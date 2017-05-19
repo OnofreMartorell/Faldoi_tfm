@@ -77,27 +77,35 @@ struct PosNei
 ////Specific struct for the different functionals
 struct  Tvl2CoupledOFStuff
 {
+  //Dual variables
   float *xi11;
   float *xi12;
   float *xi21;
   float *xi22;
+
   float *u1x;
   float *u1y;
   float *u2x;
   float *u2y;
+
   float *v1;
   float *v2;
+
   float *rho_c;
   float *grad;
+
   float *u1_;
   float *u2_;
+
   float *u1Aux;
   float *u2Aux;
+
   float *I1x;
   float *I1y;
   float *I1w;
   float *I1wx;
   float *I1wy;
+
   float *div_xi1;
   float *div_xi2;
   float *u_N;

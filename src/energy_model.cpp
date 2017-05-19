@@ -63,7 +63,7 @@ float pow2( float f ) {return f*f;}
 //Asume que las imagenes no estan normalizadas
 void rgb_to_lab(float *in, int size, float *out)
 {
-  const float T=0.008856;
+  const float T = 0.008856;
   const float color_attenuation = 1.5f;
   for(int i=0 ; i < size ; i++)
   {
@@ -169,28 +169,28 @@ void initialize_auxiliar_stuff(
  switch(ofCore->method)
   { 
     case M_NLTVL1: //NLTV-L1
-      intialize_stuff_nltvl1(ofStuff,ofCore);
+      intialize_stuff_nltvl1(ofStuff, ofCore);
       break;
     case M_TVCSAD: //TV-CSAD
-      intialize_stuff_tvcsad(ofStuff,ofCore);
+      intialize_stuff_tvcsad(ofStuff, ofCore);
       break;
     case M_NLTVCSAD: //NLTV-CSAD
-      intialize_stuff_nltvcsad(ofStuff,ofCore);
+      intialize_stuff_nltvcsad(ofStuff, ofCore);
       break;
     case M_TVL1_W: //TV-l2 coupled con pesos
-      intialize_stuff_tvl2coupled_w(ofStuff,ofCore);
+      intialize_stuff_tvl2coupled_w(ofStuff, ofCore);
       break;
     case M_NLTVCSAD_W: //NLTV-CSAD con pesos
-      intialize_stuff_nltvcsad_w(ofStuff,ofCore);
+      intialize_stuff_nltvcsad_w(ofStuff, ofCore);
       break;
     case M_NLTVL1_W: //NLTV-L1 con pessos
-      intialize_stuff_nltvl1_w(ofStuff,ofCore);
+      intialize_stuff_nltvl1_w(ofStuff, ofCore);
       break;
     case M_TVCSAD_W: //TV-CSAD con pesos
-      intialize_stuff_tvcsad_w(ofStuff,ofCore);
+      intialize_stuff_tvcsad_w(ofStuff, ofCore);
       break;
     default: //TV-l2 coupled
-      intialize_stuff_tvl2coupled(ofStuff,ofCore);
+      intialize_stuff_tvl2coupled(ofStuff, ofCore);
   }
 
 }
@@ -271,10 +271,10 @@ void prepare_stuff(
       }
       else
       {
-        memcpy(a_tmp,a,w*h*sizeof(float));
-        memcpy(b_tmp,b,w*h*sizeof(float));
+        memcpy(a_tmp, a, w*h*sizeof(float));
+        memcpy(b_tmp, b, w*h*sizeof(float));
       }
-        // normalize the images between 0 and 255
+      // normalize the images between 0 and 255
       image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);  
       gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
       gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
@@ -336,7 +336,7 @@ void prepare_stuff(
       int radius = NL_BETA;
       int rdt = DT_R;
       int ndt = DT_NEI;
-      std::printf("Preparado CSAD\n");
+      std::printf("Preparando CSAD\n");
       csad_ini_pos_nei(w, h, ndt, rdt, ofStuff1->nltvcsad.pnei);
       csad_ini_pos_nei(w, h, ndt, rdt, ofStuff2->nltvcsad.pnei);
 
@@ -358,7 +358,7 @@ void prepare_stuff(
         memcpy(a_tmp,a,w*h*sizeof(float));
         memcpy(b_tmp,b,w*h*sizeof(float));
       }
-        // normalize the images between 0 and 255
+      // normalize the images between 0 and 255
       image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);  
       gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
       gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
@@ -399,7 +399,7 @@ void prepare_stuff(
         memcpy(a_tmp,a,w*h*sizeof(float));
         memcpy(b_tmp,b,w*h*sizeof(float));
       }
-        // normalize the images between 0 and 255
+      // normalize the images between 0 and 255
       image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);  
       gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
       gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
@@ -452,7 +452,7 @@ void prepare_stuff(
         memcpy(a_tmp,a,w*h*sizeof(float));
         memcpy(b_tmp,b,w*h*sizeof(float));
       }
-        // normalize the images between 0 and 255
+      // normalize the images between 0 and 255
       image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);  
       gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
       gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
@@ -569,10 +569,10 @@ void prepare_stuff(
       }
       else
       {
-        memcpy(a_tmp,a,w*h*sizeof(float));
-        memcpy(b_tmp,b,w*h*sizeof(float));
+        memcpy(a_tmp, a, w*h*sizeof(float));
+        memcpy(b_tmp, b, w*h*sizeof(float));
       }
-        // normalize the images between 0 and 255
+      // normalize the images between 0 and 255
       image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);  
       gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
       gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);

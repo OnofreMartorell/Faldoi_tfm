@@ -34,7 +34,7 @@ void eval_tvl2coupled(
     );
 
 // Variational Optical flow method based on initial fixed values
-// It minimize the energy of \int_{B(x)} ||J(u)|| + |I_{1}(x+u)-I_{0}(x)| 
+// It minimizes the energy of \int_{B(x)} ||J(u)|| + |I_{1}(x+u)-I_{0}(x)|
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled(

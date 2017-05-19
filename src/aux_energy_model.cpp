@@ -25,7 +25,7 @@ void divergence_patch(
 
 
   // compute the divergence on the central body of the image
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for (int j = ij + 1; j < ej-1; j++){
       for (int i = ii + 1; i < ei-1; i++){
         const int p  = j * nx + i;
@@ -59,9 +59,9 @@ void divergence_patch(
   }
 
   div[ij*nx + ii] =  v1[ij*nx + ii] + v2[ij*nx + ii];
-  div[ei-1 + ii]      = -v1[ei +ii  - 2] + v2[ei + ii - 1];
-  div[(ej-1)*nx + ii] =  v1[(ej-1)*nx + ii] - v2[(ej-2)*nx + ii];
-  div[(ej-1)*nx + ei -1]   = -v1[(ej-1)*nx + ei -2] - v2[(ej-2)*nx + ei -1];
+  div[ei - 1 + ii]      = -v1[ei + ii  - 2] + v2[ei + ii - 1];
+  div[(ej - 1)*nx + ii] =  v1[(ej - 1)*nx + ii] - v2[(ej - 2)*nx + ii];
+  div[(ej - 1)*nx + ei - 1]   = -v1[(ej - 1)*nx + ei -2] - v2[(ej - 2)*nx + ei -1];
 
 
 }
@@ -83,7 +83,7 @@ void forward_gradient_mixed_bound(
 {
 
   // compute the divergence on the central body of the image
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for (int j = ij; j < ej-1; j++){
       for (int i = ii; i < ei-1; i++){
         const int p = j*nx + i;
@@ -96,12 +96,12 @@ void forward_gradient_mixed_bound(
   }
 
   // compute the gradient on the last row
-  for (int i = ii; i < ei-1; i++)
+  for (int i = ii; i < ei - 1; i++)
   {
     const int p = (ej-1) * nx + i;
 
 
-    fx[p] = f[p+1] - f[p];
+    fx[p] = f[p + 1] - f[p];
     if (ej==ny){
         fy[p] = 0;  
     }else{
@@ -123,8 +123,8 @@ void forward_gradient_mixed_bound(
     fy[p] = f[p+nx] - f[p];
   }
 
-  fx[(ej-1)*nx + ei -1] = 0;
-  fy[(ej-1)*nx + ei -1] = 0;
+  fx[(ej - 1)*nx + ei - 1] = 0;
+  fy[(ej - 1)*nx + ei - 1] = 0;
 }
 
 
@@ -143,7 +143,7 @@ void forward_gradient_patch(
 {
 
   // compute the divergence on the central body of the image
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for (int j = ij; j < ej-1; j++){
       for (int i = ii; i < ei-1; i++){
         const int p = j*nx + i;
@@ -156,25 +156,24 @@ void forward_gradient_patch(
   }
 
   // compute the gradient on the last row
-  for (int i = ii; i < ei-1; i++)
-  {
-    const int p = (ej-1) * nx + i;
+  for (int i = ii; i < ei - 1; i++){
+    const int p = (ej - 1) * nx + i;
 
-    fx[p] = f[p+1] - f[p];
+    fx[p] = f[p + 1] - f[p];
     fy[p] = 0;
   }
 
   // compute the gradient on the last column
-  for (int j = ij; j < ej-1; j++)
-  {
+  for (int j = ij; j < ej-1; j++){
+
     const int p = j*nx + ei -1;
 
     fx[p] = 0;
-    fy[p] = f[p+nx] - f[p];
+    fy[p] = f[p + nx] - f[p];
   }
 
-  fx[(ej-1)*nx + ei -1] = 0;
-  fy[(ej-1)*nx + ei -1] = 0;
+  fx[(ej - 1)*nx + ei - 1] = 0;
+  fy[(ej - 1)*nx + ei - 1] = 0;
 }
 
 //Create 
@@ -192,7 +191,7 @@ void bicubic_interpolation_warp_patch(
   bool         border_out // if true, put zeros outside the region
 )
 {
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for(int j = ij; j < ej; j++)
     for(int i = ii; i < ei; i++)
     {

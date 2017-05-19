@@ -17,16 +17,20 @@ void  intialize_stuff_tvl2coupled(
   const int w = ofCore->w;
   const int h = ofCore->h;
   //fprintf(stderr, "W x H :%d x %d\n", w, h);
+
   ofStuff->tvl2.xi11 = new float[w*h];
   ofStuff->tvl2.xi12 = new float[w*h];
   ofStuff->tvl2.xi21 = new float[w*h];
   ofStuff->tvl2.xi22 = new float[w*h];
+
   ofStuff->tvl2.u1x = new float[w*h];
   ofStuff->tvl2.u1y = new float[w*h];
   ofStuff->tvl2.u2x = new float[w*h];
   ofStuff->tvl2.u2y = new float[w*h];
+
   ofStuff->tvl2.v1 =  new float[w*h];
   ofStuff->tvl2.v2 =  new float[w*h];
+
   ofStuff->tvl2.rho_c =  new float[w*h];
   ofStuff->tvl2.grad =  new float[w*h];
   ofStuff->tvl2.u1_ =  new float[w*h];
@@ -70,7 +74,7 @@ void  free_stuff_tvl2coupled(SpecificOFStuff *ofStuff){
   delete [] ofStuff->tvl2.u_N;
 }
 
-//////////////////////////////////////////
+//////////////////////////////////////////////
 ////TV-l2 COUPLED OPTICAL FLOW PROBLEM////////
 //Dual variable
 void tvl2coupled_getD(
@@ -89,25 +93,25 @@ void tvl2coupled_getD(
       const int ej, // end row
       const int nx
 ){
-
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+  //Compute the value of xi
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for (int l = ij; l < ej; l++){
-  for (int k = ii; k < ei; k++){
-    const int i = l*nx + k;
-    const float g11 = xi11[i]*xi11[i];
-    const float g12 = xi12[i]*xi12[i];
-    const float g21 = xi21[i]*xi21[i];
-    const float g22 = xi22[i]*xi22[i];
+    for (int k = ii; k < ei; k++){
+        const int i = l*nx + k;
+        const float g11 = xi11[i]*xi11[i];
+        const float g12 = xi12[i]*xi12[i];
+        const float g21 = xi21[i]*xi21[i];
+        const float g22 = xi22[i]*xi22[i];
     
-    float xi_N = sqrt(g11 + g12 + g21 + g22);
+        float xi_N = sqrt(g11 + g12 + g21 + g22);
     
-    xi_N = MAX(1,xi_N);
+        xi_N = MAX(1, xi_N);
 
-    xi11[i] = (xi11[i] + tau*u1x[i])/xi_N;
-    xi12[i] = (xi12[i] + tau*u1y[i])/xi_N;
-    xi21[i] = (xi21[i] + tau*u2x[i])/xi_N;
-    xi22[i] = (xi22[i] + tau*u2y[i])/xi_N;
-  }
+        xi11[i] = (xi11[i] + tau*u1x[i])/xi_N;
+        xi12[i] = (xi12[i] + tau*u1y[i])/xi_N;
+        xi21[i] = (xi21[i] + tau*u2x[i])/xi_N;
+        xi22[i] = (xi22[i] + tau*u2y[i])/xi_N;
+    }
   }
 }
 
@@ -133,36 +137,35 @@ void tvl2coupled_getP(
 ){
   float err_D = 0.0;
 
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
-  for (int l = ij; l < ej; l++)
-  for (int k = ii; k < ei; k++){
-    const int i = l*nx + k;
-    const float u1k = u1[i];
-    const float u2k = u2[i];
+  #pragma omp parallel for schedule(dynamic,1) collapse(2)
+    for (int l = ij; l < ej; l++)
+        for (int k = ii; k < ei; k++){
+            const int i = l*nx + k;
+            const float u1k = u1[i];
+            const float u2k = u2[i];
       
-    //Only modify the inpainting domain
-    // if (mask[i]==0){
-      u1[i] = u1k -tau*(-div_xi1[i] + (u1k - v1[i])/theta);
-      u2[i] = u2k -tau*(-div_xi2[i] + (u2k - v2[i])/theta);
+            //Only modify the inpainting domain
+            // if (mask[i]==0){
+            u1[i] = u1k - tau*(-div_xi1[i] + (u1k - v1[i])/theta);
+            u2[i] = u2k - tau*(-div_xi2[i] + (u2k - v2[i])/theta);
 
-      u_N[i]= (u1[i] - u1k) * (u1[i] - u1k) + 
-        (u2[i] - u2k) * (u2[i] - u2k);
-    // }else {
-    //   u_N[i] = 0.0;
-    // }
-  }
+            u_N[i]= (u1[i] - u1k) * (u1[i] - u1k) +
+                (u2[i] - u2k) * (u2[i] - u2k);
+            // }else {
+            //   u_N[i] = 0.0;
+            // }
+        }
   
 
   //Get the max val
   err_D = 0;
   for (int l = ij; l < ej; l++){
-  for (int k = ii; k < ei; k++){
+    for (int k = ii; k < ei; k++){
       if (err_D < u_N[l*nx + k]){
         err_D = u_N[l*nx + k];
       }
+    }
   }
-  }
-  
   (*err) = err_D;
 
 }
@@ -179,8 +182,7 @@ void eval_tvl2coupled(
     const int ej, // end row
     const float lambda,  // weight of the data term
     const float theta
-    )
-{
+    ){
 
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
@@ -204,32 +206,33 @@ void eval_tvl2coupled(
 
   //forward_gradient_mixed_bound(u1,u1x,u1y,ii,ij,ei,ej,nx,ny);
   //forward_gradient_mixed_bound(u2,u2x,u2y,ii,ij,ei,ej,nx,ny);
-  forward_gradient_patch(u1,u1x,u1y,ii,ij,ei,ej,nx);
-  forward_gradient_patch(u2,u2x,u2y,ii,ij,ei,ej,nx);
+  forward_gradient_patch(u1, u1x, u1y, ii, ij, ei, ej, nx);
+  forward_gradient_patch(u2, u2x, u2y, ii, ij, ei, ej, nx);
   bicubic_interpolation_warp_patch(I1,  u1, u2, I1w, 
                               ii, ij, ei, ej, nx, ny, false);
+
   //Energy for all the patch. Maybe it useful only the 8 pixel around the seed.
   int m  = 0;
   for (int l = ij; l < ej; l++){
-  for (int k = ii; k < ei; k++){
-    const int i = l*nx + k;
-    float dt = lambda*fabs(I1w[i]-I0[i]);
-    float dc = (1/(2*theta))*
-        ((u1[i]-v1[i])*(u1[i]-v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
-    float g1  = u1x[i]*u1x[i];
-    float g12 = u1y[i]*u1y[i];
-    float g21 = u2x[i]*u2x[i];
-    float g2  = u2y[i]*u2y[i];
-    float g  = sqrt(g1 + g12 + g21 + g2);
-    if (!std::isfinite(dt)){
-        std::printf("Datos corruptos\n");
+    for (int k = ii; k < ei; k++){
+        const int i = l*nx + k;
+        float dt = lambda*fabs(I1w[i] - I0[i]);
+        float dc = (1/(2*theta))*
+            ((u1[i] - v1[i])*(u1[i]- v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
+        float g1  = u1x[i]*u1x[i];
+        float g12 = u1y[i]*u1y[i];
+        float g21 = u2x[i]*u2x[i];
+        float g2  = u2y[i]*u2y[i];
+        float g  = sqrt(g1 + g12 + g21 + g2);
+        if (!std::isfinite(dt)){
+            std::printf("Datos corruptos\n");
+        }
+        if (!std::isfinite(g)){
+            std::printf("Regularizacion corrupta\n");
+        }
+        ener += dc + dt + g;
+        m++;
     }
-    if (!std::isfinite(g)){
-        std::printf("Regularizacion corrupta\n");
-    }
-    ener += dc + dt + g;
-    m++;
-  }
   }
   ener /=(m*1.0);
   (*ener_N) = ener;
@@ -237,7 +240,7 @@ void eval_tvl2coupled(
 }
 
 // Variational Optical flow method based on initial fixed values
-// It minimize the energy of \int_{B(x)} ||J(u)|| + |I_{1}(x+u)-I_{0}(x)| 
+// It minimizes the energy of \int_{B(x)} ||J(u)|| + |I_{1}(x+u)-I_{0}(x)|
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled(
@@ -262,6 +265,7 @@ void guided_tvl2coupled(
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
   int *mask = ofD->fixed_points;
+
   //Columns and Rows
   const int nx = ofD->w;
   const int ny = ofD->h;
@@ -269,12 +273,14 @@ void guided_tvl2coupled(
 
   float *u1_  = tvl2->u1_;
   float *u2_  = tvl2->u2_;
-  float *u_N  = tvl2->u_N;;
+  float *u_N  = tvl2->u_N;
+
   //Optical flow derivatives
   float *u1x  = tvl2->u1x;
   float *u1y  = tvl2->u1y;
   float *u2x  = tvl2->u2x;
   float *u2y  = tvl2->u2y;
+
   //Dual variables
   float *xi11 = tvl2->xi11;
   float *xi12 = tvl2->xi12;
@@ -304,11 +310,11 @@ void guided_tvl2coupled(
   const float l_t = lambda * theta;
 
   for (int l = ij; l < ej; l++){
-  for (int k = ii; k < ei; k++){
-    const int  i = l*nx + k;
-    //Inizialization dual variables
-    xi11[i] = xi12[i] = xi21[i] = xi22[i] = 0.0;
-  }
+    for (int k = ii; k < ei; k++){
+        const int  i = l*nx + k;
+        //Inizialization dual variables
+        xi11[i] = xi12[i] = xi21[i] = xi22[i] = 0.0;
+    }
   }
 
   for (int warpings = 0; warpings < warps; warpings++)
@@ -321,107 +327,104 @@ void guided_tvl2coupled(
     bicubic_interpolation_warp_patch(I1y, u1, u2, I1wy, 
                               ii, ij, ei, ej, nx, ny, false);
     
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+    //Compute values that will not change during the whole wraping
+    #pragma omp parallel for schedule(dynamic,1) collapse(2)
     for (int l = ij; l < ej; l++)
-    for (int k = ii; k < ei; k++)
-    {
+        for (int k = ii; k < ei; k++){
 
-      const int i = l*nx + k;
-      const float Ix2 = I1wx[i] * I1wx[i];
-      const float Iy2 = I1wy[i] * I1wy[i];
+        const int i = l*nx + k;
+        const float Ix2 = I1wx[i] * I1wx[i];
+        const float Iy2 = I1wy[i] * I1wy[i];
 
-      // store the |Grad(I1)|^2
-      grad[i] = (Ix2 + Iy2);
+        // store the |Grad(I1)|^2
+        grad[i] = (Ix2 + Iy2);
 
-      // compute the constant part of the rho function
-      rho_c[i] = (I1w[i] - I1wx[i] * u1[i]
+        // compute the constant part of the rho function
+        rho_c[i] = (I1w[i] - I1wx[i] * u1[i]
             - I1wy[i] * u2[i] - I0[i]);
-    }
+        }
     
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+    #pragma omp parallel for schedule(dynamic,1) collapse(2)
     for (int l = ij; l < ej; l++){
-    for (int k = ii; k < ei; k++){
-      const int i = l*nx + k;
-      u1_[i] = u1[i];
-      u2_[i] = u2[i];
-    }
+        for (int k = ii; k < ei; k++){
+            const int i = l*nx + k;
+            u1_[i] = u1[i];
+            u2_[i] = u2[i];
+        }
     }
 
     int n = 0;
     float err_D = INFINITY;
-    while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF)
-    {
+    while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF){
 
       n++;
       // estimate the values of the variable (v1, v2)
       // (thresholding opterator TH)
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+      #pragma omp parallel for schedule(dynamic, 1) collapse(2)
       for (int l = ij; l < ej; l++){
-      for (int k = ii; k < ei; k++){
-        const int i = l*nx + k;
-        const float rho = rho_c[i]
-          + (I1wx[i] * u1[i] + I1wy[i] * u2[i]);
-          float d1, d2;
+        for (int k = ii; k < ei; k++){
+            const int i = l*nx + k;
+            const float rho = rho_c[i]
+                + (I1wx[i] * u1[i] + I1wy[i] * u2[i]);
+            float d1, d2;
   
-        if (rho < - l_t * grad[i])
-        {
-          d1 = l_t * I1wx[i];
-          d2 = l_t * I1wy[i];
-        }
-        else
-        {
-          if (rho > l_t * grad[i])
-          {
-            d1 = -l_t * I1wx[i];
-            d2 = -l_t * I1wy[i];
-          }
-          else
-          {
-            if (grad[i] < GRAD_IS_ZERO)
-              d1 = d2 = 0;
-            else
-            {
-              float fi = -rho/grad[i];
-              d1 = fi * I1wx[i];
-              d2 = fi * I1wy[i];
+            if (rho < - l_t * grad[i]){
+                d1 = l_t * I1wx[i];
+                d2 = l_t * I1wy[i];
             }
-          }
+            else{
+                if (rho > l_t * grad[i]){
+                    d1 = -l_t * I1wx[i];
+                    d2 = -l_t * I1wy[i];
+                }
+            else{
+                // if gradient is too small, we treat it as zero
+                if (grad[i] < GRAD_IS_ZERO)
+                    d1 = d2 = 0;
+                else{
+                    float fi = -rho/grad[i];
+                    d1 = fi * I1wx[i];
+                    d2 = fi * I1wy[i];
+                }
+            }
+            }
+            v1[i] = u1[i] + d1;
+            v2[i] = u2[i] + d2;
         }
-  
-        v1[i] = u1[i] + d1;
-        v2[i] = u2[i] + d2;
       }
-      }
+      // estimate the values of the variable (u1, u2)
 
-      //Dual variables
-      forward_gradient_patch(u1_,u1x,u1y,ii,ij,ei,ej,nx);
-      forward_gradient_patch(u2_,u2x,u2y,ii,ij,ei,ej,nx);
+      //Compute dual variables
+      forward_gradient_patch(u1_, u1x, u1y, ii, ij, ei, ej, nx);
+      forward_gradient_patch(u2_, u2x, u2y, ii, ij, ei, ej, nx);
       tvl2coupled_getD(xi11, xi12, xi21, xi22, u1x, u1y, u2x, u2y, 
                       tau, ii, ij, ei, ej, nx);
-      //Primal variables
-      divergence_patch(xi11,xi12,div_xi1,ii,ij,ei,ej,nx);
-      divergence_patch(xi21,xi22,div_xi2,ii,ij,ei,ej,nx);
 
-      //Almacenamos la iteracion anterior
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+      //Primal variables
+      divergence_patch(xi11, xi12, div_xi1, ii, ij, ei, ej, nx);
+      divergence_patch(xi21, xi22, div_xi2, ii, ij, ei, ej, nx);
+
+      //Save previous iteration
+      #pragma omp parallel for schedule(dynamic, 1) collapse(2)
       for (int l = ij; l < ej; l++){
-      for (int k = ii; k < ei; k++){
-        const int i = l*nx + k;
-        u1Aux[i] = u1[i];
-        u2Aux[i] = u2[i];
-      }
+        for (int k = ii; k < ei; k++){
+            const int i = l*nx + k;
+            u1Aux[i] = u1[i];
+            u2Aux[i] = u2[i];
+        }
       }
 
       tvl2coupled_getP(u1, u2, v1, v2, div_xi1, div_xi2, u_N, 
                       mask, theta, tau, ii, ij, ei, ej, nx, &err_D);
+
       //(aceleration = 1);
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+      #pragma omp parallel for schedule(dynamic, 1) collapse(2)
       for (int l = ij; l < ej; l++){
-      for (int k = ii; k < ei; k++){
-        const int i = l*nx + k;
-        u1_[i] = 2*u1[i] - u1Aux[i];
-        u2_[i] = 2*u2[i] - u2Aux[i];
-      }
+        for (int k = ii; k < ei; k++){
+            const int i = l*nx + k;
+            u1_[i] = 2*u1[i] - u1Aux[i];
+            u2_[i] = 2*u2[i] - u2Aux[i];
+        }
       }  
 
 

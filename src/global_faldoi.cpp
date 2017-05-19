@@ -699,7 +699,7 @@ void tvl2OF(
     bicubic_interpolation_warp(I1x, u1, u2, I1wx, nx, ny, true);
     bicubic_interpolation_warp(I1y, u1, u2, I1wy, nx, ny, true);
 
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < size; i++)
     {
       const float Ix2 = I1wx[i] * I1wx[i];
@@ -728,7 +728,7 @@ void tvl2OF(
       n++;
       // estimate the values of the variable (v1, v2)
       // (thresholding opterator TH)
-#pragma omp parallel for
+      #pragma omp parallel for
       for (int i = 0; i < size; i++)
       {
         const float rho = rho_c[i]
@@ -740,19 +740,16 @@ void tvl2OF(
           d1 = l_t * I1wx[i];
           d2 = l_t * I1wy[i];
         }
-        else
-        {
+        else{
           if (rho > l_t * grad[i])
           {
             d1 = -l_t * I1wx[i];
             d2 = -l_t * I1wy[i];
           }
-          else
-          {
+          else{
             if (grad[i] < GRAD_IS_ZERO)
               d1 = d2 = 0;
-            else
-            {
+            else{
               float fi = -rho/grad[i];
               d1 = fi * I1wx[i];
               d2 = fi * I1wy[i];
@@ -765,23 +762,23 @@ void tvl2OF(
       }
 
       //Dual variables
-      forward_gradient(u1_,u1x,u1y,nx,ny);
-      forward_gradient(u2_,u2x,u2y,nx,ny);
-      ofTVl2_getD(xi11,xi12,xi21,xi22,u1x,u1y,u2x,u2y,tau,size);  
+      forward_gradient(u1_, u1x, u1y, nx, ny);
+      forward_gradient(u2_, u2x, u2y, nx, ny);
+      ofTVl2_getD(xi11, xi12, xi21, xi22, u1x, u1y, u2x, u2y, tau, size);
 
       //Primal variables
-      divergence(xi11,xi12,div_xi1,nx,ny);
-      divergence(xi21,xi22,div_xi2,nx,ny);
+      divergence(xi11, xi12, div_xi1, nx, ny);
+      divergence(xi21, xi22, div_xi2, nx, ny);
 
       //Almacenamos la iteracion anterior
-      memcpy(u1Aux, u1,size*sizeof(float));
-      memcpy(u2Aux, u2,size*sizeof(float));
+      memcpy(u1Aux, u1, size*sizeof(float));
+      memcpy(u2Aux, u2, size*sizeof(float));
       // for (int i = 0; i < size; i++){
       //   u1Aux[i] = u1[i];
       //   u2Aux[i] = u2[i];   
       // }
 
-      ofTVl2_getP(u1,u2,v1,v2,div_xi1,div_xi2,u_N,theta,tau,size,&err_D);
+      ofTVl2_getP(u1, u2, v1, v2, div_xi1, div_xi2, u_N, theta, tau, size, &err_D);
 
       //(aceleration = 1);
       for (int i = 0; i < size; i++){
@@ -790,12 +787,10 @@ void tvl2OF(
     
       }
       
-
-
     }
     if (verbose)
       fprintf(stderr, "Warping: %d,Iter: %d "
-      "Error: %f\n", warpings,n, err_D);
+      "Error: %f\n", warpings, n, err_D);
   }
 
   free(u1x);
@@ -1938,8 +1933,8 @@ static char *pick_option(int *c, char ***v, char *o, char *d)
  */
 int main(int argc, char *argv[])
 {
-  char *var_reg = pick_option(&argc,&argv,"m","0");
-  char *warps_val = pick_option(&argc,&argv,"w","1");
+  char *var_reg = pick_option(&argc, &argv, "m", "0");
+  char *warps_val = pick_option(&argc, &argv, "w", "1");
   
   if (argc !=5) {
     fprintf(stderr, "Usage: %s  I0 I1 flow  out"
@@ -1962,12 +1957,12 @@ int main(int argc, char *argv[])
   char* outfile = argv[i]; i++;
 
   //read parameters
-  float lambda  = (argc>i)? atof(argv[i]): PAR_DEFAULT_LAMBDA; i++;
-  float theta   = (argc>i)? atof(argv[i]): PAR_DEFAULT_THETA;  i++;
-  float tau     = (argc>i)? atof(argv[i]): PAR_DEFAULT_TAU;    i++;
-  float tol_D   = (argc>i)? atof(argv[i]): PAR_DEFAULT_TOL_D;    i++;
-  int   nproc    = (argc>i)? atoi(argv[i]): PAR_DEFAULT_NPROC;   i++;
-  int   verbose  = (argc>i)? atoi(argv[i]): PAR_DEFAULT_VERBOSE; i++;
+  float lambda  = (argc > i)? atof(argv[i]): PAR_DEFAULT_LAMBDA; i++;
+  float theta   = (argc > i)? atof(argv[i]): PAR_DEFAULT_THETA;  i++;
+  float tau     = (argc > i)? atof(argv[i]): PAR_DEFAULT_TAU;    i++;
+  float tol_D   = (argc > i)? atof(argv[i]): PAR_DEFAULT_TOL_D;    i++;
+  int   nproc    = (argc > i)? atoi(argv[i]): PAR_DEFAULT_NPROC;   i++;
+  int   verbose  = (argc > i)? atoi(argv[i]): PAR_DEFAULT_VERBOSE; i++;
 
 
   //check parameters
@@ -2011,12 +2006,13 @@ int main(int argc, char *argv[])
   // read the input images
   // nx es width y ny es height 
 
-  // open input images
 
+  // open input images
   int w[3], h[3], pd[3];
   float *i0   = iio_read_image_float_split(image1_name, w + 0, h + 0, pd + 0);
   float *i1   = iio_read_image_float_split(image2_name, w + 1, h + 1, pd + 1);
   float *flow = iio_read_image_float_split(image_flow_name, w + 2, h + 2, pd + 2);
+  //Ensure that dimensions match
   if (w[0] != w[1] || h[0] != h[1] || pd[0] != pd[1])
     return fprintf(stderr, "ERROR: input images and flow size mismatch\n");
   if (w[0] != w[2] || h[2] != h[2] || pd[2] != 2)
@@ -2048,8 +2044,8 @@ int main(int argc, char *argv[])
     rgb2gray(i1, w[0], h[0], i1n);
   }
   else{
-    memcpy(i0n,i0,size*sizeof(float));
-    memcpy(i1n,i1,size*sizeof(float));
+    memcpy(i0n, i0, size*sizeof(float));
+    memcpy(i1n, i1, size*sizeof(float));
   }
 
   normalization(i0n, i1n, i0n, i1n, size); 
@@ -2068,11 +2064,11 @@ int main(int argc, char *argv[])
   float *v = u + size;
 
 
-
+  //Initialize flow with flow from local faldoi
   for (int i = 0; i < size; i++)
   {
     u[i] = flow[i];
-    v[i] = flow[size +i];
+    v[i] = flow[size + i];
   }
 
   
@@ -2085,6 +2081,8 @@ int main(int argc, char *argv[])
   // }
   // iio_save_image_float_split("Despues.flo", u, w[0], h[0], 2);
 
+
+  //Initialize dual variables if necessary (TV)
   if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W)
   {
     xi11 = new float[size];

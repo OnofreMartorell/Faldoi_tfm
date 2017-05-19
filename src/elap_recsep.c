@@ -123,7 +123,7 @@ static void harmonic_extension_with_init(
 
 
 #include "smapa.h"
-SMART_PARAMETER(PREFILTER,0)
+SMART_PARAMETER(PREFILTER, 0)
 
 // zoom-out by 2x2 block averages
 // NANs are discarded when possible

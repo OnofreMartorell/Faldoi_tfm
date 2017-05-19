@@ -10,8 +10,8 @@ extern "C" {
 
 static void sparse_optical_flow(char *input, int nx, int ny, float *out)
 {
-	float x1,x2,y1,y2;
-	std::string filename_sift_matches (input);
+    float x1, x2, y1, y2;
+    std::string filename_sift_matches(input);
 	std::ifstream file(input);
 	std::string str;
 
@@ -23,16 +23,16 @@ static void sparse_optical_flow(char *input, int nx, int ny, float *out)
 		}
 	}
 
-	//Insert the sparse flow
-	while (getline(file,str)){
+    //Insert the sparse flow obtained from matches
+    while (getline(file, str)){
 		//Colum I0, Row I0, Colum I1, Row I1 
 		sscanf(str.c_str(), "%f %f %f %f\n",
-			 &x1,&y1,&x2,&y2);
-		float u = x2-x1;
-		float v = y2-y1;
+             &x1, &y1, &x2, &y2);
+        float u = x2 - x1;
+        float v = y2 - y1;
 		int i = std::floor(x1);
 		int j = std::floor(y1);
-		//fprintf(stderr, "Colum x row: %d x %d u x v: (%f,%f)\n", i,j,u,v);
+        //fprintf(stderr, "Colum x row: %d x %d u x v: (%f,%f)\n", i,j,u,v);
 		out[j*nx + i] = u;
 		out[nx*ny + j*nx + i] = v;
 	}
@@ -59,8 +59,8 @@ int main(int argc, char *argv[])
 	float *out = new float[2*nx*ny];
 	//Call the function that creates the sparse optical flow
 	sparse_optical_flow(filename_in, nx, ny, out);
-	//Save the optical cosa
-	iio_save_image_float_split(filename_out,out,nx,ny,2);
+    //Save the optical flow
+    iio_save_image_float_split(filename_out, out, nx, ny, 2);
 
 	delete [] out;
 	return 0;
