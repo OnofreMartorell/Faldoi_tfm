@@ -13,6 +13,7 @@
 #define M_TVCSAD_W   5
 #define M_NLTVCSAD   6
 #define M_NLTVCSAD_W 7
+#define M_TVL1_OCC 8
 
 //Specific stuff for NLTV
 

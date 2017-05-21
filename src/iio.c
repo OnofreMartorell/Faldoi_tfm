@@ -334,8 +334,7 @@ uppsala:
 	if (c == comment_char) goto uppsala;
 }
 
-static void fill_temporary_filename(char *out)
-{
+static void fill_temporary_filename(char *out){
 #ifdef I_CAN_HAS_MKSTEMP
 		char tfn[] = "/tmp/iio_tmp_file_XXXXXX\0";
 		int r = mkstemp(tfn);
@@ -1062,14 +1061,17 @@ static void swap_two_bytes(char *here)
 //#include <png.h>
 #include <limits.h> // for CHAR_BIT only
 static int read_beheaded_png(struct iio_image *x,
-		FILE *f, char *header, int nheader)
-{
+		FILE *f, char *header, int nheader){
+
 	(void)header;
+
 	// TODO: reorder this mess
 	png_structp pp = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
 	if (!pp) fail("png_create_read_struct fail");
+
 	png_infop pi = png_create_info_struct(pp);
 	if (!pi) fail("png_create_info_struct fail");
+
 	if (setjmp(png_jmpbuf(pp))) fail("png error");
 	png_init_io(pp, f);
 	png_set_sig_bytes(pp, nheader);

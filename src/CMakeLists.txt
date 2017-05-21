@@ -25,7 +25,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -O0 -ggdb -DNDEBUG -Wall -Wextra -std=
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -ggdb -DNDEBUG -Wall -Wextra -std=c++11")
 
 SET(SHARED_C_SRC iio.c mask.c xmalloc.c bicubic_interpolation.c elap_recsep.c)
-SET(SHARED_CPP_SRC tvl2_model.cpp nltv_model.cpp tvcsad_model.cpp nltvcsad_model.cpp tvl2w_model.cpp nltvcsadw_model.cpp nltvw_model.cpp tvcsadw_model.cpp aux_energy_model.cpp energy_model.cpp heuristic_interpolation.cpp)
+SET(SHARED_CPP_SRC tvl2_model.cpp nltv_model.cpp tvcsad_model.cpp nltvcsad_model.cpp tvl2w_model.cpp nltvcsadw_model.cpp nltvw_model.cpp tvcsadw_model.cpp aux_energy_model.cpp energy_model.cpp heuristic_interpolation.cpp tvl2_model_occ.cpp)
 
 message(${PNG_LIBRARY})
 add_executable(sparse_flow ${SHARED_C_SRC} ${SHARED_CPP_SRC} sparse_flow.cpp)

@@ -77,7 +77,7 @@ void  free_stuff_tvl2coupled(SpecificOFStuff *ofStuff){
 //////////////////////////////////////////////
 ////TV-l2 COUPLED OPTICAL FLOW PROBLEM////////
 //Dual variable
-void tvl2coupled_getD(
+static void tvl2coupled_getD(
       float *xi11, 
       float *xi12, 
       float *xi21,
@@ -117,7 +117,7 @@ void tvl2coupled_getD(
 
 
 //Primal variable
-void tvl2coupled_getP(
+static void tvl2coupled_getP(
       float *u1,
       float *u2,
       float *v1, 

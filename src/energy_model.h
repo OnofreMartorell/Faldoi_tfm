@@ -51,4 +51,19 @@ void eval_functional(
           const int ei, // end column
           const int ej // end row,
           );
+
+
+void prepare_stuff_occ(
+        SpecificOFStuff *ofStuff1,
+        OpticalFlowData *ofCore1,
+        SpecificOFStuff *ofStuff2,
+        OpticalFlowData *ofCore2,
+        float *i0,
+        float *i1,
+        float *i_1,
+        int pd,
+        float **out_i0,
+        float **out_i1,
+        float **out_i_1
+        );
 #endif //ENERGY_MODEL_H
