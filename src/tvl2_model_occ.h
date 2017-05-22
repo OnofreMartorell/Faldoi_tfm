@@ -15,46 +15,48 @@
 
 ////INITIALIZATION OF EACH METHOD
 void intialize_stuff_tvl2coupled_occ(
-          SpecificOFStuff *ofStuff,
-          OpticalFlowData *ofCore);
+        SpecificOFStuff *ofStuff,
+        OpticalFlowData *ofCore);
 
 
 void free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff);
 
 void eval_tvl2coupled_occ(
-    float *I0,           // source image
-    float *I1,           // target image
-    OpticalFlowData *ofD,
-    Tvl2CoupledOFStuff *tvl2,
-    float *ener_N,
-    const int ii, // initial column
-    const int ij, // initial row
-    const int ei, // end column
-    const int ej, // end row
-    const float lambda,  // weight of the data term
-    const float theta
-    );
+        float *I0,           // source image
+        float *I1,           // target image
+        OpticalFlowData *ofD,
+        Tvl2CoupledOFStuff *tvl2,
+        float *ener_N,
+        const int ii, // initial column
+        const int ij, // initial row
+        const int ei, // end column
+        const int ej, // end row
+        const float lambda,  // weight of the data term
+        const float theta
+        );
 
 // Variational Optical flow method based on initial fixed values
 // It minimizes the energy of \int_{B(x)} ||J(u)|| + |I_{1}(x+u)-I_{0}(x)|
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled_occ(
-    float *I0,           // source image
-    float *I1,           // target image
-    OpticalFlowData *ofD,
-    Tvl2CoupledOFStuff *tvl2,
-    float *ener_N,
-    const int ii, // initial column
-    const int ij, // initial row
-    const int ei, // end column
-    const int ej, // end row
-    const float lambda,  // weight of the data term
-    const float theta,   // weight of the data term
-    const float tau,     // time step
-    const float tol_OF,  // tol max allowed
-    const int   warps,   // number of warpings per scale
-    const bool  verbose  // enable/disable the verbose mode
-    );
+        float *I1,           // source image
+        float *I2,           // target image
+        float *I0,
+        OpticalFlowData *ofD,
+        Tvl2CoupledOFStuff_occ *tvl2_occ,
+        float *ener_N,
+        const int ii, // initial column
+        const int ij, // initial row
+        const int ei, // end column
+        const int ej, // end row
+        const float lambda,  // weight of the data term
+        const float theta,   // weight of the data term
+        const float tau,     // time step
+        const float tol_OF,  // tol max allowed
+        const int   warps,   // number of warpings per scale
+        const bool  verbose  // enable/disable the verbose mode
+        );
+
 
 #endif //TVL2-L1 functional with occlusions

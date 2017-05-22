@@ -16,24 +16,24 @@ void initialize_auxiliar_stuff(
 
 void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore);
 
-void prepare_stuff(
-    SpecificOFStuff *ofStuff1,
+void prepare_stuff(SpecificOFStuff *ofStuff1,
     OpticalFlowData *ofCore1,
     SpecificOFStuff *ofStuff2,
     OpticalFlowData *ofCore2,
-    float *a,
-    float *b,
+    float *i1,
+    float *i2,
+    float *i0,
     int pd,
-    float **out_a,
-    float **out_b
-    );
+    float **out_i1,
+    float **out_i2,
+    float **out_i0);
 
-void of_estimation(
-    SpecificOFStuff *ofStuff,
+void of_estimation(SpecificOFStuff *ofStuff,
     OpticalFlowData *ofCore,
-    float *ener_N,
-    float *a,  //first frame
-    float *b,  //second frame
+    float *ener_N,  //first frame
+    float *i1,
+    float *i2,
+    float *i0,  //second frame
     const int ii, // initial column
     const int ij, // initial row
     const int ei, // end column
@@ -52,18 +52,4 @@ void eval_functional(
           const int ej // end row,
           );
 
-
-void prepare_stuff_occ(
-        SpecificOFStuff *ofStuff1,
-        OpticalFlowData *ofCore1,
-        SpecificOFStuff *ofStuff2,
-        OpticalFlowData *ofCore2,
-        float *i0,
-        float *i1,
-        float *i_1,
-        int pd,
-        float **out_i0,
-        float **out_i1,
-        float **out_i_1
-        );
 #endif //ENERGY_MODEL_H

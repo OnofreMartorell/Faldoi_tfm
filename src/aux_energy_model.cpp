@@ -189,12 +189,10 @@ void bicubic_interpolation_warp_patch(
   const int    nx,        // image width
   const int    ny,        // image height
   bool         border_out // if true, put zeros outside the region
-)
-{
+) {
   #pragma omp parallel for schedule(dynamic,1) collapse(2)
   for(int j = ij; j < ej; j++)
-    for(int i = ii; i < ei; i++)
-    {
+    for(int i = ii; i < ei; i++){
       const int   p  = j * nx + i;
       const float uu = (float) (i + u[p]);
       const float vv = (float) (j + v[p]);

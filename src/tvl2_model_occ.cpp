@@ -1,5 +1,5 @@
-#ifndef TVL2_MODEL
-#define TVL2_MODEL
+#ifndef TVL2_MODEL_OCC
+#define TVL2_MODEL_OCC
 
 #include <cmath>
 #include <cstdio>
@@ -12,75 +12,92 @@
 void  intialize_stuff_tvl2coupled_occ(
         SpecificOFStuff *ofStuff,
         OpticalFlowData *ofCore) {
-    //TODO: add new variables
+
     const int w = ofCore->w;
     const int h = ofCore->h;
 
-    //Primal variables v
-    ofStuff->tvl2.v1 =  new float[w*h];
-    ofStuff->tvl2.v2 =  new float[w*h];
+    //Occlusion variable
+    ofStuff->tvl2_occ.chi =  new float[w*h];
+    ofStuff->tvl2_occ.chix =  new float[w*h];
+    ofStuff->tvl2_occ.chiy =  new float[w*h];
+
+    //Weigth
+    ofStuff->tvl2_occ.g =  new float[w*h];
 
     //Dual variables
-    ofStuff->tvl2.xi11 = new float[w*h];
-    ofStuff->tvl2.xi12 = new float[w*h];
-    ofStuff->tvl2.xi21 = new float[w*h];
-    ofStuff->tvl2.xi22 = new float[w*h];
+    ofStuff->tvl2_occ.xi11 =  new float[w*h];
+    ofStuff->tvl2_occ.xi12 =  new float[w*h];
+    ofStuff->tvl2_occ.xi21 =  new float[w*h];
+    ofStuff->tvl2_occ.xi22 =  new float[w*h];
 
-    //Derivatives of primal variables
-    ofStuff->tvl2.u1x = new float[w*h];
-    ofStuff->tvl2.u1y = new float[w*h];
-    ofStuff->tvl2.u2x = new float[w*h];
-    ofStuff->tvl2.u2y = new float[w*h];
+    //Derivatives of u1,u2
+    ofStuff->tvl2_occ.u1x =  new float[w*h];
+    ofStuff->tvl2_occ.u1y =  new float[w*h];
+    ofStuff->tvl2_occ.u2x =  new float[w*h];
+    ofStuff->tvl2_occ.u2y =  new float[w*h];
 
-    ofStuff->tvl2.rho_c =  new float[w*h];
-    ofStuff->tvl2.grad =  new float[w*h];
-    ofStuff->tvl2.u1_ =  new float[w*h];
-    ofStuff->tvl2.u2_ =  new float[w*h];
-    ofStuff->tvl2.u1Aux = new float[w*h];
-    ofStuff->tvl2.u2Aux = new float[w*h];
+    ofStuff->tvl2_occ.v1 =  new float[w*h];
+    ofStuff->tvl2_occ.v2 =  new float[w*h];
 
-    //Derivatives of image
-    ofStuff->tvl2.I1x = new float[w*h];
-    ofStuff->tvl2.I1y = new float[w*h];
+    ofStuff->tvl2_occ.rho_c1 =  new float[w*h];
+    ofStuff->tvl2_occ.rho_c2 =  new float[w*h];
+    ofStuff->tvl2_occ.grad =  new float[w*h];
+    ofStuff->tvl2_occ.grad_ba =  new float[w*h];
 
-    //Derivatives of warped image
-    ofStuff->tvl2.I1w = new float[w*h];
-    ofStuff->tvl2.I1wx = new float[w*h];
-    ofStuff->tvl2.I1wy = new float[w*h];
+    ofStuff->tvl2_occ.u1Aux =  new float[w*h];
+    ofStuff->tvl2_occ.u2Aux =  new float[w*h];
 
-    ofStuff->tvl2.div_xi1 = new float[w*h];
-    ofStuff->tvl2.div_xi2 = new float[w*h];
+    ofStuff->tvl2_occ.I2x =  new float[w*h];
+    ofStuff->tvl2_occ.I2y =  new float[w*h];
+    ofStuff->tvl2_occ.I2w =  new float[w*h];
+    ofStuff->tvl2_occ.I2wx =  new float[w*h];
+    ofStuff->tvl2_occ.I2wy =  new float[w*h];
 
+    ofStuff->tvl2_occ.I0x =  new float[w*h];
+    ofStuff->tvl2_occ.I0y =  new float[w*h];
+    ofStuff->tvl2_occ.I0w =  new float[w*h];
+    ofStuff->tvl2_occ.I0wx =  new float[w*h];
+    ofStuff->tvl2_occ.I0wy =  new float[w*h];
 
-    ofStuff->tvl2.u_N = new float[w*h];
+    ofStuff->tvl2_occ.div_xi1 =  new float[w*h];
+    ofStuff->tvl2_occ.div_xi2 =  new float[w*h];
+    ofStuff->tvl2_occ.u_N =  new float[w*h];
 }
 
 void  free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff){
-    //TODO: remove all variables created above
-    delete [] ofStuff->tvl2.xi11;
-    delete [] ofStuff->tvl2.xi12;
-    delete [] ofStuff->tvl2.xi21;
-    delete [] ofStuff->tvl2.xi22;
-    delete [] ofStuff->tvl2.u1x;
-    delete [] ofStuff->tvl2.u1y;
-    delete [] ofStuff->tvl2.u2x;
-    delete [] ofStuff->tvl2.u2y;
-    delete [] ofStuff->tvl2.v1;
-    delete [] ofStuff->tvl2.v2;
-    delete [] ofStuff->tvl2.rho_c;
-    delete [] ofStuff->tvl2.grad;
-    delete [] ofStuff->tvl2.u1_;
-    delete [] ofStuff->tvl2.u2_;
-    delete [] ofStuff->tvl2.u1Aux;
-    delete [] ofStuff->tvl2.u2Aux;
-    delete [] ofStuff->tvl2.I1x;
-    delete [] ofStuff->tvl2.I1y;
-    delete [] ofStuff->tvl2.I1w;
-    delete [] ofStuff->tvl2.I1wx;
-    delete [] ofStuff->tvl2.I1wy;
-    delete [] ofStuff->tvl2.div_xi1;
-    delete [] ofStuff->tvl2.div_xi2;
-    delete [] ofStuff->tvl2.u_N;
+
+    delete [] ofStuff->tvl2_occ.chi;
+    delete [] ofStuff->tvl2_occ.chix;
+    delete [] ofStuff->tvl2_occ.chiy;
+    delete [] ofStuff->tvl2_occ.g;
+    delete [] ofStuff->tvl2_occ.xi11;
+    delete [] ofStuff->tvl2_occ.xi12;
+    delete [] ofStuff->tvl2_occ.xi21;
+    delete [] ofStuff->tvl2_occ.xi22;
+    delete [] ofStuff->tvl2_occ.u1x;
+    delete [] ofStuff->tvl2_occ.u1y;
+    delete [] ofStuff->tvl2_occ.u2x;
+    delete [] ofStuff->tvl2_occ.u2y;
+    delete [] ofStuff->tvl2_occ.v1;
+    delete [] ofStuff->tvl2_occ.v2;
+    delete [] ofStuff->tvl2_occ.rho_c1;
+    delete [] ofStuff->tvl2_occ.rho_c2;
+    delete [] ofStuff->tvl2_occ.grad;
+    delete [] ofStuff->tvl2_occ.u1Aux;
+    delete [] ofStuff->tvl2_occ.u2Aux;
+    delete [] ofStuff->tvl2_occ.I2x;
+    delete [] ofStuff->tvl2_occ.I2y;
+    delete [] ofStuff->tvl2_occ.I2w;
+    delete [] ofStuff->tvl2_occ.I2wx;
+    delete [] ofStuff->tvl2_occ.I2wy;
+    delete [] ofStuff->tvl2_occ.I0x;
+    delete [] ofStuff->tvl2_occ.I0y;
+    delete [] ofStuff->tvl2_occ.I0w;
+    delete [] ofStuff->tvl2_occ.I0wx;
+    delete [] ofStuff->tvl2_occ.I0wy;
+    delete [] ofStuff->tvl2_occ.div_xi1;
+    delete [] ofStuff->tvl2_occ.div_xi2;
+    delete [] ofStuff->tvl2_occ.u_N;
 }
 
 //////////////////////////////////////////////////////////////
@@ -184,7 +201,7 @@ void eval_tvl2coupled_occ(
         float *I0,           // source image
         float *I1,           // target image
         OpticalFlowData *ofD,
-        Tvl2CoupledOFStuff *tvl2,
+        Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
         const int ii, // initial column
         const int ij, // initial row
@@ -203,14 +220,14 @@ void eval_tvl2coupled_occ(
     const int ny = ofD->h;
 
     //Optical flow derivatives
-    float *v1   = tvl2->v1;
-    float *v2   = tvl2->v2;
-    float *u1x  = tvl2->u1x;
-    float *u1y  = tvl2->u1y;
-    float *u2x  = tvl2->u2x;
-    float *u2y  = tvl2->u2y;
+    float *v1   = tvl2_occ->v1;
+    float *v2   = tvl2_occ->v2;
+    float *u1x  = tvl2_occ->u1x;
+    float *u1y  = tvl2_occ->u1y;
+    float *u2x  = tvl2_occ->u2x;
+    float *u2y  = tvl2_occ->u2y;
 
-    float *I1w = tvl2->I1w;
+    float *I2w = tvl2_occ->I2w;
 
     float ener = 0.0;
 
@@ -218,7 +235,7 @@ void eval_tvl2coupled_occ(
     //forward_gradient_mixed_bound(u2,u2x,u2y,ii,ij,ei,ej,nx,ny);
     forward_gradient_patch(u1, u1x, u1y, ii, ij, ei, ej, nx);
     forward_gradient_patch(u2, u2x, u2y, ii, ij, ei, ej, nx);
-    bicubic_interpolation_warp_patch(I1,  u1, u2, I1w,
+    bicubic_interpolation_warp_patch(I1,  u1, u2, I2w,
                                      ii, ij, ei, ej, nx, ny, false);
 
     //Energy for all the patch. Maybe it useful only the 8 pixel around the seed.
@@ -226,7 +243,7 @@ void eval_tvl2coupled_occ(
     for (int l = ij; l < ej; l++){
         for (int k = ii; k < ei; k++){
             const int i = l*nx + k;
-            float dt = lambda*fabs(I1w[i] - I0[i]);
+            float dt = lambda*fabs(I2w[i] - I0[i]);
             float dc = (1/(2*theta))*
                     ((u1[i] - v1[i])*(u1[i]- v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
             float g1  = u1x[i]*u1x[i];
@@ -254,10 +271,11 @@ void eval_tvl2coupled_occ(
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled_occ(
-        float *I0,           // source image
-        float *I1,           // target image
+        float *I1,           // source image
+        float *I2,           // target image
+        float *I0,
         OpticalFlowData *ofD,
-        Tvl2CoupledOFStuff *tvl2,
+        Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
         const int ii, // initial column
         const int ij, // initial row
@@ -269,87 +287,102 @@ void guided_tvl2coupled_occ(
         const float tol_OF,  // tol max allowed
         const int   warps,   // number of warpings per scale
         const bool  verbose  // enable/disable the verbose mode
-        )
-{
+        ) {
 
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
+    float *u1_ba = ofD->u1_ba;
+    float *u2_ba = ofD->u2_ba;
     int *mask = ofD->fixed_points;
 
     //Columns and Rows
     const int nx = ofD->w;
     const int ny = ofD->h;
 
+    //Occlusion variable
+    float *chi = tvl2_occ->chi;
+    float *chix = tvl2_occ->chix;
+    float *chiy = tvl2_occ->chiy;
 
-    float *u1_  = tvl2->u1_;
-    float *u2_  = tvl2->u2_;
-    float *u_N  = tvl2->u_N;
-
-    //Optical flow derivatives
-    float *u1x  = tvl2->u1x;
-    float *u1y  = tvl2->u1y;
-    float *u2x  = tvl2->u2x;
-    float *u2y  = tvl2->u2y;
+    //Weigth
+    float *g = tvl2_occ->g;
 
     //Dual variables
-    float *xi11 = tvl2->xi11;
-    float *xi12 = tvl2->xi12;
-    float *xi21 = tvl2->xi21;
-    float *xi22 = tvl2->xi22;
+    float *xi11 = tvl2_occ->xi11;
+    float *xi12 = tvl2_occ->xi12;
+    float *xi21 = tvl2_occ->xi21;
+    float *xi22 = tvl2_occ->xi22;
 
-    float *v1 = tvl2->v1;
-    float *v2 = tvl2->v2;
+    //Derivatives of u1,u2
+    float *u1x = tvl2_occ->u1x;
+    float *u1y = tvl2_occ->u1y;
+    float *u2x = tvl2_occ->u2x;
+    float *u2y = tvl2_occ->u2y;
 
-    float *rho_c = tvl2->rho_c;
-    float *grad  = tvl2->grad;
+    float *v1 = tvl2_occ->v1;
+    float *v2 = tvl2_occ->v2;
 
-    float *u1Aux = tvl2->u1Aux;
-    float *u2Aux = tvl2->u2Aux;
+    float *rho_c1 = tvl2_occ->rho_c1;
+    float *rho_c2 = tvl2_occ->rho_c2;
+    float *grad = tvl2_occ->grad;
 
-    float *I1x = tvl2->I1x;
-    float *I1y = tvl2->I1y;
+    float *u1Aux = tvl2_occ->u1Aux;
+    float *u2Aux = tvl2_occ->u2Aux;
 
-    float *I1w = tvl2->I1w;
-    float *I1wx = tvl2->I1wx;
-    float *I1wy = tvl2->I1wy;
+    float *I2x = tvl2_occ->I2x;
+    float *I2y = tvl2_occ->I2y;
+    float *I2w = tvl2_occ->I2w;
+    float *I2wx = tvl2_occ->I2wx;
+    float *I2wy = tvl2_occ->I2wy;
 
-    //Divergence
-    float *div_xi1 = tvl2->div_xi1;
-    float *div_xi2 = tvl2->div_xi2;
+    float *I0x = tvl2_occ->I0x;
+    float *I0y = tvl2_occ->I0y;
+    float *I0w = tvl2_occ->I0w;
+    float *I0wx = tvl2_occ->I0wx;
+    float *I0wy = tvl2_occ->I0wy;
+
+    float *div_xi1 = tvl2_occ->div_xi1;
+    float *div_xi2 = tvl2_occ->div_xi2;
+    float *u_N = tvl2_occ->u_N;
 
     const float l_t = lambda * theta;
 
+    //Initialization of dual variables and backward flow
     for (int l = ij; l < ej; l++){
         for (int k = ii; k < ei; k++){
-            const int  i = l*nx + k;
-            //Inizialization dual variables
+            const int  i = l*nx + k;            
             xi11[i] = xi12[i] = xi21[i] = xi22[i] = 0.0;
+
+            u1_ba[i] = -u1[i];
+            u2_ba[i] = -u2[i];
         }
     }
 
-    for (int warpings = 0; warpings < warps; warpings++)
-    {
-        // compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
-        bicubic_interpolation_warp_patch(I1,  u1, u2, I1w,
-                                         ii, ij, ei, ej, nx, ny, false);
-        bicubic_interpolation_warp_patch(I1x, u1, u2, I1wx,
-                                         ii, ij, ei, ej, nx, ny, false);
-        bicubic_interpolation_warp_patch(I1y, u1, u2, I1wy,
-                                         ii, ij, ei, ej, nx, ny, false);
+    for (int warpings = 0; warpings < warps; warpings++) {
+        // Compute the warping of I2 and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
+        bicubic_interpolation_warp_patch(I2,  u1, u2, I2w, ii, ij, ei, ej, nx, ny, false);
+        bicubic_interpolation_warp_patch(I2x, u1, u2, I2wx, ii, ij, ei, ej, nx, ny, false);
+        bicubic_interpolation_warp_patch(I2y, u1, u2, I2wy, ii, ij, ei, ej, nx, ny, false);
 
+        // Compute the warping of I0 and its derivatives Ir(x - u1o), Irx (x - u1o) and Iry (x - u2o)
+        bicubic_interpolation_warp_patch(I0,  u1_ba, u2_ba, I0w, ii, ij, ei, ej, nx, ny, false);
+        bicubic_interpolation_warp_patch(I0x, u1_ba, u2_ba, I0wx, ii, ij, ei, ej, nx, ny, false);
+        bicubic_interpolation_warp_patch(I0y, u1_ba, u2_ba, I0wy, ii, ij, ei, ej, nx, ny, false);
+//////Continue here/////
         //Compute values that will not change during the whole wraping
 #pragma omp parallel for schedule(dynamic,1) collapse(2)
         for (int l = ij; l < ej; l++)
             for (int k = ii; k < ei; k++){
 
                 const int i = l*nx + k;
+
                 const float Ix2 = I1wx[i] * I1wx[i];
                 const float Iy2 = I1wy[i] * I1wy[i];
 
-                // store the |Grad(I1)|^2
+                // store the |Grad(I2)|^2
                 grad[i] = (Ix2 + Iy2);
 
-                // compute the constant part of the rho function
+                // Compute the constant part of the rho function
                 rho_c[i] = (I1w[i] - I1wx[i] * u1[i]
                             - I1wy[i] * u2[i] - I0[i]);
             }
@@ -440,10 +473,10 @@ void guided_tvl2coupled_occ(
 
         }
         if (verbose)
-            std::printf("Warping: %d,Iter: %d "
-                        "Error: %f\n", warpings,n, err_D);
+            std::printf("Warping: %d, Iter: %d "
+                        "Error: %f\n", warpings, n, err_D);
     }
-    eval_tvl2coupled_occ(I0, I1, ofD, tvl2, ener_N, ii, ij, ei, ej, lambda, theta);
+    eval_tvl2coupled_occ(I1, I2, ofD, tvl2_occ, ener_N, ii, ij, ei, ej, lambda, theta);
 }
 
 #endif //TVL2-L1 functional
