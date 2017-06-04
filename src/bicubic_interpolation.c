@@ -119,8 +119,7 @@ static float bicubic_interpolation_cell (
 	float p[4][4], //array containing the interpolation points
 	float x,       //x position to be interpolated
 	float y        //y position to be interpolated
-)
-{
+) {
 	float v[4];
 	v[0] = cubic_interpolation_cell(p[0], y);
 	v[1] = cubic_interpolation_cell(p[1], y);
@@ -142,8 +141,7 @@ float bicubic_interpolation_at(
 	const int    nx,    //image width
 	const int    ny,    //image height
 	bool         border_out //if true, return zero outside the region
-)
-{
+) {
 	const int sx = (uu < 0)? -1: 1;
 	const int sy = (vv < 0)? -1: 1;
 
@@ -247,8 +245,7 @@ void bicubic_interpolation_warp(
 	const int    nx,        // image width
 	const int    ny,        // image height
 	bool         border_out // if true, put zeros outside the region
-)
-{
+){
 	#pragma omp parallel for
 	for(int i = 0; i < ny; i++)
 		for(int j = 0; j < nx; j++)
@@ -263,5 +260,37 @@ void bicubic_interpolation_warp(
 		}
 }
 
+/**
+  *
+  * Compute the bicubic interpolation over a patch
+  *
+**/
 
+
+
+void bicubic_interpolation_warp_patch(
+        const float *input,     // image to be warped
+        const float *u,         // x component of the vector field
+        const float *v,         // y component of the vector field
+        float       *output,    // image warped with bicubic interpolation
+        const int    ii,     // initial column
+        const int    ij,     // initial row
+        const int    ei,     // end column
+        const int    ej,     // end row
+        const int    nx,        // image width
+        const int    ny,        // image height
+        bool         border_out // if true, put zeros outside the region
+        ) {
+#pragma omp parallel for schedule(dynamic,1) collapse(2)
+    for(int j = ij; j < ej; j++)
+        for(int i = ii; i < ei; i++){
+            const int   p  = j * nx + i;
+            const float uu = (float) (i + u[p]);
+            const float vv = (float) (j + v[p]);
+
+            // obtain the bicubic interpolation at position (uu, vv)
+            output[p] = bicubic_interpolation_at(input,
+                                                 uu, vv, nx, ny, border_out);
+        }
+}
 #endif//BICUBIC_INTERPOLATION_C

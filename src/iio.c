@@ -2840,8 +2840,7 @@ static int read_image_f(struct iio_image *x, FILE *f)
 	return read_beheaded_image(x, f, buf, nbuf, format);
 }
 
-static int read_image(struct iio_image *x, const char *fname)
-{
+static int read_image(struct iio_image *x, const char *fname){
 	int r; // the return-value of this function
 
 #ifndef IIO_ABORT_ON_ERROR
@@ -2961,8 +2960,7 @@ static void *rfail(const char *fmt, ...)
 //}
 
 // API 2D
-float *iio_read_image_float_vec(const char *fname, int *w, int *h, int *pd)
-{
+float *iio_read_image_float_vec(const char *fname, int *w, int *h, int *pd){
 	struct iio_image x[1];
 	int r = read_image(x, fname);
 	if (r) return rfail("could not read image");
@@ -2977,8 +2975,7 @@ float *iio_read_image_float_vec(const char *fname, int *w, int *h, int *pd)
 }
 
 // API 2D
-float *iio_read_image_float_split(const char *fname, int *w, int *h, int *pd)
-{
+float *iio_read_image_float_split(const char *fname, int *w, int *h, int *pd) {
 	float *r = iio_read_image_float_vec(fname, w, h, pd);
 	if (!r) return rfail("could not read image");
 	float *rbroken = xmalloc(*w**h**pd*sizeof*rbroken);
@@ -3347,8 +3344,7 @@ static bool string_suffix(const char *s, const char *suf)
 // Note:
 // This function was written without being designed.  See file "saving.txt" for
 // an attempt at designing it.
-static void iio_save_image_default(const char *filename, struct iio_image *x)
-{
+static void iio_save_image_default(const char *filename, struct iio_image *x) {
 	int typ = normalize_type(x->type);
 	if (x->dimension != 2) fail("de moment només escrivim 2D");
 	//if (raw_prefix(fname)) {
@@ -3386,8 +3382,8 @@ static void iio_save_image_default(const char *filename, struct iio_image *x)
 		fail("de moment només fem floats o bytes (got %d)",typ);
 	int nsamp = iio_image_number_of_samples(x);
 	if (typ == IIO_TYPE_FLOAT &&
-			these_floats_are_actually_bytes(x->data, nsamp))
-	{
+			these_floats_are_actually_bytes(x->data, nsamp)){
+
 		void *old_data = x->data;
 		x->data = xmalloc(nsamp*sizeof(float));
 		memcpy(x->data, old_data, nsamp*sizeof(float));
@@ -3404,8 +3400,7 @@ static void iio_save_image_default(const char *filename, struct iio_image *x)
 				|| string_suffix(filename, ".tif")
 				|| string_suffix(filename, ".TIFF")
 				|| string_suffix(filename, ".TIF")
-		   )
-		{
+		   ){
 			iio_save_image_as_tiff_smarter(filename, x);
 			return;
 		}
@@ -3467,8 +3462,8 @@ static void iio_save_image_default(const char *filename, struct iio_image *x)
 		if (false
 				|| string_suffix(filename, ".png")
 				|| string_suffix(filename, ".PNG")
-				|| (typ==IIO_TYPE_UINT8&&x->pixel_dimension==4)
-				|| (typ==IIO_TYPE_UINT8&&x->pixel_dimension==2)
+                || (typ == IIO_TYPE_UINT8 && x->pixel_dimension == 4)
+                || (typ == IIO_TYPE_UINT8 && x->pixel_dimension == 2)
 		   )
 		{
 			if (typ == IIO_TYPE_FLOAT) {
@@ -3555,8 +3550,8 @@ static void iio_save_image_default(const char *filename, struct iio_image *x)
 #ifdef I_CAN_HAS_LIBTIFF
 		iio_save_image_as_tiff_smarter(filename, x);
 #else
-		fail("\n\n\nThis particular data format can not yet be saved."
-				"\nPlease, ask enric.\n");
+        fail("\n\n\n This particular data format can not yet be saved."
+                "\n Please, ask enric.\n");
 #endif//I_CAN_HAS_LIBTIFF
 	xfclose(f);
 }
@@ -3623,8 +3618,7 @@ void iio_save_image_double_vec(char *filename, double *data,
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_float(char *filename, float *data, int w, int h)
-{
+void iio_save_image_float(char *filename, float *data, int w, int h){
 	struct iio_image x[1];
 	x->dimension = 2;
 	x->sizes[0] = w;

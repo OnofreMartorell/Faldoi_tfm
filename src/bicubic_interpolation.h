@@ -43,4 +43,17 @@ void bicubic_interpolation_warp(
 	bool         border_out // if true, put zeros outside the region
 );
 
+void bicubic_interpolation_warp_patch(
+        const float *input,     // image to be warped
+        const float *u,         // x component of the vector field
+        const float *v,         // y component of the vector field
+        float       *output,    // image warped with bicubic interpolation
+        const int    ii,     // initial column
+        const int    ij,     // initial row
+        const int    ei,     // end column
+        const int    ej,     // end row
+        const int    nx,        // image width
+        const int    ny,        // image height
+        bool         border_out // if true, put zeros outside the region
+        );
 #endif//BICUBIC_INTERPOLATION_H

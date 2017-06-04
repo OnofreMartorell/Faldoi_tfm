@@ -17,12 +17,14 @@
 
 extern "C" {
 #include "bicubic_interpolation.h"
-#include "mask.h"
+//#include "mask.h"
 }
 
+#include "utils.h"
 #include "energy_structures.h"
 #include "aux_energy_model.h"
 #include "energy_model.h"
+
 //Models
 #include "tvl2_model.h"
 #include "nltv_model.h"
@@ -48,6 +50,8 @@ extern "C" {
 #define PAR_DEFAULT_NWARPS  1  //5
 #define PAR_DEFAULT_TOL_D   0.01
 #define PAR_DEFAULT_VERBOSE 0  //0
+#define PAR_DEFAULT_GAMMA 0.05  //0
+
 
 void rgb_to_gray(float *in, int w, int h, float *out){
     int size = w*h;
@@ -61,6 +65,7 @@ void rgb_to_gray(float *in, int w, int h, float *out){
 }
 
 float pow2( float f ) {return f*f;}
+
 
 //Asume que las imagenes no estan normalizadas
 void rgb_to_lab(float *in, int size, float *out){
@@ -92,112 +97,6 @@ void rgb_to_lab(float *in, int size, float *out){
     }
 }
 
-//Image Normalization///
-/**
- *
- * Compute the max and min of an array
- *
- **/
-static void getminmax(
-        float *min,     // output min
-        float *max,     // output max
-        const float *x, // input array
-        int n           // array size
-        )
-{ 
-    *min = *max = x[0];
-    for (int i = 1; i < n; i++) {
-        if (x[i] < *min)
-            *min = x[i];
-        if (x[i] > *max)
-            *max = x[i];
-    }
-}
-
-/**
- *
- * Function to normalize two images between 0 and 1
- *
- **/
-void image_normalization(
-        const float *I0,  // input image0
-        const float *I1,  // input image1
-        float *I0n,       // normalized output image0
-        float *I1n,       // normalized output image1
-        int size        // size of the image
-        ) {
-    float max0, max1, min0, min1;
-
-    // obtain the max and min of each image
-    getminmax(&min0, &max0, I0, size);
-    getminmax(&min1, &max1, I1, size);
-
-    // obtain the max and min of both images
-    const float max = (max0 > max1)? max0 : max1;
-    const float min = (min0 < min1)? min0 : min1;
-    const float den = max - min;
-
-    if (den > 0)
-        // normalize both images between [0,1]
-        for (int i = 0; i < size; i++){
-            I0n[i] = (I0[i] - min) / den;
-            I1n[i] = (I1[i] - min) / den;
-        }
-
-    else
-        // copy the original images
-        for (int i = 0; i < size; i++){
-            I0n[i] = I0[i];
-            I1n[i] = I1[i];
-        }
-}
-
-
-/**
- *
- * Function to normalize three images between 0 and 1
- *
- **/
-
-void image_normalization_3(
-        const float *I1,  // input image1
-        const float *I2,  // input image2
-        const float *I0,  // input image0
-        float *I1n,       // normalized output image1
-        float *I2n,       // normalized output image2
-        float *I0n,       // normalized output image0
-        int size        // size of the image
-        ) {
-    float max0, max1, max2, min0, min1, min2;
-
-    // Obtain the max and min of each image
-    getminmax(&min0, &max0, I0, size);
-    getminmax(&min1, &max1, I1, size);
-    getminmax(&min2, &max2, I2, size);
-
-    // Obtain the max and min of all images
-    const float max01 = (max0 > max1)? max0 : max1;
-    const float max = (max2 > max01)? max2 : max01;
-    const float min01 = (min0 < min1)? min0 : min1;
-    const float min = (min2 > min01)? min2 : min01;
-    const float den = max - min;
-
-    if (den > 0)
-        // normalize both images between [0, 1]
-        for (int i = 0; i < size; i++){
-            I0n[i] = (I0[i] - min) / den;
-            I1n[i] = (I1[i] - min) / den;
-            I2n[i] = (I2[i] - min) / den;
-        }
-
-    else
-        // copy the original images
-        for (int i = 0; i < size; i++){
-            I0n[i] = I0[i];
-            I1n[i] = I1[i];
-            I2n[i] = I2[i];
-        }
-}
 
 
 ////AUXILIAR FUNCTIONS (NEUMANN BOUNDARY CONDITIONS)///////////////
@@ -278,18 +177,22 @@ void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore)
 }
 
 
-void prepare_stuff(SpecificOFStuff *ofStuff1,
+void prepare_stuff(
+        SpecificOFStuff *ofStuff1,
         OpticalFlowData *ofCore1,
         SpecificOFStuff *ofStuff2,
         OpticalFlowData *ofCore2,
-        float *i1,
-        float *i2,
         float *i0,
+        float *i1,
+        float *i_1,
+        float *i2,
         int pd,
+        float **out_i0,
         float **out_i1,
-        float **out_i2,
-        float **out_i0
+        float **out_i_1,
+        float **out_i2
         ) {
+
     const int method = ofCore1->method;
     const int w = ofCore1->w;
     const int h = ofCore1->h;
@@ -306,8 +209,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         int n_d = NL_DUAL_VAR;
         int radius = NL_BETA;
 
-        rgb_to_lab(i1, w*h, alb);
-        rgb_to_lab(i2, w*h, blb);
+        rgb_to_lab(i0, w*h, alb);
+        rgb_to_lab(i1, w*h, blb);
         // std::printf("W:%d x H:%d\n Neir:%d, radius:%d\n",w,h,n_d,radius);
         nltv_ini_dual_variables(alb, pd, w, h, n_d, radius,
                                 ofStuff1->nltvl1.p, ofStuff1->nltvl1.q);
@@ -315,12 +218,12 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                                 ofStuff2->nltvl1.p, ofStuff2->nltvl1.q);
         if (pd !=1 ){
 
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
 
         }else{
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -331,8 +234,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         centered_gradient(a_tmp, ofStuff2->nltvl1.I1x, ofStuff2->nltvl1.I1y,
                           ofCore2->w, ofCore2->h);
 
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
         delete [] alb;
         delete [] blb;
@@ -351,13 +254,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         if (pd!=1)
         {
             // std::printf("Numero canales:%d\n",pd);
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -367,8 +270,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                           ofCore1->w, ofCore1->h);
         centered_gradient(a_tmp, ofStuff2->tvcsad.I1x, ofStuff2->tvcsad.I1y,
                           ofCore2->w, ofCore2->h);
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
     }
         break;
@@ -388,8 +291,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff1->nltvcsad.pnei);
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff2->nltvcsad.pnei);
 
-        rgb_to_lab(i1, w*h, alb);
-        rgb_to_lab(i2, w*h, blb);
+        rgb_to_lab(i0, w*h, alb);
+        rgb_to_lab(i1, w*h, blb);
         // std::printf("W:%d x H:%d\n Neir:%d, radius:%d\n",w,h,n_d,radius);
         nltv_ini_dual_variables(alb, pd, w, h, n_d, radius,
                                 ofStuff1->nltvcsad.p, ofStuff1->nltvcsad.q);
@@ -398,13 +301,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         std::printf("Preparado NLTV\n");
         if (pd!=1)
         {
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i1, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i0, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -415,8 +318,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         centered_gradient(a_tmp, ofStuff2->nltvcsad.I1x, ofStuff2->nltvcsad.I1y,
                           ofCore2->w, ofCore2->h);
 
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
         delete [] alb;
         delete [] blb;
@@ -439,13 +342,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         if (pd!=1)
         {
             // std::printf("Numero canales:%d\n",pd);
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -455,8 +358,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                           ofCore1->w, ofCore1->h);
         centered_gradient(a_tmp, ofStuff2->tvl2w.I1x, ofStuff2->tvl2w.I1y,
                           ofCore2->w, ofCore2->h);
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
     }
         break;
@@ -482,7 +385,7 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff1->nltvcsadw.pnei);
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff2->nltvcsadw.pnei);
 
-        rgb_to_lab(i1, w*h, alb);
+        rgb_to_lab(i0, w*h, alb);
         rgb_to_lab(i1, w*h, blb);
         // std::printf("W:%d x H:%d\n Neir:%d, radius:%d\n",w,h,n_d,radius);
         nltv_ini_dual_variables(alb, pd, w, h, n_d, radius,
@@ -492,13 +395,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         std::printf("Preparado NLTV\n");
         if (pd!=1)
         {
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -509,8 +412,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         centered_gradient(a_tmp, ofStuff2->nltvcsadw.I1x, ofStuff2->nltvcsadw.I1y,
                           ofCore2->w, ofCore2->h);
 
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
         delete [] alb;
         delete [] blb;
@@ -534,8 +437,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         int n_d = NL_DUAL_VAR;
         int radius = NL_BETA;
 
-        rgb_to_lab(i1, w*h, alb);
-        rgb_to_lab(i2, w*h, blb);
+        rgb_to_lab(i0, w*h, alb);
+        rgb_to_lab(i1, w*h, blb);
         // std::printf("W:%d x H:%d\n Neir:%d, radius:%d\n",w,h,n_d,radius);
         nltv_ini_dual_variables(alb, pd, w, h, n_d, radius,
                                 ofStuff1->nltvl1w.p, ofStuff1->nltvl1w.q);
@@ -543,13 +446,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                                 ofStuff2->nltvl1w.p, ofStuff2->nltvl1w.q);
         if (pd!=1)
         {
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -560,8 +463,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         centered_gradient(a_tmp, ofStuff2->nltvl1w.I1x, ofStuff2->nltvl1w.I1y,
                           ofCore2->w, ofCore2->h);
 
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
         delete [] alb;
         delete [] blb;
@@ -583,13 +486,13 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff2->tvcsadw.pnei);
         if (pd != 1) {
             // std::printf("Numero canales:%d\n",pd);
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }
         else
         {
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
         // normalize the images between 0 and 255
         image_normalization(a_tmp, b_tmp, a_tmp, b_tmp, w*h);
@@ -599,8 +502,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                           ofCore1->w, ofCore1->h);
         centered_gradient(a_tmp, ofStuff2->tvcsadw.I1x, ofStuff2->tvcsadw.I1y,
                           ofCore2->w, ofCore2->h);
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
     }
         break;
@@ -609,36 +512,49 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         float *i1_tmp = new float[w*h];
         float *i2_tmp = new float[w*h];
         float *i0_tmp = new float[w*h];
+        float *i_1_tmp = new float[w*h];
 
         //Check if image is gray, otherwise transform
         if (pd != 1){
-            rgb_to_gray(i1, w, h, i1_tmp);
-            rgb_to_gray(i2, w, h, i2_tmp);
             rgb_to_gray(i0, w, h, i0_tmp);
+            rgb_to_gray(i1, w, h, i1_tmp);
+            rgb_to_gray(i_1, w, h, i_1_tmp);
+            rgb_to_gray(i2, w, h, i2_tmp);
+
         }else{
-            memcpy(i1_tmp, i1, w*h*sizeof(float));
-            memcpy(i2_tmp, i2, w*h*sizeof(float));
             memcpy(i0_tmp, i0, w*h*sizeof(float));
+            memcpy(i1_tmp, i1, w*h*sizeof(float));
+            memcpy(i_1_tmp, i_1, w*h*sizeof(float));
+            memcpy(i2_tmp, i2, w*h*sizeof(float));
         }
 
         // Normalize the images between 0 and 255
-        image_normalization_3(i1_tmp, i2_tmp, i0_tmp, i1_tmp, i2_tmp, i0_tmp, w*h);
+        image_normalization_4(i0_tmp, i1_tmp, i_1_tmp, i2_tmp, i0_tmp, i1_tmp, i_1_tmp, i2_tmp, w*h);
 
+        //Make a little smoth of images
         gaussian(i1_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(i2_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(i0_tmp, w, h, PRESMOOTHING_SIGMA);
+        gaussian(i_1_tmp, w, h, PRESMOOTHING_SIGMA);
 
         //TODO: change the computation of derivatives
-        centered_gradient(i1_tmp, ofStuff1->tvl2.I1x, ofStuff1->tvl2.I1y,
-                          w, h);
-        centered_gradient(i0_tmp, ofStuff2->tvl2.I1x, ofStuff2->tvl2.I1y,
-                          w, h);
+        centered_gradient(i1_tmp, ofStuff1->tvl2_occ.I1x, ofStuff1->tvl2_occ.I1y, w, h);
+        centered_gradient(i_1_tmp, ofStuff1->tvl2_occ.I_1x, ofStuff1->tvl2_occ.I_1y, w, h);
+
+        centered_gradient(i0_tmp, ofStuff2->tvl2_occ.I1x, ofStuff2->tvl2_occ.I1y, w, h);
+        centered_gradient(i2_tmp, ofStuff2->tvl2_occ.I_1x, ofStuff2->tvl2_occ.I_1y, w, h);
+
+        // Initialize g (weight)
+        // The derivatives are taken from previous computation. Forward: I0, backward: I1
+        init_weight(ofStuff1->tvl2_occ.g, ofStuff2->tvl2_occ.I1x, ofStuff2->tvl2_occ.I1y, w*h);
+        init_weight(ofStuff2->tvl2_occ.g, ofStuff1->tvl2_occ.I1x, ofStuff1->tvl2_occ.I1y, w*h);
 
         //The following variables contain a gray and smooth version
         //of the corresponding image
         *out_i1 = i1_tmp;
         *out_i2 = i2_tmp;
         *out_i0 = i0_tmp;
+        *out_i_1 = i_1_tmp;
     }
         break;
     default: //TV-l2 coupled
@@ -648,11 +564,11 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
         //Check if image is gray, otherwise transform
         if (pd != 1){
             // std::printf("Numero canales:%d\n",pd);
-            rgb_to_gray(i1, w, h, a_tmp);
-            rgb_to_gray(i2, w, h, b_tmp);
+            rgb_to_gray(i0, w, h, a_tmp);
+            rgb_to_gray(i1, w, h, b_tmp);
         }else{
-            memcpy(a_tmp, i1, w*h*sizeof(float));
-            memcpy(b_tmp, i2, w*h*sizeof(float));
+            memcpy(a_tmp, i0, w*h*sizeof(float));
+            memcpy(b_tmp, i1, w*h*sizeof(float));
         }
 
         // Normalize the images between 0 and 255
@@ -663,8 +579,8 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                           ofCore1->w, ofCore1->h);
         centered_gradient(a_tmp, ofStuff2->tvl2.I1x, ofStuff2->tvl2.I1y,
                           ofCore2->w, ofCore2->h);
-        *out_i1 = a_tmp;
-        *out_i2 = b_tmp;
+        *out_i0 = a_tmp;
+        *out_i1 = b_tmp;
 
     }
     }
@@ -675,9 +591,9 @@ void of_estimation(
         SpecificOFStuff *ofStuff,
         OpticalFlowData *ofCore,
         float *ener_N,
-        float *i1,  //first frame
-        float *i2,  //second frame
-        float *i0,
+        float *i0,  //first frame
+        float *i1,  //second frame
+        float *i_1,
         const int ii, // initial column
         const int ij, // initial row
         const int ei, // end column
@@ -699,7 +615,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvl1(i1, i2, ofCore, &(ofStuff->nltvl1), ener_N, ii, ij, ei, ej,
+        guided_nltvl1(i0, i1, ofCore, &(ofStuff->nltvl1), ener_N, ii, ij, ei, ej,
                       lambda, theta, tau, tol_OF, warps, verbose);
 
     }
@@ -710,7 +626,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_tvcsad(i1, i2, ofCore, &(ofStuff->tvcsad), ener_N, ii, ij, ei, ej,
+        guided_tvcsad(i0, i1, ofCore, &(ofStuff->tvcsad), ener_N, ii, ij, ei, ej,
                       lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -720,7 +636,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvcsad(i1, i2, ofCore, &(ofStuff->nltvcsad), ener_N, ii, ij, ei, ej,
+        guided_nltvcsad(i0, i1, ofCore, &(ofStuff->nltvcsad), ener_N, ii, ij, ei, ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -728,7 +644,7 @@ void of_estimation(
     {
         const float central = ofStuff->tvl2w.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        guided_tvl2coupled_w(i1, i2, ofCore, &(ofStuff->tvl2w), ener_N, ii, ij, ei, ej,
+        guided_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N, ii, ij, ei, ej,
                              lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -740,7 +656,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvcsad_w(i1, i2, ofCore, &(ofStuff->nltvcsadw), ener_N, ii, ij, ei, ej,
+        guided_nltvcsad_w(i0, i1, ofCore, &(ofStuff->nltvcsadw), ener_N, ii, ij, ei, ej,
                           lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -753,7 +669,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvl1_w(i1, i2, ofCore, &(ofStuff->nltvl1w), ener_N, ii, ij, ei, ej,
+        guided_nltvl1_w(i0, i1, ofCore, &(ofStuff->nltvl1w), ener_N, ii, ij, ei, ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
 
     }
@@ -766,17 +682,29 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_tvcsad_w(i1, i2, ofCore, &(ofStuff->tvcsadw), ener_N, ii, ij, ei, ej,
+        guided_tvcsad_w(i0, i1, ofCore, &(ofStuff->tvcsadw), ener_N, ii, ij, ei, ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
     case M_TVL1_OCC:
+    {
+        lambda = 0.25;
+        theta = 0.3;
+        const float beta = 1;
+        const float alpha = 0.01;
+        const float tau_u = 0.125;
+        const float tau_eta = 0.125;
+        const float tau_chi = 0.125;
         //estimate_tvl2 with occlusions
-        guided_tvl2coupled_occ(i1, i2, i0, ofCore, &(ofStuff->tvl2_occ), ener_N, ii, ij, ei, ej,
-                           lambda, theta, tau, tol_OF, warps, verbose);
+        guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, ii, ij, ei, ej,
+                           lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_OF, warps, verbose);
+
+
+    }
+        break;
     default: //TV-l2 coupled
         //estimate_tvl2
-        guided_tvl2coupled(i1, i2, ofCore, &(ofStuff->tvl2), ener_N, ii, ij, ei, ej,
+        guided_tvl2coupled(i0, i1, ofCore, &(ofStuff->tvl2), ener_N, ii, ij, ei, ej,
                            lambda, theta, tau, tol_OF, warps, verbose);
     }
 }

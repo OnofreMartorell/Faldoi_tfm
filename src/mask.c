@@ -5,6 +5,7 @@
 //
 // Copyright (C) 2011, Javier Sánchez Pérez <jsanchez@dis.ulpgc.es>
 // All rights reserved.
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -41,14 +42,11 @@ void divergence(
         float *div,      // output divergence
         const int nx,    // image width
         const int ny     // image height
-        )
-{
+        ) {
     // compute the divergence on the central body of the image
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 1; i < ny-1; i++)
-    {
-        for(int j = 1; j < nx-1; j++)
-        {
+    for (int i = 1; i < ny-1; i++) {
+        for(int j = 1; j < nx-1; j++){
             const int p  = i * nx + j;
             const int p1 = p - 1;
             const int p2 = p - nx;
@@ -61,8 +59,7 @@ void divergence(
     }
 
     // compute the divergence on the first and last rows
-    for (int j = 1; j < nx-1; j++)
-    {
+    for (int j = 1; j < nx-1; j++){
         const int p = (ny-1) * nx + j;
 
         div[j] = v1[j] - v1[j-1] + v2[j];
@@ -70,8 +67,7 @@ void divergence(
     }
 
     // compute the divergence on the first and last columns
-    for (int i = 1; i < ny-1; i++)
-    {
+    for (int i = 1; i < ny-1; i++){
         const int p1 = i * nx;
         const int p2 = (i+1) * nx - 1;
 
@@ -99,14 +95,11 @@ void forward_gradient(
         float *fy,      //computed y derivative
         const int nx,   //image width
         const int ny    //image height
-        )
-{
+        ){
     // compute the gradient on the central body of the image
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 0; i < ny-1; i++)
-    {
-        for(int j = 0; j < nx-1; j++)
-        {
+    for (int i = 0; i < ny-1; i++){
+        for(int j = 0; j < nx-1; j++){
             const int p  = i * nx + j;
             const int p1 = p + 1;
             const int p2 = p + nx;
@@ -117,8 +110,7 @@ void forward_gradient(
     }
 
     // compute the gradient on the last row
-    for (int j = 0; j < nx-1; j++)
-    {
+    for (int j = 0; j < nx-1; j++){
         const int p = (ny-1) * nx + j;
 
         fx[p] = f[p+1] - f[p];
@@ -126,8 +118,7 @@ void forward_gradient(
     }
 
     // compute the gradient on the last column
-    for (int i = 1; i < ny; i++)
-    {
+    for (int i = 1; i < ny; i++){
         const int p = i * nx-1;
 
         fx[p] = 0;
@@ -150,14 +141,11 @@ void backward_gradient(
         float *fy,      //computed y derivative
         const int nx,   //image width
         const int ny    //image height
-        )
-{
+        ){
     // compute the gradient on the central body of the image
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 1; i < ny; i++)
-    {
-        for(int j = 1; j < nx; j++)
-        {
+    for (int i = 1; i < ny; i++){
+        for(int j = 1; j < nx; j++){
             const int p  = i * nx + j;
             const int p1 = p - 1;
             const int p2 = p - nx;
@@ -168,8 +156,7 @@ void backward_gradient(
     }
 
     // compute the gradient on the first row
-    for (int j = 1; j < nx; j++)
-    {
+    for (int j = 1; j < nx; j++){
         const int p = j;
 
         fx[p] = f[p] - f[p-1];
@@ -177,8 +164,7 @@ void backward_gradient(
     }
 
     // compute the gradient on the first column
-    for (int i = 1; i < ny; i++)
-    {
+    for (int i = 1; i < ny; i++){
         const int p = i * nx;
 
         fx[p] = 0;
@@ -264,8 +250,7 @@ void gaussian(
         const int xdim,       // image width
         const int ydim,       // image height
         const float sigma    // Gaussian sigma
-        )
-{
+        ){
     const int boundary_condition = DEFAULT_BOUNDARY_CONDITION;
     const int window_size = DEFAULT_GAUSSIAN_WINDOW_SIZE;
 
@@ -296,14 +281,12 @@ void gaussian(
     // convolution of each line of the input image
     float *R = xmalloc((size + xdim + size)*sizeof*R);
 
-    for (int k = 0; k < ydim; k++)
-    {
+    for (int k = 0; k < ydim; k++){
         int i, j;
         for (i = size; i < bdx; i++)
             R[i] = I[k * xdim + i - size];
 
-        switch (boundary_condition)
-        {
+        switch (boundary_condition){
         case BOUNDARY_CONDITION_DIRICHLET:
             for(i = 0, j = bdx; i < size; i++, j++)
                 R[i] = R[j] = 0;
@@ -324,8 +307,7 @@ void gaussian(
             break;
         }
 
-        for (i = size; i < bdx; i++)
-        {
+        for (i = size; i < bdx; i++){
             float sum = B[0] * R[i];
             for (j = 1; j < size; j++ )
                 sum += B[j] * ( R[i-j] + R[i+j] );
@@ -336,14 +318,12 @@ void gaussian(
     // convolution of each column of the input image
     float *T = xmalloc((size + ydim + size)*sizeof*T);
 
-    for (int k = 0; k < xdim; k++)
-    {
+    for (int k = 0; k < xdim; k++){
         int i, j;
         for (i = size; i < bdy; i++)
             T[i] = I[(i - size) * xdim + k];
 
-        switch (boundary_condition)
-        {
+        switch (boundary_condition){
         case BOUNDARY_CONDITION_DIRICHLET:
             for (i = 0, j = bdy; i < size; i++, j++)
                 T[i] = T[j] = 0;
@@ -364,8 +344,7 @@ void gaussian(
             break;
         }
 
-        for (i = size; i < bdy; i++)
-        {
+        for (i = size; i < bdy; i++){
             float sum = B[0] * T[i];
             for (j = 1; j < size; j++ )
                 sum += B[j] * (T[i-j] + T[i+j]);
@@ -381,8 +360,7 @@ void gaussian(
 void gaussian1Dweight(
         float *I,             // input/output image
         const int r       // image width
-        )
-{
+        ){
     const float sigma = r*0.3333;
 
     const float den  = 2*sigma*sigma;
@@ -409,14 +387,12 @@ void five_point_gradient(
         float *dy,           //computed y derivative
         const int nx,        //image width
         const int ny         //image height
-        )
-{
+        ){
 
 
     // compute the gradient on the center body of the image
 #pragma omp parallel for schedule(dynamic)
-    for (int i = 2; i < ny-2; i++)
-    {
+    for (int i = 2; i < ny-2; i++){
         for(int j = 2; j < nx-2; j++)
         {
             const int k = i * nx + j;
@@ -427,8 +403,7 @@ void five_point_gradient(
 
 
     //Centered gradient for the second column an the penultimate column
-    for (int j = 1; j < ny-1; j++)
-    {
+    for (int j = 1; j < ny-1; j++){
         dx[j*nx + 1] = 0.5*(input[j*nx + 2] - input[j*nx -1]);
         dy[j*nx + 1] = 0.5*(input[j*nx + nx +1] - input[j*nx - nx +1]);
 
@@ -439,8 +414,7 @@ void five_point_gradient(
     }
 
     //Centered gradient for the second row an the penultimate row
-    for (int j = 1; j < ny-1; j++)
-    {
+    for (int j = 1; j < ny-1; j++){
         dx[nx + j] = 0.5*(input[nx + j + 1] - input[nx + j -1]);
         dy[nx + j] = 0.5*(input[2*nx + j] - input[j]);
 
@@ -451,8 +425,7 @@ void five_point_gradient(
     }
 
     // compute the gradient on the first and last rows
-    for (int j = 1; j < nx-1; j++)
-    {
+    for (int j = 1; j < nx-1; j++){
         dx[j] = 0.5*(input[j+1] - input[j-1]);
         dy[j] = 0.5*(input[j+nx] - input[j]);
 
@@ -463,8 +436,7 @@ void five_point_gradient(
     }
 
     // compute the gradient on the first and last columns
-    for(int i = 1; i < ny-1; i++)
-    {
+    for(int i = 1; i < ny-1; i++){
         const int p = i * nx;
         dx[p] = 0.5*(input[p+1] - input[p]);
         dy[p] = 0.5*(input[p+nx] - input[p-nx]);

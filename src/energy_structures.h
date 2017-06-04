@@ -27,16 +27,14 @@
 #define DT_NEI (2*DT_R + 1)*(2*DT_R + 1) -1 // 7x7
 
 
-struct BilateralWeight
-{
+struct BilateralWeight{
     float wp[NL_DUAL_VAR]; // weight of non local
     int   apj[NL_DUAL_VAR]; //absolute positon of p(y,x) (row)
     int   api[NL_DUAL_VAR]; //absolute position of p(y,x) (colum)
     float wt = 0.0;
 };
 
-struct OpticalFlowData
-{
+struct OpticalFlowData{
     /* data */
     //TODO: This should be outside of this structure
     float *u1;
@@ -56,8 +54,7 @@ struct OpticalFlowData
 };
 
 
-struct DualVariables
-{
+struct DualVariables{
     float sc[NL_DUAL_VAR]; // value of p(x,y)
     float wp[NL_DUAL_VAR]; // weight of non local
     int   apj[NL_DUAL_VAR]; //absolute positon of p(y,x) (row)
@@ -68,8 +65,7 @@ struct DualVariables
 
 
 //Struct
-struct PosNei
-{
+struct PosNei{
     int   api[DT_NEI]; //absolute positon of Intensity (row)
     int   apj[DT_NEI]; //absolute position of intensity (colum)
     float b[DT_NEI];
@@ -78,8 +74,7 @@ struct PosNei
 };
 
 ////Specific struct for the different functionals
-struct  Tvl2CoupledOFStuff
-{
+struct  Tvl2CoupledOFStuff{
     //Dual variables
     float *xi11;
     float *xi12;
@@ -379,38 +374,58 @@ struct  Tvl2CoupledOFStuff_occ
     float *xi21;
     float *xi22;
 
-    //Derivatives of u1, u2
     float *u1x;
     float *u1y;
     float *u2x;
     float *u2y;
+    //Dual variables for chi
+    float *eta1;
+    float *eta2;
+
 
     float *v1;
     float *v2;
 
     float *rho_c1;
-    float *rho_c2;
-    float *grad;
-    float *grad_ba;
+    float *rho_c_1;
+    float *grad_1;
+    float *grad__1;
 
-    float *u1Aux;
-    float *u2Aux;
 
-    float *I2x;
-    float *I2y;
-    float *I2w;
-    float *I2wx;
-    float *I2wy;
+    float *I1x;
+    float *I1y;
+    float *I1w;
+    float *I1wx;
+    float *I1wy;
 
-    float *I0x;
-    float *I0y;
-    float *I0w;
-    float *I0wx;
-    float *I0wy;
+    float *I_1x;
+    float *I_1y;
+    float *I_1w;
+    float *I_1wx;
+    float *I_1wy;
 
-    float *div_xi1;
-    float *div_xi2;
-    float *u_N;
+
+    float *vi_div1;
+    float *grad_x1;
+    float *grad_y1;
+    float *vi_div2;
+    float *grad_x2;
+    float *grad_y2;
+    float *g_xi11;
+    float *g_xi12;
+    float *g_xi21;
+    float *g_xi22;
+    float *div_g_xi1;
+    float *div_g_xi2;
+
+
+    float *F;
+    float *G;
+
+    float *div_u;
+    float *g_eta1;
+    float *g_eta2;
+    float *div_g_eta;
 };
 
 

@@ -24,7 +24,7 @@
 
 extern "C" {
 #include "iio.h"
-#include "mask.h"
+//#include "mask.h"
 #include "bicubic_interpolation.h"
 #include "elap_recsep.h"
 }
@@ -43,11 +43,12 @@ using namespace std;
 #define TU_TOL 0.01
 #define FB_TOL 2
 
+#define MAX_PATCH 50
+
 #define MAX(x,y) ((x)>(y)?(x):(y))
 
 //Struct
-struct SparseOF
-{
+struct SparseOF {
     int i; // column
     int j; // row
     float u; //x- optical flow component
@@ -92,7 +93,7 @@ static void delete_random(
             n++;
         }
     }
-    std::printf("Too-Chosen:%f\n",(n*1.0)/size);
+    std::printf("Too-Chosen:%f\n", (n*1.0)/size);
 }
 
 static void rand_local_patch_ini(
@@ -231,15 +232,13 @@ void pruning_method(
         float *go, //of to t, t+1
         int *trust_Ba, //energy map of v
         float *ba //of to t+1, t
-        )
-{
+        ) {
     int *go_fb_check   = new int[w*h];
     int *go_cons_check = new int[w*h];
     int *ba_fb_check   = new int[w*h];
     int *ba_cons_check = new int[w*h];
 
-    for (int i = 0; i < w*h; i++)
-    {
+    for (int i = 0; i < w*h; i++){
         //0 - Invalid pixel 1 - Trustable pixel.
         trust_Go[i] = 1;
         trust_Ba[i] = 1;
@@ -248,13 +247,13 @@ void pruning_method(
 
     //FB - consistency check
     if (method[0] == 1) {
-        std::printf("FB-Consistency:%f\n", tol[0]);
+        std::printf("FB-Consistency: %f\n", tol[0]);
         fb_consistency_check(go, ba, go_fb_check, w, h, tol[0]);
         fb_consistency_check(ba, go, ba_fb_check, w, h, tol[0]);
     }
     //Too-uniform consistency check
     if (method[1] == 1){
-        std::printf("Too Uniform -Consistency:%f\n", tol[1]);
+        std::printf("Too Uniform -Consistency: %f\n", tol[1]);
         too_uniform_areas(a, b, go, go_cons_check, w, h, tol[1]);
         too_uniform_areas(b, a, ba, ba_cons_check, w, h, tol[1]);
     }
@@ -354,7 +353,7 @@ inline void interpolate_constant(
         }
 }
 
-#define MAX_PATCH 50
+
 
 //Poisson Interpolation
 void interpolate_poisson(
@@ -453,15 +452,15 @@ void nltv_regularization(
                     //The position should be the same
                     const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
 
-                    if (ap==0) {
+                    if (ap == 0) {
                         const float wp = p[i].wp[j];
                         assert(wp >= 0);
                         g1 += (u1[i] - u1[apj*w + api])*wp;
                         g2 += (u2[i] - u2[apj*w + api])*wp;
                     }
                 }
-                g1 /=p[i].wt;
-                g2 /=p[i].wt;
+                g1 /= p[i].wt;
+                g2 /= p[i].wt;
                 //If the value is not fixed
                 if (mask[i]==0){
                     const float u1k = u1[i];
@@ -656,10 +655,10 @@ inline void get_index_patch(
         const int factor
         ) {
     //Points to begin and end. End is the previous value
-    (*ii) = (((i - factor * wr)< 0)? 0 : (i - factor * wr));
-    (*ij) = (((j - factor * wr)< 0)? 0 : (j - factor * wr));
-    (*ei) = (((i + 1 + factor * wr)> w)? w : (i + 1 + factor * wr));
-    (*ej) = (((j + 1 + factor * wr)> h)? h : (j + 1 + factor * wr));
+    (*ii) = (((i - factor * wr) < 0)? 0 : (i - factor * wr));
+    (*ij) = (((j - factor * wr) < 0)? 0 : (j - factor * wr));
+    (*ei) = (((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr));
+    (*ej) = (((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr));
 
 }
 
@@ -834,9 +833,9 @@ int check_trustable_patch(
 
 
 static void add_neighbors(        
-        float *i1,
-        float *i2,
         float *i0,
+        float *i1,
+        float *i_1,
         float *ene_val,
         OpticalFlowData *ofD,
         SpecificOFStuff *ofS,
@@ -906,7 +905,7 @@ static void add_neighbors(
 
     // std::printf("antes de estimar\n");
     //Optical flow method (2*wr x 2wr + 1)
-    of_estimation(ofS, ofD, &ener_N, i1, i2, i0, ii, ij, ei, ej);
+    of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, ii, ij, ei, ej);
 
     // update_fixed_coordinates(out, ofD, ii, ij, ei, ej);
     insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
@@ -945,9 +944,9 @@ static void add_neighbors(
 
 
 int insert_initial_seeds(        
-        float *i1,
-        float *i2,
         float *i0,
+        float *i1,
+        float *i_1,
         float *in,
         pq_cand *queue,
         OpticalFlowData *ofD,
@@ -981,7 +980,7 @@ int insert_initial_seeds(
                 ofD->fixed_points[j*w + i] = 1;
                 // add_neigbors 0 means that during the propagation interpolates the patch
                 // based on the energy.
-                add_neighbors(i1, i2, i0, ene_val, ofD, ofS, queue, i, j, 0, out);
+                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out);
 
                 out[j*w + i] = NAN;
                 out[w*h + j*w + i] = NAN;
@@ -1202,6 +1201,8 @@ void local_growing(
     }
 }
 
+
+//Initialize optical flow data
 static OpticalFlowData init_Optical_Flow_Data(
         float *saliency,
         int w,
@@ -1236,9 +1237,10 @@ static OpticalFlowData init_Optical_Flow_Data(
 void match_growing_variational(
         float *go,
         float *ba,
-        float *i1,
-        float *i2,
         float *i0,
+        float *i1,
+        float *i_1,
+        float *i2,
         float *sal_go,
         float *sal_ba,
         int pd,
@@ -1247,7 +1249,8 @@ void match_growing_variational(
         int w_radio,
         int method,
         float *ene_val,
-        float *out
+        float *out_flow,
+        float *out_occ
         ){
 
     //Initialize all the stuff for optical flow computation
@@ -1255,12 +1258,14 @@ void match_growing_variational(
     OpticalFlowData ofGo = init_Optical_Flow_Data(sal_go, w, h, w_radio, method);
     float *oft0 = new float[w*h*2];
     float *ene_Go = new float[w*h];
+    float *occ_Go = new float[w*h];
 
 
     //Optical flow t+1, t
     OpticalFlowData ofBa = init_Optical_Flow_Data(sal_ba, w, h, w_radio, method);
     float *oft1 = new float[w*h*2];
     float *ene_Ba = new float[w*h];
+    float *occ_Ba = new float[w*h];
 
     //Create queues
     int nfixed = 0;
@@ -1276,20 +1281,22 @@ void match_growing_variational(
 
 
     //Prepare data based on the functional chosen (energy_model.cpp)
-    float *i1n;
-    float *i2n;
+    //i0n, i1n, i_1n, i2n are a gray and smooth version of i0, i1, i_1, i2
     float *i0n;
-    prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i1, i2, i0, pd, &i1n, &i2n, &i0n);
-    //i0n, i1n, i_1n are a gray and smooth version of i0, i1, i_1
+    float *i1n;
+    float *i_1n;
+    float *i2n;
+
+    prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, pd, &i0n, &i1n, &i_1n, &i2n);
 
     ////FIXED POINTS///////////////////
-    //Insert initial seeds to t, t+1
-    nfixed = insert_initial_seeds(i1n, i2n, i0n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0);
+    //Insert initial seeds to queues
+    nfixed = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0);
     nfixed = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1);
 
     int iter = LOCAL_ITER;
-    for (int i = 0; i< iter; i++){
-        std::printf("Iteration:%d\n", i);
+    for (int i = 0; i < iter; i++){
+        std::printf("Iteration: %d\n", i);
 #pragma omp parallel num_threads(2)
         {
 #pragma omp sections
@@ -1303,30 +1310,11 @@ void match_growing_variational(
             } /// End of sections
         } /// End of parallel section
 
-        // update_energy_map(an, bn, ene_Go, &stuffGo, &ofGo, oft0);
-        // update_energy_map(bn, an, ene_Ba, &stuffBa, &ofBa, oft1);
         //Pruning method
         float tol[2] = {FB_TOL, TU_TOL};
         int   p[2] = {1 , 0};
         pruning_method(&ofGo, &ofBa, i1n, i2n, w, h, tol, p,
                        ofGo.trust_points, oft0, ofBa.trust_points, oft1);
-        // char buf[1000];
-        // sprintf(buf, "%s_it_%d_sin_pru_t_t1.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, oft0, w, h, 2);
-        // sprintf(buf, "%s_it_%d_sin_pru_t1_t.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, oft1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_sin_pru_Aux_t_t1.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofGo.u1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_sin_pru_Aux_t1_t.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofBa.u1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_sin_pru_ene_val_t_t1.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_float(buf, ene_Go, w, h);
-        // sprintf(buf, "%s_it_%d_sin_pru_ene_val_t1_t.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_float(buf, ene_Ba, w, h);
-        // sprintf(buf, "%s_it_%d_sin_pru_trust_points_t_t1.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_int(buf, ofGo.trust_points, w, h);
-        // sprintf(buf, "%s_it_%d_sin_pru_trust_points_t1_t.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_int(buf, ofBa.trust_points, w, h);
 
         //Delete not trustable candidates based on the previous pruning
         delete_not_trustable_candidates(&stuffGo, &ofGo, oft0, ene_Go);
@@ -1341,36 +1329,18 @@ void match_growing_variational(
         prepare_data_for_growing(&ofGo, &stuffGo, ene_Go, oft0);
         prepare_data_for_growing(&ofBa, &stuffBa, ene_Ba, oft1);
 
-
-
-        // sprintf(buf, "%s_it_%d_t_t1.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofGo.u1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_t1_t.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofBa.u1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_Aux_t_t1.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofGo.u1, w, h, 2);
-        // sprintf(buf, "%s_it_%d_Aux_t1_t.flo",GLOBAL_TMP_FILE,i);
-        // iio_save_image_float_split(buf, ofBa.u1, w, h, 2);
-
-        // sprintf(buf, "%s_it_%d_ene_val_t_t1.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_float(buf, ene_Go, w, h);
-        // sprintf(buf, "%s_it_%d_ene_val_t1_t.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_float(buf, ene_Ba, w, h);
-        // sprintf(buf, "%s_it_%d_trust_points_t_t1.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_int(buf, ofGo.trust_points, w, h);
-        // sprintf(buf, "%s_it_%d_trust_points_t1_t.tiff", GLOBAL_TMP_FILE, i);
-        // iio_save_image_int(buf, ofBa.trust_points, w, h);
     }
     std::printf("Last growing\n");
     local_growing(i1n, i2n, i0n, &queueGo, &stuffGo, &ofGo, 10, nfixed, ene_Go, oft0);
 
-    //Copy the result t,t+1 as output.
-    memcpy(out, oft0, sizeof(float)*w*h*2);
+    //Copy the result t, t+1 as output.
+    memcpy(out_flow, oft0, sizeof(float)*w*h*2);
     memcpy(ene_val, ene_Go, sizeof(float)*w*h);
+    memcpy(out_occ, occ_Go, sizeof(float)*w*h);
 
 
-    free_auxiliar_stuff(&stuffGo,&ofGo);
-    free_auxiliar_stuff(&stuffBa,&ofBa);
+    free_auxiliar_stuff(&stuffGo, &ofGo);
+    free_auxiliar_stuff(&stuffBa, &ofBa);
 
     delete [] i1n;
     delete [] i2n;
@@ -1522,12 +1492,14 @@ static char *pick_option(int *c, char ***v, char *o, char *d)
     return d;
 }
 
+
+//Main function that expands sparse flow
 int main(int c, char *v[]){
     // process input
     char *windows_radio = pick_option(&c, &v, (char *)"wr", (char *)"5"); //Warpings
     char *var_reg       = pick_option(&c, &v, (char *)"m", (char *)"8"); //Method
 
-    if (c!=6 && c!=8) {
+    if (c != 6 && c != 8) {
         fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff"
                 //                          0      1     2       3       4       5         6
                 "[-m method_id] [-wr windows_radio]\n", c, *v);
@@ -1537,8 +1509,10 @@ int main(int c, char *v[]){
 
         return 1;
     }
+
     //filename that contains all the images to use
     char *filename_images = v[1];
+    char *filename_i_1;
     char *filename_i0;
     char *filename_i1;
     char *filename_i2;
@@ -1551,23 +1525,30 @@ int main(int c, char *v[]){
     while(getline(infile, line)){
 
         ++num_files;
-        if (num_files == 1){
-            filename_i1  = strdup(line.c_str());
+        if (num_files == 3){
+            filename_i_1  = strdup(line.c_str());
         }else{
-            if (num_files == 2){
-                filename_i2  = strdup(line.c_str());
+            if (num_files == 1){
+                filename_i0  = strdup(line.c_str());
             }else{
-                if (num_files == 3){
-                    filename_i0  = strdup(line.c_str());
+                if (num_files == 2){
+                    filename_i1  = strdup(line.c_str());
+                }else{
+                    if (num_files == 4){
+                        filename_i2  = strdup(line.c_str());
+                    }
                 }
             }
         }
     }
     infile.close();
 
-    // char *ret = mktemp(GLOBAL_TMP_FILE);
-    // if (!ret) return fprintf(stderr, "could not create temp file\n");
-    // std::printf("%s\n",GLOBAL_TMP_FILE );
+    if (num_files == 3){
+        fprintf(stderr, "ERROR: 3 images given as input\n");
+        fprintf(stderr, "Usage: 4 images in the following order: I0, I1, I-1, I2\n");
+        fprintf(stderr, "Usage: 2 images in the following order: I0, I1\n");
+        return 1;
+    }
 
     //Save other arguments
     char *filename_go  = v[2];
@@ -1583,39 +1564,44 @@ int main(int c, char *v[]){
     }
 
     //Optional arguments
-    int w_radio = atoi(windows_radio);
-    // O TV-l2 coupled 1 - ||Du + Du'||_{F}
-    int val_method = atoi(var_reg);
+    int w_radio = atoi(windows_radio);// Default: 5
+    int val_method = atoi(var_reg);// Default: TV-l2 coupled
 
     // Open input images and .flo
     // pd: number of channels
-    int w[7], h[7], pd[5];
+    int w[8], h[8], pd[6];
 
-    //Frame t-1
-    float *i0;
-    if (num_files == 3){
-        i0 = iio_read_image_float_split(filename_i0, w + 6, h + 6, pd + 5);
+    //Frame t-1 and t+2
+    float *i_1;
+    float *i2;
+    if (num_files == 4){
+        i_1 = iio_read_image_float_split(filename_i_1, w + 6, h + 6, pd + 4);
+        i2 = iio_read_image_float_split(filename_i2, w + 7, h + 7, pd + 5);
     }else{
-        i0 = iio_read_image_float_split(filename_i2, w + 1, h + 1, pd + 1);
+        i_1 = iio_read_image_float_split(filename_i0, w + 6, h + 6, pd + 4);
+        i2 = iio_read_image_float_split(filename_i1, w + 7, h + 7, pd + 5);
     }
 
     //Frames t and t+1
-    float *i1 = iio_read_image_float_split(filename_i1, w + 0, h + 0, pd + 0);
-    float *i2 = iio_read_image_float_split(filename_i2, w + 1, h + 1, pd + 1);
+    float *i0 = iio_read_image_float_split(filename_i1, w + 0, h + 0, pd + 0);
+    float *i1 = iio_read_image_float_split(filename_i2, w + 1, h + 1, pd + 1);
 
-    //Sparse Optical flow
+    //Sparse Optical flow forward and backward
     float *go = iio_read_image_float_split(filename_go, w + 2, h + 2, pd + 2);
     float *ba = iio_read_image_float_split(filename_ba, w + 3, h + 3, pd + 3);
 
 
     //Ensure dimensions match in images
-    if (num_files == 3){
-        if (w[0] != w[1] || h[0] != h[1])
+    if (num_files == 4){
+        if (w[0] != w[1] || h[0] != h[1] || w[0] != w[6] || h[0] != h[6])
             return fprintf(stderr, "ERROR: input images size mismatch\n");
-        if (w[0] != w[6] || h[0] != h[6])
+
+        if (w[0] != w[7] || h[0] != h[7] || w[1] != w[6] || h[1] != h[6])
             return fprintf(stderr, "ERROR: input images size mismatch\n");
-        if (w[1] != w[6] || h[1] != h[6])
+
+        if (w[1] != w[7] || h[1] != h[7] || w[6] != w[7] || h[6] != h[7])
             return fprintf(stderr, "ERROR: input images size mismatch\n");
+
     }else{
         if (w[0] != w[1] || h[0] != h[1])
             return fprintf(stderr, "ERROR: input images size mismatch\n");
@@ -1628,10 +1614,10 @@ int main(int c, char *v[]){
     //Load or compute saliency
     float *sal0;
     float *sal1;
-    if (c == 8){ //c == 8
+    if (c == 8){
         sal0 = iio_read_image_float(filename_sal0, w + 4, h + 4);
         sal1 = iio_read_image_float(filename_sal1, w + 5, h + 5);
-        fprintf(stderr,"Reading saliency values given\n");
+        fprintf(stderr, "Reading saliency values given\n");
     }else{
         fprintf(stderr, "Saliency values not given\n");
         sal0 = new float[w[0]*h[0]];
@@ -1650,27 +1636,28 @@ int main(int c, char *v[]){
         assert(std::isfinite(sal0[i]));
         assert(std::isfinite(sal1[i]));
         if (sal0[i] < 0.0)
-            fprintf(stderr, "cosa:%d\n", i);
+            fprintf(stderr, "cosa: %d\n", i);
         if (sal1[i] < 0.0)
-            fprintf(stderr, "cosa:%d\n", i);
+            fprintf(stderr, "cosa: %d\n", i);
     }
 
-    //Output optical flow and energy
-    float *out = new float[w[0]*h[0]*2];
+    //Initialize output optical flow and energy
+    float *out_flow = new float[w[0]*h[0]*2];
+    float *out_occ = new float[w[0]*h[0]];
     float *ene_val = new float[w[0]*h[0]];
 
     for (int i = 0; i < w[0]*h[0]*2; i++){
-        out[i] = NAN;
+        out_flow[i] = NAN;
     }
 
 
     // Print method used
     if (num_files == 2 && val_method == M_TVL1_OCC){
         //If only two images given for occ, something not working
-        //TODO: When new occlusion methods implemented, add here
+        //TODO: When new methods with occlusions implemented, add here
         switch (val_method) {
         case M_TVL1_OCC:
-            fprintf(stderr, "Since only two images give, method is changed to TV-l2 coupled\n");
+            fprintf(stderr, "Since only two images given, method is changed to TV-l2 coupled\n");
             val_method  = M_TVL1;
             break;
         default:
@@ -1679,9 +1666,9 @@ int main(int c, char *v[]){
         }
 
     }else{
-        //If three images given for without occ, one not needed
-        if(num_files == 3 && val_method >= 0 && val_method <= 7) {
-            fprintf(stderr, "Only two of the three images given will be used\n");
+        //If four images given for without occ, one not needed
+        if(num_files == 4 && val_method >= 0 && val_method <= 7) {
+            fprintf(stderr, "Only two of the four images given will be used, according to method selected\n");
             fprintf(stderr, "Method: ");
             switch(val_method){
             case M_NLTVL1: //NLTVL1
@@ -1721,23 +1708,25 @@ int main(int c, char *v[]){
     }
 
     //Match growing algorithm
-    match_growing_variational(go, ba, i1, i2, i0, sal0, sal1, pd[0],
-            w[0], h[0], w_radio, val_method, ene_val, out);
+    match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, pd[0],
+            w[0], h[0], w_radio, val_method, ene_val, out_flow, out_occ);
 
 
 
 
     // Save results
-    iio_save_image_float_split(filename_out, out, w[0], h[0], 2);
+    iio_save_image_float_split(filename_out, out_flow, w[0], h[0], 2);
     iio_save_image_float(filenme_sim, ene_val, w[0], h[0]);
 
     // cleanup and exit
+    free(i_1);
     free(i0);
     free(i1);
     free(i2);
 
     free(go);
     free(ba);
+
     if (c ==  9){ //c == 9
         free(sal0);
         free(sal1);
@@ -1746,8 +1735,9 @@ int main(int c, char *v[]){
         delete [] sal1;
     }
 
-    delete [] out;
+    delete [] out_flow;
     delete [] ene_val;
+    delete [] out_occ;
     return 0;
 }
 #endif

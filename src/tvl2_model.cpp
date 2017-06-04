@@ -6,7 +6,10 @@
 #include <cassert>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-
+#include "utils.h"
+extern "C" {
+#include "bicubic_interpolation.h"
+}
 
 ////INITIALIZATION OF EACH METHOD
 void  intialize_stuff_tvl2coupled(
@@ -204,8 +207,8 @@ void eval_tvl2coupled(
 
   float ener = 0.0;
 
-  //forward_gradient_mixed_bound(u1,u1x,u1y,ii,ij,ei,ej,nx,ny);
-  //forward_gradient_mixed_bound(u2,u2x,u2y,ii,ij,ei,ej,nx,ny);
+  //forward_gradient_mixed_bound_patch(u1,u1x,u1y,ii,ij,ei,ej,nx,ny);
+  //forward_gradient_mixed_bound_patch(u2,u2x,u2y,ii,ij,ei,ej,nx,ny);
   forward_gradient_patch(u1, u1x, u1y, ii, ij, ei, ej, nx);
   forward_gradient_patch(u2, u2x, u2y, ii, ij, ei, ej, nx);
   bicubic_interpolation_warp_patch(I1,  u1, u2, I1w, 

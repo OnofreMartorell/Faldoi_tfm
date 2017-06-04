@@ -6,7 +6,9 @@
 #include <cassert>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-
+extern "C" {
+#include "bicubic_interpolation.h"
+}
 void  intialize_stuff_nltvl1(
           SpecificOFStuff *ofStuff,
           OpticalFlowData *ofCore)

@@ -8,7 +8,9 @@
 
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-
+extern "C" {
+#include "bicubic_interpolation.h"
+}
 void  intialize_stuff_nltvcsad(
           SpecificOFStuff *ofStuff,
           OpticalFlowData *ofCore)

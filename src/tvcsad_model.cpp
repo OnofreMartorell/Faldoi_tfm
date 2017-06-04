@@ -8,7 +8,10 @@
 
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-
+#include "utils.h"
+extern "C" {
+#include "bicubic_interpolation.h"
+}
 //OPTICAL FLOW PARAMETERS
 #define TVCSAD_LAMBDA  40//40
 #define TVCSAD_THETA   0.3
