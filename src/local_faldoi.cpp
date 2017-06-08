@@ -14,25 +14,23 @@
 #include <cstdio>
 #include <cstring>
 #include <queue>
-// #include <ext/pb_ds/priority_queue.hpp>
-// #include <ext/pb_ds/tag_and_trait.hpp>
 #include <random>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
 #include "energy_model.h"
-#include "heuristic_interpolation.h"
 
 extern "C" {
 #include "iio.h"
-//#include "mask.h"
 #include "bicubic_interpolation.h"
 #include "elap_recsep.h"
 }
-
+#include <omp.h>
 
 #include <iostream>
 #include <fstream>
 #include <string>
+
+#include "utils.h"
 
 using namespace std;
 
@@ -54,7 +52,7 @@ struct SparseOF {
     float u; //x- optical flow component
     float v; //y- optical flow component
     float sim_node; //similarity measure for the actual pixel
-    float sim_accu; //similarity measure for the accumulated path.
+    float occluded; //similarity measure for the accumulated path.
 };
 
 class CompareSparseOF {
@@ -93,7 +91,7 @@ static void delete_random(
             n++;
         }
     }
-    std::printf("Too-Chosen:%f\n", (n*1.0)/size);
+    std::printf("Too-Chosen: %f\n", (n*1.0)/size);
 }
 
 static void rand_local_patch_ini(
@@ -139,7 +137,7 @@ static int too_uniform(float *a, float tol, int i, int j, int w, int h, int pd){
             float neighborhood = getsample_inf(a, w, h, pd, px, py , l);
             if (std::isfinite(center) && std::isfinite(neighborhood)){
                 float tmp = std::abs(neighborhood-center);
-                //std::printf("Tmp:%f, Tol:%f neighborhood:%f Center:%f\n",tmp,difference,neighborhood,center);
+                //std::printf("Tmp: %f, Tol: %f neighborhood: %f Center: %f\n", tmp, difference, neighborhood, center);
                 if (difference < tmp){
                     difference = tmp;
                 }
@@ -171,16 +169,16 @@ void too_uniform_areas(
 
     bicubic_interpolation_warp(b, in0, in0 + size, bw, w, h, true);
     for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++)
-        { //If both areas present too uniform pixels, we remove the flow.
-            if ((too_uniform(a, tol, i, j, w, h, 1) == 1 ) ||  (too_uniform(bw, tol, i, j, w, h, 1)==1)){
+        for (int i = 0; i < w; i++){
+            //If both areas present too uniform pixels, we remove the flow.
+            if ((too_uniform(a, tol, i, j, w, h, 1) == 1 ) || (too_uniform(bw, tol, i, j, w, h, 1) == 1)){
                 trust_in0[j*w + i] = 0;
             }else{
                 trust_in0[j*w + i] = 1;
                 n++;
             }
         }
-    std::printf("Too-Chosen:%f\n",(n*1.0)/size);
+    std::printf("Too-Chosen: %f\n", (n*1.0)/size);
 
     delete [] bw;
 }
@@ -214,7 +212,7 @@ void fb_consistency_check(
             n++;
         }
     }
-    std::printf("FB-Chosen:%f\n",(n*1.0)/size);
+    std::printf("FB-Chosen: %f\n", (n*1.0)/size);
     delete [] u2w;
     delete [] u1w;
 }
@@ -296,10 +294,8 @@ void delete_not_trustable_candidates(
     int w = ofD->w;
     int h = ofD->h;
     int n = 0;
-    for (int i = 0; i < w*h; i++)
-    {
-        if (mask[i] == 0)
-        {
+    for (int i = 0; i < w*h; i++) {
+        if (mask[i] == 0) {
             //printf("%f\n", ene_val[i]);
             if (ene_val[i] == 0.0){
                 n++;
@@ -311,7 +307,7 @@ void delete_not_trustable_candidates(
             ene_val[i]  = INFINITY;
         }
     }
-    printf("Total_seeds%d\n", n);
+    printf("Total_seeds: %d\n", n);
 }
 
 
@@ -396,6 +392,7 @@ void interpolate_poisson(
             u2[ xy ] = buf_out[ j*w + i + w*h ];
         }
 }
+
 void nltv_regularization(
         OpticalFlowData *ofD,
         int ii, // initial column
@@ -436,7 +433,7 @@ void nltv_regularization(
             p[i].wt = wt_tmp;
         }
     }
-    //We perform the number of iterrations
+    //We perform the number of iterations
     int n = 0;
     while (n < niter) {
         n++;
@@ -462,7 +459,7 @@ void nltv_regularization(
                 g1 /= p[i].wt;
                 g2 /= p[i].wt;
                 //If the value is not fixed
-                if (mask[i]==0){
+                if (mask[i] == 0){
                     const float u1k = u1[i];
                     const float u2k = u2[i];
                     u1[i] = u1k  -tau*g1;
@@ -532,7 +529,7 @@ void bilateral_filter_regularization(
                     //The position should be the same
                     const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
 
-                    if (ap==0) {
+                    if (ap == 0) {
                         const float wp = p[i].wp[j];
                         assert(wp >= 0);
                         assert(std::isfinite(g1));
@@ -541,8 +538,8 @@ void bilateral_filter_regularization(
                         g2 += u2[apj*w + api]*wp;
                     }
                 }
-                g1 /=p[i].wt;
-                g2 /=p[i].wt;
+                g1 /= p[i].wt;
+                g2 /= p[i].wt;
                 //If the value is not fixed
                 if (mask[i]==0){
                     u1[i] = g1;
@@ -609,10 +606,11 @@ void insert_candidates(
         const int j,
         const float ener_N
         ) {
+
     int n_neigh = 4;
     int neighborhood[8][2] = {
-        {0, 1}, {0, -1},{1, 0},{-1, 0},
-        {1, 1}, {1, -1},{-1, 1}, {-1, -1}};
+        {0, 1}, {0, -1}, {1, 0}, {-1, 0},
+        {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
     const int w = ofD->w;
     const int h = ofD->h;
@@ -621,25 +619,27 @@ void insert_candidates(
     for (int k = 0; k < n_neigh; k++){
         int px = i + neighborhood[k][0];
         int py = j + neighborhood[k][1];
+
         if (px >= 0 && px < w && py >=0 && py < h){
             float new_ener = ener_N * sal[py*w + px];
+
             //std::printf("Ener_N: %f  Sim: %f \n", ener_N, ene_val[py*w + px]);
-            if (!ofD->fixed_points[py*w +px] &&  new_ener < ene_val[py*w + px]){
+            if (!ofD->fixed_points[py*w + px] &&  new_ener < ene_val[py*w + px]){
+
                 ene_val[py*w + px] = ener_N;
                 SparseOF element;
                 element.i = px; // column
                 element.j = py; // row
-                element.u = ofD->u1[py*w+px];
-                element.v = ofD->u2[py*w+px];
+                element.u = ofD->u1[py*w + px];
+                element.v = ofD->u2[py*w + px];
                 element.sim_node = new_ener;
+                element.occluded = ofD->chi[py*w + px];
                 queue->push(element);
             }
         }
     }
 
 }
-
-
 
 
 inline void get_index_patch(
@@ -662,7 +662,7 @@ inline void get_index_patch(
 
 }
 
-//TODO:Esto esta fatal. Si finalmenente funciona lo de los pesos arreglarlo para
+//TODO: Esto esta fatal. Si finalmenente funciona lo de los pesos arreglarlo para
 //que faldoi sea independiente y este dentro de energy_model.cpp
 inline void get_relative_index_weight(
         int *iiw, // initial column
@@ -674,10 +674,41 @@ inline void get_relative_index_weight(
 
     (*iiw) = (((i -  wr)< 0)? -(i - wr) : 0);
     (*ijw) = (((j -  wr)< 0)? -(j - wr) : 0);
-    assert(*iiw >=0);
-    assert(*ijw >=0);
+    assert(*iiw >= 0);
+    assert(*ijw >= 0);
 }
+static void get_index_weight(
+        int method,
+        SpecificOFStuff *ofS,
+        const int wr,
+        int i,
+        int j){
 
+    int iiw, ijw;
+    if (method == M_TVL1_W || method == M_NLTVCSAD_W || method == M_NLTVL1_W || method == M_TVCSAD_W) {
+        get_relative_index_weight(&iiw, &ijw, wr, i, j);
+    }
+    switch (method) {
+    case M_TVL1_W:
+        ofS->tvl2w.iiw = iiw;
+        ofS->tvl2w.ijw = ijw;
+        break;
+    case M_NLTVCSAD_W:
+        ofS->nltvcsadw.iiw = iiw;
+        ofS->nltvcsadw.ijw = ijw;
+        break;
+    case M_NLTVL1_W:
+        ofS->nltvl1w.iiw = iiw;
+        ofS->nltvl1w.ijw = ijw;
+        break;
+    case M_TVCSAD_W:
+        ofS->tvcsadw.iiw = iiw;
+        ofS->tvcsadw.ijw = ijw;
+        break;
+    default:
+        break;
+    }
+}
 
 
 
@@ -697,10 +728,10 @@ inline void copy_fixed_coordinates(
     int *fixed = ofD->fixed_points;
 
     for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++)
-        { //Copy only fixed values from the patch
+        for (int k = ii; k < ei; k++){ 
+            //Copy only fixed values from the patch
             const int i = l*w + k;
-            if (fixed[i]==1){
+            if (fixed[i] == 1){
                 u1[i] = (float) out[i];
                 u2[i] = (float) out[w*h + i];
                 assert(std::isfinite(u1[i]));
@@ -724,22 +755,20 @@ static inline void update_fixed_coordinates(
     int *fixed = ofD->fixed_points;
 
     for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++)
-        { //Copy only fixed values from the patch
+        for (int k = ii; k < ei; k++){
+            //Copy only fixed values from the patch
             const int i = l*w + k;
-            if (fixed[i]==1){
+            if (fixed[i] == 1){
                 out[i]       = u1[i];
                 out[w*h + i] = u2[i];
                 assert(std::isfinite(out[i]));
                 assert(std::isfinite(out[w*h + i]));
-            }
-            else{
+            }else{
                 out[i] = NAN;
                 out[w*h + i] = NAN;
             }
         }
 }
-
 
 
 //Poisson Interpolation
@@ -752,7 +781,6 @@ void copy_ini_patch(
         ) {
     int w = ei - ii;
     int h = ej - ij;
-    int *mask = ofD->fixed_points;
     int wR = ofD->w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
@@ -822,7 +850,7 @@ int check_trustable_patch(
         for (int k = ii; k < ei; k++){
             //Return 0 if it detects that at least one point it is not fixed
             const int i = l*w + k;
-            if (fixed[i]==0){
+            if (fixed[i] == 0){
                 //If the pixel it is not trustable.
                 return 0;
             }
@@ -843,7 +871,8 @@ static void add_neighbors(
         int i,
         int j,
         int mode,
-        float *out
+        float *out,
+        float *out_occ
         ) {
 
     const int w  = ofD->w;
@@ -854,57 +883,28 @@ static void add_neighbors(
     int ii, ij, ei, ej;
     get_index_patch(&ii, &ij, &ei, &ej, wr, w, h, i, j, 1);
 
-    // std::printf("Patch\n");
-    //TODO:Arreglar los de los pesos
-    int iiw, ijw;
+    int method = ofD->method;
+
+    //TODO: Arreglar los de los pesos
+    get_index_weight(method, ofS, wr, i, j);
     //////////////////////////////////////////
     //
     // FIRST STEP, ADD "POISSON" CANDIDATES
     //
     //////////////////////////////////////////
     //Poisson Interpolation (4wr x 4wr + 1)
-    if (mode == 0) {//|| (check_trustable_patch(ofD,ii,ij,ei,ej) == 0))
+    if (mode == 0) {
         //it > 0. Interpolate over the survivors of the pruning.
         copy_fixed_coordinates(ofD, out, ii, ij, ei, ej);
         interpolate_poisson(ofD, ii, ij, ei, ej);
-    }
-    else if (check_trustable_patch(ofD,ii,ij,ei,ej) == 0) {
+
+    }else if (check_trustable_patch(ofD,ii,ij,ei,ej) == 0) {
 
         copy_fixed_coordinates(ofD, out, ii, ij, ei, ej);
         interpolate_poisson(ofD, ii, ij, ei, ej);
     }
 
-    int method = ofD->method;
-    if (method == M_TVL1_W || method == M_NLTVCSAD_W || method == M_NLTVL1_W || method == M_TVCSAD_W) {
-        get_relative_index_weight(&iiw, &ijw, wr, i, j);
-    }
-    switch (method) {
-    case M_TVL1_W:
-        ofS->tvl2w.iiw = iiw;
-        ofS->tvl2w.ijw = ijw;
-        break;
-    case M_NLTVCSAD_W:
-        ofS->nltvcsadw.iiw = iiw;
-        ofS->nltvcsadw.ijw = ijw;
-        break;
-    case M_NLTVL1_W:
-        ofS->nltvl1w.iiw = iiw;
-        ofS->nltvl1w.ijw = ijw;
-        break;
-    case M_TVCSAD_W:
-        ofS->tvcsadw.iiw = iiw;
-        ofS->tvcsadw.ijw = ijw;
-        break;
-    default:
-        break;
-    }
-
-    //Insert poisson candidates
-    //eval_functional(ofS, ofD, &ener_N, a, b, ii, ij, ei, ej);
-    //insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
-
-    // std::printf("antes de estimar\n");
-    //Optical flow method (2*wr x 2wr + 1)
+    // Optical flow method on patch (2*wr x 2wr + 1)
     of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, ii, ij, ei, ej);
 
     // update_fixed_coordinates(out, ofD, ii, ij, ei, ej);
@@ -916,34 +916,14 @@ static void add_neighbors(
         out[      j*w + i] = ofD->u1[j*w + i];
         out[w*h + j*w + i] = ofD->u2[j*w + i];
         ene_val[  j*w + i] = ener_N;
+        out_occ[  j*w + i] = ofD->chi[j*w + i];
 
     }
-    //////////////////////////////////////////
-    //
-    // SECOND STEP, ADD "constant" CANDIDATES
-    //
-    //////////////////////////////////////////
-    //Constant Interpolation (4wr x 4wr + 1)
-    //  if (mode == 0)
-    //  {
-    //   copy_fixed_coordinates(ofD, out, ii2, ij2, ei2, ej2);
-    //   float vv[2] = { out[j*w + i], out[j*w + i + w*h] };
-    //   interpolate_constant(ofD, ii2, ij2, ei2, ej2, vv);
-    // }
-
-    // //Insert constant candidates
-    // eval_functional(ofS, ofD, &ener_N, a, b, ii, ij, ei, ej);
-    // insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
-
-    //Optical flow method (2*wr x 2wr + 1)
-    // of_estimation(ofS, ofD, &ener_N, a, b, ii, ij, ei, ej);
-    // insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
-
 }
 
 
 
-int insert_initial_seeds(        
+int insert_initial_seeds(
         float *i0,
         float *i1,
         float *i_1,
@@ -953,7 +933,8 @@ int insert_initial_seeds(
         SpecificOFStuff *ofS,
         int mode,
         float *ene_val,
-        float *out
+        float *out,
+        float *out_occ
         ) {
     int w = ofD->w;
     int h = ofD->h;
@@ -966,44 +947,39 @@ int insert_initial_seeds(
         ene_val[i] = INFINITY;
         out[i] = NAN;
         out[w*h + i] = NAN;
+        out_occ[i] = 0;
     }
 
-
     ofD->wr = 1;
-    //Fixed the initial seeds.
+    //Fix the initial seeds.
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++){
+
             //Indicates the initial seed in the similarity map
             if (std::isfinite(in[j*w +i]) && std::isfinite(in[w*h + j*w + i])){
-                out[j*w + i] = in[j*w + i];
+
+                out[j*w + i] = in[j*w + i];                
                 out[w*h + j*w + i] = in[w*h + j*w +i];
                 ofD->fixed_points[j*w + i] = 1;
+
                 // add_neigbors 0 means that during the propagation interpolates the patch
                 // based on the energy.
-                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out);
+                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out, out_occ);
 
-                out[j*w + i] = NAN;
-                out[w*h + j*w + i] = NAN;
-                ofD->fixed_points[j*w + i] = 0;
-            }
-        }
-    ofD->wr = wr;
-    //Propagate the information of the initial seeds to their neighbours.
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++){
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[w*h + j*w +i])) {
+                //These values may have been modified in the previous function
                 out[j*w + i] = in[j*w + i];
                 out[w*h + j*w + i] = in[w*h + j*w +i];
                 ofD->fixed_points[j*w + i] = 1;
                 ene_val[j*w + i] = 0.0;
             }
         }
+    ofD->wr = wr;
 
     return nfixed;
 }
 
 
-//Insert each pixel into the queue as possible candidate. Its related energy comes
+//  Insert each pixel into the queue as possible candidate. Its related energy comes
 // from the energy store at the moment that the pixel was fixed.
 void insert_potential_candidates(
         float *i0,
@@ -1013,27 +989,28 @@ void insert_potential_candidates(
         OpticalFlowData *ofD,
         pq_cand *queue,
         float *ene_val,
-        float *out
+        float *out,
+        float *out_occ
         ){
-
+    //Note: in and out are the same pointer
     int w = ofD->w;
     int h = ofD->h;
 
     //Fixed the initial seeds.
     for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++)
-        {
+        for (int i = 0; i < w; i++) {
             //Indicates the initial seed in the similarity map
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[w*h + j*w +i]))
-            {
+            if (std::isfinite(in[j*w + i]) && std::isfinite(in[w*h + j*w + i])) {
+
                 SparseOF element;
                 element.i = i; // column
                 element.j = j; // row
                 element.u = in[j*w +i];
                 element.v = in[w*h + j*w +i];
                 //Obs: Notice that ene_val contains (en)*saliency
-                element.sim_node = ene_val[j*w +i];
-                assert(std::isfinite(ene_val[j*w +i]));
+                element.sim_node = ene_val[j*w + i];
+                element.occluded = out_occ[j*w + i];
+                assert(std::isfinite(ene_val[j*w + i]));
                 queue->push(element);
             }
         }
@@ -1044,6 +1021,7 @@ void insert_potential_candidates(
         ene_val[i] = INFINITY;
         out[i] = NAN;
         out[w*h + i] = NAN;
+        out_occ[i] = 0;
     }
 }
 
@@ -1055,7 +1033,6 @@ static void update_energy_map(
         OpticalFlowData *ofD,
         float *out
         ) {
-
 
     const int w  = ofD->w;
     const int h  = ofD->h;
@@ -1072,34 +1049,11 @@ static void update_energy_map(
 
     //Update the energy map measuring the energy for each pixel.
     for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++)
-        {
+        for (int i = 0; i < w; i++) {
+
             //TODO:Arreglar los de los pesos
-            int iiw, ijw;
             int method = ofD->method;
-            if (method == M_TVL1_W || method == M_NLTVCSAD_W || method == M_NLTVL1_W || method == M_TVCSAD_W) {
-                get_relative_index_weight(&iiw, &ijw, wr, i, j);
-            }
-            switch (method) {
-            case M_TVL1_W:
-                ofS->tvl2w.iiw = iiw;
-                ofS->tvl2w.ijw = ijw;
-                break;
-            case M_NLTVCSAD_W:
-                ofS->nltvcsadw.iiw = iiw;
-                ofS->nltvcsadw.ijw = ijw;
-                break;
-            case M_NLTVL1_W:
-                ofS->nltvl1w.iiw = iiw;
-                ofS->nltvl1w.ijw = ijw;
-                break;
-            case M_TVCSAD_W:
-                ofS->tvcsadw.iiw = iiw;
-                ofS->tvcsadw.ijw = ijw;
-                break;
-            default:
-                break;
-            }
+            get_index_weight(method, ofS, wr, i, j);
             //////////////////////////////////////////
             //
             // FIRST STEP, ADD "POISSON" CANDIDATES
@@ -1133,19 +1087,18 @@ void prepare_data_for_growing(
 
 }
 
-
-
 void local_growing(        
-        float *i1,
-        float *i2,
         float *i0,
+        float *i1,
+        float *i_1,
         pq_cand *queue,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         int tm,
         int nfixed,
         float *ene_val,
-        float *out
+        float *out,
+        float *out_occ
         ) {
     int val = nfixed;
     int w = ofD->w;
@@ -1153,7 +1106,6 @@ void local_growing(
     std::printf("Queue size at start = %d\n", (int)queue->size());
     while (! queue->empty()) {
 
-        //std::printf("Fixed elements = %d\n", val);
         SparseOF element = queue->top();
         int i = element.i;
         int j = element.j;
@@ -1165,6 +1117,7 @@ void local_growing(
             float u = element.u;
             float v = element.v;
             float energy = element.sim_node;
+
             if (!std::isfinite(u)){
                 std::printf("U1 = %f\n", u);
             }
@@ -1174,29 +1127,18 @@ void local_growing(
 
             ofD->fixed_points[j*w + i] = 1;
             val += 1;
-            // int ntotal = w*h;
-            // if (0 == val%10000){
-
-            //    fprintf(stderr, "fixed %d/%d (%g%%)\n",
-            //        val, ntotal, val*100.0/ntotal);
-            //    fprintf(stderr, "queue size now = %d\n", (int)queue->size());
-            //  //   char buf[1000];
-            //  // sprintf(buf, "%s_of_%d_iter_%08d.flo", GLOBAL_TMP_FILE, tm, val);
-            //  // iio_save_image_float_split(buf, ofD->u1, w, h, 2);
-            //  // sprintf(buf, "%s_sim_node_%d_iter__%08d.tiff", GLOBAL_TMP_FILE, tm, val);
-            //  // iio_save_image_float(buf, ene_val, w, h);
-            //  }
-
+            //printf("%d\n", val);
             out[j*w + i] = u;
             out[w*h + j*w + i] = v;
             ene_val[j*w + i] = energy;
+            out_occ[j*w + i] = u;
             // //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
             // //MIRAR
             // ofD->u1[j*w + i] = u;
             // ofD->u2[j*w + i] = v;
 
             //tm stores if we made interpolation or not.
-            add_neighbors(i1, i2, i0, ene_val, ofD, ofS, queue, i, j, tm, out);
+            add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out, out_occ);
         }
     }
 }
@@ -1215,6 +1157,7 @@ static OpticalFlowData init_Optical_Flow_Data(
     of.u2  = of.u1 + w*h;
     of.u1_ba  = new float[w*h*2];
     of.u2_ba  = of.u1_ba + w*h;
+    of.chi = new float[w*h];
     of.fixed_points = new int[w*h];
     of.trust_points = new int[w*h];
     of.saliency = saliency;
@@ -1226,10 +1169,6 @@ static OpticalFlowData init_Optical_Flow_Data(
     of.weight = new BilateralWeight[w*h]; // weight of non local
     of.u1_ini = new float[(2*w_radio + 1)*(2*w_radio + 1)];
     of.u2_ini = new float[(2*w_radio + 1)*(2*w_radio + 1)];
-    // rand_local_patch_ini(ofGo.u1_ini,w_radio);
-    // rand_local_patch_ini(ofGo.u2_ini,w_radio);
-    // zero_local_patch_ini(ofGo.u1_ini,w_radio);
-    // zero_local_patch_ini(ofGo.u2_ini,w_radio);
 
     return of;
 }
@@ -1252,7 +1191,7 @@ void match_growing_variational(
         float *out_flow,
         float *out_occ
         ){
-
+    std::printf("Initializing stuff\n");
     //Initialize all the stuff for optical flow computation
     //Optical flow t, t+1
     OpticalFlowData ofGo = init_Optical_Flow_Data(sal_go, w, h, w_radio, method);
@@ -1280,39 +1219,71 @@ void match_growing_variational(
     initialize_auxiliar_stuff(&stuffBa, &ofBa);
 
 
-    //Prepare data based on the functional chosen (energy_model.cpp)
     //i0n, i1n, i_1n, i2n are a gray and smooth version of i0, i1, i_1, i2
-    float *i0n;
-    float *i1n;
-    float *i_1n;
-    float *i2n;
+    float *i0n = nullptr;
+    float *i1n = nullptr;
+    float *i_1n = nullptr;
+    float *i2n = nullptr;
 
+    //Prepare data based on the functional chosen (energy_model.cpp)
     prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, pd, &i0n, &i1n, &i_1n, &i2n);
+    std::printf("Finished initializing stuff\n");
 
-    ////FIXED POINTS///////////////////
+
+    ////FIXED POINTS////
     //Insert initial seeds to queues
-    nfixed = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0);
-    nfixed = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1);
+    std::printf("Inserting initial seeds\n");
+    nfixed = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
+    nfixed = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+    std::printf("Finished inserting initial seeds\n");
 
     int iter = LOCAL_ITER;
+    //Variables for pruning
+    float tol[2] = {FB_TOL, TU_TOL};
+    int   p[2] = {1 , 0};
+
+
+//    int numCPU = omp_get_num_procs();
+//    int half_num_threads_0 = numCPU/2;
+//    int half_num_threads_1 = numCPU - half_num_threads_0;
+
+//    omp_set_nested(1);
     for (int i = 0; i < iter; i++){
         std::printf("Iteration: %d\n", i);
+
+
+//#pragma omp parallel num_threads(2)
+//        {
+//            if (omp_get_thread_num() == 0){
+//#pragma omp parallel num_threads(half_num_threads_0)
+//                {
+//                    //Estimate local minimization I0-I1
+//                    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0);
+//                }
+//            }else{
+//#pragma omp parallel num_threads(half_num_threads_1)
+//                {
+//                    //Estimate local minimzation I1-I0
+//                    local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1);
+//                }
+//            }
+//        }
+
+
 #pragma omp parallel num_threads(2)
         {
 #pragma omp sections
             {
 #pragma omp section
-                //Estimate local minimization I1-I2
-                local_growing(i1n, i2n, i0n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0);
+                //Estimate local minimization I0-I1
+                local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0, occ_Go);
 #pragma omp section
                 //Estimate local minimzation I1-I0
-                local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1);
+                local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1, occ_Ba);
             } /// End of sections
         } /// End of parallel section
 
         //Pruning method
-        float tol[2] = {FB_TOL, TU_TOL};
-        int   p[2] = {1 , 0};
         pruning_method(&ofGo, &ofBa, i1n, i2n, w, h, tol, p,
                        ofGo.trust_points, oft0, ofBa.trust_points, oft1);
 
@@ -1321,17 +1292,15 @@ void match_growing_variational(
         delete_not_trustable_candidates(&stuffBa, &ofBa, oft1, ene_Ba);
 
         //Insert each pixel into the queue as possible candidate
-        insert_potential_candidates(i1n, i2n, oft0,
-                                    &stuffGo, &ofGo, &queueGo, ene_Go, oft0);
-        insert_potential_candidates(i2n, i1n, oft1,
-                                    &stuffBa, &ofBa, &queueBa, ene_Ba, oft1);
+        insert_potential_candidates(i0n, i1n, oft0, &stuffGo, &ofGo, &queueGo, ene_Go, oft0, occ_Go);
+        insert_potential_candidates(i1n, i0n, oft1, &stuffBa, &ofBa, &queueBa, ene_Ba, oft1, occ_Ba);
 
         prepare_data_for_growing(&ofGo, &stuffGo, ene_Go, oft0);
         prepare_data_for_growing(&ofBa, &stuffBa, ene_Ba, oft1);
 
     }
     std::printf("Last growing\n");
-    local_growing(i1n, i2n, i0n, &queueGo, &stuffGo, &ofGo, 10, nfixed, ene_Go, oft0);
+    local_growing(i1n, i2n, i0n, &queueGo, &stuffGo, &ofGo, 10, nfixed, ene_Go, oft0, occ_Go);
 
     //Copy the result t, t+1 as output.
     memcpy(out_flow, oft0, sizeof(float)*w*h*2);
@@ -1345,6 +1314,7 @@ void match_growing_variational(
     delete [] i1n;
     delete [] i2n;
     delete [] i0n;
+    delete [] i_1n;
 
     delete [] ofGo.u1;
     delete [] ofBa.u1;
@@ -1381,18 +1351,16 @@ static void copy_additional_seeds(float *out, float *in, int w, int h){
 
     int size = w*h;
 
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++)
-        {
+    for (int j = 0; j < h; j++){
+        for (int i = 0; i < w; i++){
             //Copy non-NaN values and if there is colision keep the old value.
             if (std::isfinite(in[j*w +i]) && std::isfinite(in[size + j*w +i])
-                    && !std::isfinite(out[j*w +i]) && !std::isfinite(out[size + j*w +i]) )
-            {
+                    && !std::isfinite(out[j*w +i]) && !std::isfinite(out[size + j*w +i]) ){
                 out[j*w + i] = in[j*w + i];
                 out[w*h + j*w + i] = in[w*h + j*w + i];
             }
-
         }
+    }
 }
 
 
@@ -1417,30 +1385,27 @@ static void reverse_optical_flow(float *in, int w, int h, float *out){
             //If a sparse optical flow.
             // NaN - not flow
             // Real valuables - flow.
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[size + j*w +i]))
-            {
+            if (std::isfinite(in[j*w +i]) && std::isfinite(in[size + j*w +i])){
                 int x = std::floor(i + in[j*w + i]);
                 int y = std::floor(j + in[size + j*w + i]);
                 //Check that is inside of the image domain.
-                if (x >= 0 && x < w && y >=0 && y < h)
-                {
+
+                if (x >= 0 && x < w && y >=0 && y < h){
                     float val = 1;
+
                     //We check if there are two different flow for the same position
-                    if (std::isfinite(out[y*w +x]) && std::isfinite(out[size + y*w +x]))
-                    {
+                    if (std::isfinite(out[y*w +x]) && std::isfinite(out[size + y*w +x])){
                         float pre,now;
                         pre = hypotf(out[y*w +x],out[size + y*w +x]);
                         now = hypotf(-in[y*w +x],-in[size + y*w +x]);
                         fprintf(stderr, "COLLISION: At least two flow for the same pixel\n");
                         //If there is a colision, we put the optical flow with higher norm.
-                        if (now < pre)
-                        {
+                        if (now < pre){
                             val = 0;
                         }
                     }
 
-                    if (val == 1)
-                    {
+                    if (val == 1){
                         out[y*w + x] = -in[j*w + i];
                         out[size + y*w + x] = -in[size + j*w + i];
                     }
@@ -1458,8 +1423,8 @@ static void reverse_optical_flow(float *in, int w, int h, float *out){
  *  It always returns an allocated the image.
  *
  */
-static float *read_image(const char *filename, int *w, int *h)
-{
+static float *read_image(const char *filename, int *w, int *h){
+
     float *f = iio_read_image_float(filename, w, h);
     if (!f)
         fprintf(stderr, "ERROR: could not read image from file "
@@ -1499,11 +1464,11 @@ int main(int c, char *v[]){
     char *windows_radio = pick_option(&c, &v, (char *)"wr", (char *)"5"); //Warpings
     char *var_reg       = pick_option(&c, &v, (char *)"m", (char *)"8"); //Method
 
-    if (c != 6 && c != 8) {
-        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff"
-                //                          0      1     2       3       4       5         6
+    if (c != 7 && c != 9) {
+        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
+                //                          0        1     2       3       4       5         6
                 "[-m method_id] [-wr windows_radio]\n", c, *v);
-        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff sal0.tiff sal1.tiff"
+        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
                 //                          0      1     2       3       4       5         6
                 "[-m method_id] [-wr windows_radio]\n", c, *v);
 
@@ -1555,12 +1520,13 @@ int main(int c, char *v[]){
     char *filename_ba  = v[3];
     char *filename_out = v[4];
     char *filenme_sim  = v[5];
+    char *filename_occ = v[6];
     char *filename_sal0;
     char *filename_sal1;
 
-    if (c == 8){
-        filename_sal0 = v[6];
-        filename_sal1 = v[7];
+    if (c == 9){
+        filename_sal0 = v[7];
+        filename_sal1 = v[8];
     }
 
     //Optional arguments
@@ -1614,7 +1580,7 @@ int main(int c, char *v[]){
     //Load or compute saliency
     float *sal0;
     float *sal1;
-    if (c == 8){
+    if (c == 9){
         sal0 = iio_read_image_float(filename_sal0, w + 4, h + 4);
         sal1 = iio_read_image_float(filename_sal1, w + 5, h + 5);
         fprintf(stderr, "Reading saliency values given\n");
@@ -1645,7 +1611,7 @@ int main(int c, char *v[]){
     float *out_flow = new float[w[0]*h[0]*2];
     float *out_occ = new float[w[0]*h[0]];
     float *ene_val = new float[w[0]*h[0]];
-
+#pragma omp parallel for
     for (int i = 0; i < w[0]*h[0]*2; i++){
         out_flow[i] = NAN;
     }
@@ -1666,7 +1632,7 @@ int main(int c, char *v[]){
         }
 
     }else{
-        //If four images given for without occ, one not needed
+        //If four images given for without occ, two not needed
         if(num_files == 4 && val_method >= 0 && val_method <= 7) {
             fprintf(stderr, "Only two of the four images given will be used, according to method selected\n");
             fprintf(stderr, "Method: ");
@@ -1712,11 +1678,10 @@ int main(int c, char *v[]){
             w[0], h[0], w_radio, val_method, ene_val, out_flow, out_occ);
 
 
-
-
     // Save results
     iio_save_image_float_split(filename_out, out_flow, w[0], h[0], 2);
     iio_save_image_float(filenme_sim, ene_val, w[0], h[0]);
+    iio_save_image_float(filename_occ, out_occ, w[0], h[0]);
 
     // cleanup and exit
     free(i_1);
@@ -1727,7 +1692,7 @@ int main(int c, char *v[]){
     free(go);
     free(ba);
 
-    if (c ==  9){ //c == 9
+    if (c ==  8){ //c == 8
         free(sal0);
         free(sal1);
     }else{

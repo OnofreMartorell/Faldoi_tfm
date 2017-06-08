@@ -13,7 +13,7 @@
 #define M_TVCSAD_W   5
 #define M_NLTVCSAD   6
 #define M_NLTVCSAD_W 7
-#define M_TVL1_OCC 8
+#define M_TVL1_OCC   8
 
 //Specific stuff for NLTV
 
@@ -41,6 +41,7 @@ struct OpticalFlowData{
     float *u2;
     float *u1_ba;
     float *u2_ba;
+    float *chi;
     int   *fixed_points;
     int   *trust_points;
     float *saliency; //It stores the saliency value for each pixel.
@@ -76,37 +77,37 @@ struct PosNei{
 ////Specific struct for the different functionals
 struct  Tvl2CoupledOFStuff{
     //Dual variables
-    float *xi11;
-    float *xi12;
-    float *xi21;
-    float *xi22;
+    float *xi11 = nullptr;
+    float *xi12 = nullptr;
+    float *xi21 = nullptr;
+    float *xi22 = nullptr;
 
-    float *u1x;
-    float *u1y;
-    float *u2x;
-    float *u2y;
+    float *u1x = nullptr;
+    float *u1y = nullptr;
+    float *u2x = nullptr;
+    float *u2y = nullptr;
 
-    float *v1;
-    float *v2;
+    float *v1 = nullptr;
+    float *v2 = nullptr;
 
-    float *rho_c;
-    float *grad;
+    float *rho_c = nullptr;
+    float *grad = nullptr;
 
-    float *u1_;
-    float *u2_;
+    float *u1_ = nullptr;
+    float *u2_ = nullptr;
 
-    float *u1Aux;
-    float *u2Aux;
+    float *u1Aux = nullptr;
+    float *u2Aux = nullptr;
 
-    float *I1x;
-    float *I1y;
-    float *I1w;
-    float *I1wx;
-    float *I1wy;
+    float *I1x = nullptr;
+    float *I1y = nullptr;
+    float *I1w = nullptr;
+    float *I1wx = nullptr;
+    float *I1wy = nullptr;
 
-    float *div_xi1;
-    float *div_xi2;
-    float *u_N;
+    float *div_xi1 = nullptr;
+    float *div_xi2 = nullptr;
+    float *u_N = nullptr;
 };
 
 // ////Specific struct for the different functionals
@@ -367,6 +368,8 @@ struct  Tvl2CoupledOFStuff_occ
 
     //Weigth
     float *g;
+
+    float *diff_u_N;
 
     //Dual variables
     float *xi11;

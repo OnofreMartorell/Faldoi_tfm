@@ -14,9 +14,8 @@ extern "C" {
 ////INITIALIZATION OF EACH METHOD
 void  intialize_stuff_tvl2coupled(
           SpecificOFStuff *ofStuff,
-          OpticalFlowData *ofCore)
+          OpticalFlowData *ofCore){
 
-{
   const int w = ofCore->w;
   const int h = ofCore->h;
   //fprintf(stderr, "W x H :%d x %d\n", w, h);
@@ -262,8 +261,7 @@ void guided_tvl2coupled(
     const float tol_OF,  // tol max allowed
     const int   warps,   // number of warpings per scale
     const bool  verbose  // enable/disable the verbose mode
-    )
-{
+    ){
 
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
@@ -320,8 +318,7 @@ void guided_tvl2coupled(
     }
   }
 
-  for (int warpings = 0; warpings < warps; warpings++)
-  {   
+  for (int warpings = 0; warpings < warps; warpings++) {   
     // compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
     bicubic_interpolation_warp_patch(I1,  u1, u2, I1w, 
                               ii, ij, ei, ej, nx, ny, false);

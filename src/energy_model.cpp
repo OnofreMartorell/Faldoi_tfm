@@ -47,7 +47,7 @@ extern "C" {
 #define PAR_DEFAULT_LAMBDA  40//40
 #define PAR_DEFAULT_THETA   0.3
 #define PAR_DEFAULT_TAU     0.125 //0.25
-#define PAR_DEFAULT_NWARPS  1  //5
+#define PAR_DEFAULT_NWARPS  2  //5
 #define PAR_DEFAULT_TOL_D   0.01
 #define PAR_DEFAULT_VERBOSE 0  //0
 #define PAR_DEFAULT_GAMMA 0.05  //0
@@ -72,16 +72,16 @@ void rgb_to_lab(float *in, int size, float *out){
 
     const float T = 0.008856;
     const float color_attenuation = 1.5f;
-    for(int i=0 ; i < size ; i++){
+    for(int i = 0 ; i < size ; i++){
 
         const float r = in[i]/255.f;
         const float g = in[i + size]/255.f;
         const float b = in[i + 2*size]/255.f;
-        float X=0.412453 * r + 0.357580 * g + 0.180423 * b;
-        float Y=0.212671 * r + 0.715160 * g + 0.072169 * b;
-        float Z=0.019334 * r + 0.119193 * g + 0.950227 * b;
-        X/=0.950456;
-        Z/=1.088754;
+        float X = 0.412453 * r + 0.357580 * g + 0.180423 * b;
+        float Y = 0.212671 * r + 0.715160 * g + 0.072169 * b;
+        float Z = 0.019334 * r + 0.119193 * g + 0.950227 * b;
+        X /= 0.950456;
+        Z /= 1.088754;
         float Y3 = pow(Y,1./3);
         float fX = X>T ? pow(X,1./3) : 7.787 * X + 16/116.;
         float fY = Y>T ? Y3 : 7.787 * Y + 16/116.;
@@ -607,8 +607,8 @@ void of_estimation(
     float tol_OF  = PAR_DEFAULT_TOL_D;
     int    verbose = PAR_DEFAULT_VERBOSE;
     int    warps   = PAR_DEFAULT_NWARPS;
-    switch(ofCore->method)
-    {
+
+    switch(ofCore->method) {
     case M_NLTVL1: //NLTV-L1
     {
         lambda = 2;
@@ -698,8 +698,6 @@ void of_estimation(
         //estimate_tvl2 with occlusions
         guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, ii, ij, ei, ej,
                            lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_OF, warps, verbose);
-
-
     }
         break;
     default: //TV-l2 coupled

@@ -9,6 +9,9 @@
 // Copyright (C) 2011, Javier Sánchez Pérez <jsanchez@dis.ulpgc.es>
 // All rights reserved.
 
+#include <chrono>
+#include <iostream>
+#include <utility>
 
 
 ///////////////////////////////////////////
@@ -177,6 +180,18 @@ void init_weight(
         float *Iy,
         float size);
 
+template <typename F>
+void time_it(const char* name, F&& f)
+{
+    using namespace std::chrono;
 
+    auto start = steady_clock::now();
+
+    std::forward<F>(f)();
+
+    auto end = steady_clock::now();
+
+    std::cout << "Time elapsed for " << name << ": " << duration_cast<milliseconds>(end - start).count() << " ms\n";
+}
 
 #endif // UTILS_H

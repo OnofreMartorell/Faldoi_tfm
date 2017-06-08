@@ -19,7 +19,6 @@
 #include <algorithm> 
 
 extern "C" {
-//#include "mask.h"
 #include "bicubic_interpolation.h"
 #include "iio.h"
 }
@@ -57,7 +56,7 @@ using namespace std;
 #define M_TVCSAD_W   5
 #define M_NLTVCSAD   6
 #define M_NLTVCSAD_W 7
-#define M_TVL1_OCC 8
+#define M_TVL1_OCC   8
 
 
 //#ifndef DISABLE_OMP
@@ -309,8 +308,7 @@ void ofDu_getD(
         ){
     //#pragma omp parallel for
 
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
 
         const float g11 = xi11[i]*xi11[i];
         const float g12 = xi12[i]*xi12[i];
@@ -318,7 +316,7 @@ void ofDu_getD(
 
         float xi_N = sqrt(g11 + g22 + 2*g12);
 
-        xi_N = MAX(1,xi_N);
+        xi_N = MAX(1, xi_N);
 
         xi11[i] = (xi11[i] + tau*u1x[i])/xi_N;
         xi12[i] = (xi12[i] + 0.5*tau*(u1y[i] + u2x[i]))/xi_N;
@@ -1314,8 +1312,17 @@ void initialize_pos_nei(
  * - Output: float *u - New optical flow estimated
  *
 */
-void tvcsad_getP(float *u1,float *u2,float *v1, float *v2,float *div_xi1, float *div_xi2, float *u_N, float theta, float tau, int size, float *err)
-{
+void tvcsad_getP(float *u1,
+                 float *u2,
+                 float *v1,
+                 float *v2,
+                 float *div_xi1,
+                 float *div_xi2,
+                 float *u_N,
+                 float theta,
+                 float tau,
+                 int size,
+                 float *err){
     float err_D = 0.0;
     float min, max;
 
@@ -1817,8 +1824,6 @@ static char *pick_option(int *c, char ***v, char *o, char *d) {
  *   -I1          second image
  *   -tau         time step in the numerical scheme
  *   -theta       attachment parameter between E_Data and E_Smooth
- *   -nscales     number of scales in the pyramidal structure
- *   -zfactor     downsampling factor for creating the scales
  *   -nwarps      number of warps per scales
  *   -out         name of the output flow field
  *   -verbose     switch on/off messages
@@ -1829,11 +1834,16 @@ int main(int argc, char *argv[]) {
     char *var_reg = pick_option(&argc, &argv, (char *)"m", (char *)"0");
     char *warps_val = pick_option(&argc, &argv, (char *)"w", (char *)"1");
 
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s  ims.txt in_flow.flo  out.flo"
+
+    if (argc != 6 && argc != 4) {
+        fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo"
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
-                "\n", *argv);
+                "\n", argc);
+        fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo occl_input.png occl_out.png"
+                        "  [-m] val [-w] val"
+                //                       0   1  2   3     4    5   6
+                "\n", argc);
         // 4
         return EXIT_FAILURE;
     }
@@ -1850,6 +1860,8 @@ int main(int argc, char *argv[]) {
     char* filename_images  = argv[i]; i++;
     char* image_flow_name = argv[i]; i++;
     char* outfile = argv[i]; i++;
+    char* occ_input = argv[i]; i++;
+    char* occ_output = argv[i]; i++;
 
     //filename of images
     char *filename_i_1;
@@ -1925,7 +1937,7 @@ int main(int argc, char *argv[]) {
 
 
     // open input images
-    int w[4], h[4], pd[4];
+    int w[5], h[5], pd[5];
     float *i_1;
     if (num_files == 3){
         i_1 = iio_read_image_float_split(filename_i_1, w + 3, h + 3, pd + 3);
@@ -1936,6 +1948,7 @@ int main(int argc, char *argv[]) {
     float *i0   = iio_read_image_float_split(filename_i0, w + 0, h + 0, pd + 0);
     float *i1   = iio_read_image_float_split(filename_i1, w + 1, h + 1, pd + 1);
     float *flow = iio_read_image_float_split(image_flow_name, w + 2, h + 2, pd + 2);
+    float *occ  = iio_read_image_float_split(occ_input, w + 4, h + 4, pd + 4);
     //Ensure that dimensions match
     if (num_files == 3){
         if (w[0] != w[1] || h[0] != h[1] || pd[0] != pd[1])
@@ -1955,14 +1968,14 @@ int main(int argc, char *argv[]) {
 
 
 
-    float *a;
-    float *i0n;
-    float *i1n;
-    float *i_1n;
-    float *xi11;
-    float *xi12;
-    float *xi21;
-    float *xi22;
+    float *a = nullptr;
+    float *i0n = nullptr;
+    float *i1n = nullptr;
+    float *i_1n = nullptr;
+    float *xi11 = nullptr;
+    float *xi12 = nullptr;
+    float *xi21 = nullptr;
+    float *xi22 = nullptr;
 
     int size = w[0]*h[0];
     // 0 - TVl2 coupled, otherwise Du
@@ -1975,6 +1988,7 @@ int main(int argc, char *argv[]) {
 
     i0n = new float[size];
     i1n = new float[size];
+    i_1n = new float[size];
 
     if (pd[0] != 1){
 
@@ -1989,30 +2003,31 @@ int main(int argc, char *argv[]) {
         memcpy(i_1n, i_1, size*sizeof(float));
     }
     image_normalization_3(i0n, i1n, i_1n, i0n, i1n, i_1n, size);
-//    normalization(i0n, i1n, i0n, i1n, size);
     gaussian(i0n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i1n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i_1n, w[0], h[0], PRESMOOTHING_SIGMA);
 
 
     if (verbose)
-        fprintf(stderr,"tau=%2.3f tol_D=%2.3f theta=%2.3f"
-                       " lambda=%2.3f\n", tau, tol_D, theta, lambda);
+        fprintf(stderr,"tau = %2.3f tol_D = %2.3f theta = %2.3f"
+                       " lambda = %2.3f\n", tau, tol_D, theta, lambda);
 
     //allocate memory for the flow
     float *u = new float[size*2];
     float *v = u + size;
-
+    float *chi = new float[size];
 
     //Initialize flow with flow from local faldoi
     for (int i = 0; i < size; i++){
         u[i] = flow[i];
         v[i] = flow[size + i];
+        chi[i] = occ[i];
     }
 
 
     //Initialize dual variables if necessary (TV)
-    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W) {
+    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W
+            || val_method == M_TVL1_OCC) {
         xi11 = new float[size];
         xi12 = new float[size];
         xi21 = new float[size];
@@ -2054,6 +2069,8 @@ int main(int argc, char *argv[]) {
                   lambda, theta, tau, tol_D, w[0], h[0], nwarps, verbose, u,v);
 
     }else if (val_method == M_TVL1_OCC){
+        fprintf(stderr, "TV-l2 occlusions\n");
+
         lambda = 0.25;
         theta = 0.3;
         const float beta = 1;
@@ -2061,15 +2078,18 @@ int main(int argc, char *argv[]) {
         const float tau_u = 0.125;
         const float tau_eta = 0.125;
         const float tau_chi = 0.125;
-        tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22,
+        tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi,
                lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_D, w[0], h[0], nwarps, verbose);
 
     }
     iio_save_image_float_split(outfile, u, w[0], h[0], 2);
+    iio_save_image_float(occ_output, chi, w[0], h[0]);
 
     //delete allocated memory
     delete [] u;
-    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W){
+    delete [] chi;
+    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W
+            || val_method == M_TVL1_OCC){
         delete [] xi11;
         delete [] xi12;
         delete [] xi21;

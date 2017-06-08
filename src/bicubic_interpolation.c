@@ -151,7 +151,8 @@ float bicubic_interpolation_at(
 	//apply the corresponding boundary conditions
 	switch(BOUNDARY_CONDITION) {
 
-		case 0: x   = neumann_bc((int) uu, nx, out);
+        case 0:
+            x   = neumann_bc((int) uu, nx, out);
 			y   = neumann_bc((int) vv, ny, out);
 			mx  = neumann_bc((int) uu - sx, nx, out);
 			my  = neumann_bc((int) vv - sx, ny, out);
@@ -161,7 +162,8 @@ float bicubic_interpolation_at(
 			ddy = neumann_bc((int) vv + 2*sy, ny, out);
 			break;
 
-		case 1: x   = periodic_bc((int) uu, nx, out);
+        case 1:
+            x   = periodic_bc((int) uu, nx, out);
 			y   = periodic_bc((int) vv, ny, out);
 			mx  = periodic_bc((int) uu - sx, nx, out);
 			my  = periodic_bc((int) vv - sx, ny, out);
@@ -171,7 +173,8 @@ float bicubic_interpolation_at(
 			ddy = periodic_bc((int) vv + 2*sy, ny, out);
 			break;
 
-		case 2: x   = symmetric_bc((int) uu, nx, out);
+        case 2:
+            x   = symmetric_bc((int) uu, nx, out);
 			y   = symmetric_bc((int) vv, ny, out);
 			mx  = symmetric_bc((int) uu - sx, nx, out);
 			my  = symmetric_bc((int) vv - sx, ny, out);
@@ -181,7 +184,8 @@ float bicubic_interpolation_at(
 			ddy = symmetric_bc((int) vv + 2*sy, ny, out);
 			break;
 
-		default:x   = neumann_bc((int) uu, nx, out);
+        default:
+            x   = neumann_bc((int) uu, nx, out);
 			y   = neumann_bc((int) vv, ny, out);
 			mx  = neumann_bc((int) uu - sx, nx, out);
 			my  = neumann_bc((int) vv - sx, ny, out);
@@ -227,7 +231,7 @@ float bicubic_interpolation_at(
 		};
 
 		//return interpolation
-		return bicubic_interpolation_cell(pol, uu-x, vv-y);
+        return bicubic_interpolation_cell(pol, uu - x, vv - y);
 	}
 }
 
@@ -281,7 +285,7 @@ void bicubic_interpolation_warp_patch(
         const int    ny,        // image height
         bool         border_out // if true, put zeros outside the region
         ) {
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+//#pragma omp parallel for schedule(dynamic,1) collapse(2)
     for(int j = ij; j < ej; j++)
         for(int i = ii; i < ei; i++){
             const int   p  = j * nx + i;
