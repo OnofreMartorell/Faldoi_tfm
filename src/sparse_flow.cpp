@@ -8,8 +8,7 @@ extern "C" {
 #include "iio.h"
 }
 
-static void sparse_optical_flow(char *input, int nx, int ny, float *out)
-{
+static void sparse_optical_flow(char *input, int nx, int ny, float *out) {
     float x1, x2, y1, y2;
     std::string filename_sift_matches(input);
 	std::ifstream file(input);
@@ -41,8 +40,7 @@ static void sparse_optical_flow(char *input, int nx, int ny, float *out)
 
 //#ifdef MAIN_SPARSE_FLOW
 #include <cstdio>
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	// process input arguments
 	if (argc != 5) {
 		fprintf(stderr, "usage:\n\t%s sift_matches.txt colum row out.flo\n", *argv);

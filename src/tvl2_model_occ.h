@@ -15,24 +15,24 @@
 
 ////INITIALIZATION OF EACH METHOD
 void intialize_stuff_tvl2coupled_occ(
-        SpecificOFStuff *ofStuff,
-        OpticalFlowData *ofCore);
+        SpecificOFStuff& ofStuff,
+        const OpticalFlowData& ofCore);
 
 
 void free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff);
 
 void eval_tvl2coupled_occ(
-        float *I0,           // source image
-        float *I1,           // target image
+        const float *I0,           // source image
+        const float *I1,           // forward image
+        const float *I_1,           // backward image
         OpticalFlowData *ofD,
-        Tvl2CoupledOFStuff *tvl2,
+        Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej, // end row
+        const PatchIndexes index, // end row
         const float lambda,  // weight of the data term
-        const float theta
+        const float theta,
+        const float alpha,
+        const float beta
         );
 
 // Variational Optical flow method based on initial fixed values
@@ -42,16 +42,13 @@ void eval_tvl2coupled_occ(
 
 
 void guided_tvl2coupled_occ(
-        float *I1,           // source image
-        float *I2,           // forward image
-        float *I0,           // backward image
+        const float *I1,           // source image
+        const float *I2,           // forward image
+        const float *I0,           // backward image
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej, // end row
+        const PatchIndexes index,
         const float lambda,  // weight of the data term
         const float theta,   // weight of the data term
         const float tau_u,     // time step for u
@@ -65,15 +62,16 @@ void guided_tvl2coupled_occ(
         );
 
 void tvl2OF_occ(
-        float *I0,           // source image
-        float *I1,           // target image
-        float *I_1,
+        const float *I0,           // source image
+        const float *I1,           // target image
+        const float *I_1,
         float *u1,           // x component of the optical flow
         float *u2,           // y component of the optical flow
         float *xi11,
         float *xi12,
         float *xi21,
         float *xi22,
+        float *chi,
         const float lambda,  // weight of the data term
         const float theta,   // weight of the data term
         const float tau_u,     // time step for u

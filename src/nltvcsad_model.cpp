@@ -65,8 +65,8 @@ void  free_stuff_nltvcsad(SpecificOFStuff *ofStuff)
 
 
 void eval_nltvcsad(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     NonLocalTvCsadStuff *nltvcsad,
     float *ener_N,
@@ -290,8 +290,8 @@ void nltvcsad_getP(
 }
 
 void guided_nltvcsad(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     NonLocalTvCsadStuff *nltvcsad,
     float *ener_N,

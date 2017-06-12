@@ -642,11 +642,7 @@ void insert_candidates(
 }
 
 
-inline void get_index_patch(
-        int *ii, // initial column
-        int *ij, // initial row
-        int *ei, // end column
-        int *ej, // end row
+inline PatchIndexes get_index_patch(
         const int wr,
         const int w,
         const int h,
@@ -654,11 +650,13 @@ inline void get_index_patch(
         const int j,
         const int factor
         ) {
+    PatchIndexes index;
     //Points to begin and end. End is the previous value
-    (*ii) = (((i - factor * wr) < 0)? 0 : (i - factor * wr));
-    (*ij) = (((j - factor * wr) < 0)? 0 : (j - factor * wr));
-    (*ei) = (((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr));
-    (*ej) = (((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr));
+    index.ii = (((i - factor * wr) < 0)? 0 : (i - factor * wr));
+    index.ij = (((j - factor * wr) < 0)? 0 : (j - factor * wr));
+    index.ei = (((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr));
+    index.ej = (((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr));
+    return index;
 
 }
 
@@ -861,16 +859,16 @@ int check_trustable_patch(
 
 
 static void add_neighbors(        
-        float *i0,
-        float *i1,
-        float *i_1,
+        const float *i0,
+        const float *i1,
+        const float *i_1,
         float *ene_val,
         OpticalFlowData *ofD,
         SpecificOFStuff *ofS,
         pq_cand *queue,
-        int i,
-        int j,
-        int mode,
+        const int i,
+        const int j,
+        const int mode,
         float *out,
         float *out_occ
         ) {
@@ -880,8 +878,8 @@ static void add_neighbors(
     const int wr = ofD->wr;
     float ener_N;
 
-    int ii, ij, ei, ej;
-    get_index_patch(&ii, &ij, &ei, &ej, wr, w, h, i, j, 1);
+
+    PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
 
     int method = ofD->method;
 
@@ -895,17 +893,17 @@ static void add_neighbors(
     //Poisson Interpolation (4wr x 4wr + 1)
     if (mode == 0) {
         //it > 0. Interpolate over the survivors of the pruning.
-        copy_fixed_coordinates(ofD, out, ii, ij, ei, ej);
-        interpolate_poisson(ofD, ii, ij, ei, ej);
+        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
+        interpolate_poisson(ofD, index.ii, index.ij, index.ei, index.ej);
 
-    }else if (check_trustable_patch(ofD,ii,ij,ei,ej) == 0) {
+    }else if (check_trustable_patch(ofD, index.ii, index.ij, index.ei, index.ej) == 0) {
 
-        copy_fixed_coordinates(ofD, out, ii, ij, ei, ej);
-        interpolate_poisson(ofD, ii, ij, ei, ej);
+        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
+        interpolate_poisson(ofD, index.ii, index.ij, index.ei, index.ej);
     }
 
     // Optical flow method on patch (2*wr x 2wr + 1)
-    of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, ii, ij, ei, ej);
+    of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, index);
 
     // update_fixed_coordinates(out, ofD, ii, ij, ei, ej);
     insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
@@ -924,9 +922,9 @@ static void add_neighbors(
 
 
 int insert_initial_seeds(
-        float *i0,
-        float *i1,
-        float *i_1,
+        const float *i0,
+        const float *i1,
+        const float *i_1,
         float *in,
         pq_cand *queue,
         OpticalFlowData *ofD,
@@ -936,9 +934,9 @@ int insert_initial_seeds(
         float *out,
         float *out_occ
         ) {
-    int w = ofD->w;
-    int h = ofD->h;
-    int wr = ofD->wr;
+    const int w = ofD->w;
+    const int h = ofD->h;
+    const int wr = ofD->wr;
     int nfixed = 0;
 
     //Set to the initial conditions all the stuff
@@ -982,9 +980,9 @@ int insert_initial_seeds(
 //  Insert each pixel into the queue as possible candidate. Its related energy comes
 // from the energy store at the moment that the pixel was fixed.
 void insert_potential_candidates(
-        float *i0,
-        float *i1,
-        float *in,
+        const float *i0,
+        const float *i1,
+        const float *in,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         pq_cand *queue,
@@ -1026,12 +1024,13 @@ void insert_potential_candidates(
 }
 
 static void update_energy_map(
-        float *i0,
-        float *i1,
+        const float *i0,
+        const float *i1,
+        const float *i_1,
         float *ene_val,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
-        float *out
+        const float *out
         ) {
 
     const int w  = ofD->w;
@@ -1059,9 +1058,8 @@ static void update_energy_map(
             // FIRST STEP, ADD "POISSON" CANDIDATES
             //
             //////////////////////////////////////////
-            int ii, ij, ei, ej;
-            get_index_patch(&ii, &ij, &ei, &ej, wr, w, h, i, j, 1);
-            eval_functional(ofS, ofD, &ener_N, i0, i1, ii, ij, ei, ej);
+            PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
+            eval_functional(ofS, ofD, &ener_N, i0, i1, i_1, index);
             ene_val[j*w + i] = ener_N * sal[j*w + i];
         }
 }
@@ -1088,21 +1086,21 @@ void prepare_data_for_growing(
 }
 
 void local_growing(        
-        float *i0,
-        float *i1,
-        float *i_1,
+        const float *i0,
+        const float *i1,
+        const float *i_1,
         pq_cand *queue,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         int tm,
-        int nfixed,
+        const int nfixed,
         float *ene_val,
         float *out,
         float *out_occ
         ) {
-    int val = nfixed;
-    int w = ofD->w;
-    int h = ofD->h;
+
+    const int w = ofD->w;
+    const int h = ofD->h;
     std::printf("Queue size at start = %d\n", (int)queue->size());
     while (! queue->empty()) {
 
@@ -1126,7 +1124,7 @@ void local_growing(
             }
 
             ofD->fixed_points[j*w + i] = 1;
-            val += 1;
+
             //printf("%d\n", val);
             out[j*w + i] = u;
             out[w*h + j*w + i] = v;
@@ -1207,7 +1205,8 @@ void match_growing_variational(
     float *occ_Ba = new float[w*h];
 
     //Create queues
-    int nfixed = 0;
+    int nfixed_go = 0;
+    int nfixed_ba = 0;
     pq_cand queueGo;
     pq_cand queueBa;
 
@@ -1215,8 +1214,8 @@ void match_growing_variational(
     //Initialize all the auxiliar data.
     SpecificOFStuff stuffGo;
     SpecificOFStuff stuffBa;
-    initialize_auxiliar_stuff(&stuffGo, &ofGo);
-    initialize_auxiliar_stuff(&stuffBa, &ofBa);
+    initialize_auxiliar_stuff(stuffGo, ofGo);
+    initialize_auxiliar_stuff(stuffBa, ofBa);
 
 
     //i0n, i1n, i_1n, i2n are a gray and smooth version of i0, i1, i_1, i2
@@ -1233,11 +1232,20 @@ void match_growing_variational(
     ////FIXED POINTS////
     //Insert initial seeds to queues
     std::printf("Inserting initial seeds\n");
-    nfixed = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
-    nfixed = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+#pragma omp parallel num_threads(2)
+        {
+#pragma omp sections
+            {
+#pragma omp section
+                nfixed_go = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
+#pragma omp section
+                nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+            } /// End of sections
+        } /// End of parallel section
+
     std::printf("Finished inserting initial seeds\n");
 
-    int iter = LOCAL_ITER;
+    const int iter = LOCAL_ITER;
     //Variables for pruning
     float tol[2] = {FB_TOL, TU_TOL};
     int   p[2] = {1 , 0};
@@ -1276,15 +1284,15 @@ void match_growing_variational(
             {
 #pragma omp section
                 //Estimate local minimization I0-I1
-                local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0, occ_Go);
+                local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go);
 #pragma omp section
                 //Estimate local minimzation I1-I0
-                local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1, occ_Ba);
+                local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed_ba, ene_Ba, oft1, occ_Ba);
             } /// End of sections
         } /// End of parallel section
 
         //Pruning method
-        pruning_method(&ofGo, &ofBa, i1n, i2n, w, h, tol, p,
+        pruning_method(&ofGo, &ofBa, i0n, i1n, w, h, tol, p,
                        ofGo.trust_points, oft0, ofBa.trust_points, oft1);
 
         //Delete not trustable candidates based on the previous pruning
@@ -1300,7 +1308,7 @@ void match_growing_variational(
 
     }
     std::printf("Last growing\n");
-    local_growing(i1n, i2n, i0n, &queueGo, &stuffGo, &ofGo, 10, nfixed, ene_Go, oft0, occ_Go);
+    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, 10, nfixed_go, ene_Go, oft0, occ_Go);
 
     //Copy the result t, t+1 as output.
     memcpy(out_flow, oft0, sizeof(float)*w*h*2);
@@ -1477,10 +1485,10 @@ int main(int c, char *v[]){
 
     //filename that contains all the images to use
     char *filename_images = v[1];
-    char *filename_i_1;
-    char *filename_i0;
-    char *filename_i1;
-    char *filename_i2;
+    char *filename_i_1  = nullptr;
+    char *filename_i0 = nullptr;
+    char *filename_i1 = nullptr;
+    char *filename_i2 = nullptr;
 
     //Read txt file of images
     string line;
@@ -1521,8 +1529,8 @@ int main(int c, char *v[]){
     char *filename_out = v[4];
     char *filenme_sim  = v[5];
     char *filename_occ = v[6];
-    char *filename_sal0;
-    char *filename_sal1;
+    char *filename_sal0 = nullptr;
+    char *filename_sal1 = nullptr;
 
     if (c == 9){
         filename_sal0 = v[7];
@@ -1538,8 +1546,8 @@ int main(int c, char *v[]){
     int w[8], h[8], pd[6];
 
     //Frame t-1 and t+2
-    float *i_1;
-    float *i2;
+    float *i_1 = nullptr;
+    float *i2 = nullptr;
     if (num_files == 4){
         i_1 = iio_read_image_float_split(filename_i_1, w + 6, h + 6, pd + 4);
         i2 = iio_read_image_float_split(filename_i2, w + 7, h + 7, pd + 5);
@@ -1578,8 +1586,8 @@ int main(int c, char *v[]){
         return fprintf(stderr, "ERROR: input flow field size mismatch\n");
 
     //Load or compute saliency
-    float *sal0;
-    float *sal1;
+    float *sal0 = nullptr;
+    float *sal1 = nullptr;
     if (c == 9){
         sal0 = iio_read_image_float(filename_sal0, w + 4, h + 4);
         sal1 = iio_read_image_float(filename_sal1, w + 5, h + 5);

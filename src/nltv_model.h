@@ -16,25 +16,22 @@
 #define NLTV_VERBOSE 0  //0
 
 void  intialize_stuff_nltvl1(
-          SpecificOFStuff *ofStuff,
-          OpticalFlowData *ofCore);
+        SpecificOFStuff *ofStuff,
+        OpticalFlowData *ofCore);
 
 
 void  free_stuff_nltvl1(SpecificOFStuff *ofStuff);
 
 void eval_nltvl1(
-    float *I0,           // source image
-    float *I1,           // target image
-    OpticalFlowData *ofD,
-    NonLocalTVL1Stuff *nltvl1,
-    float *ener_N,
-    const int ii, // initial column
-    const int ij, // initial row
-    const int ei, // end column
-    const int ej, // end row
-    const float lambda,  // weight of the data term
-    const float theta
-    );
+        const float *I0,           // source image
+        const float *I1,           // target image
+        OpticalFlowData *ofD,
+        NonLocalTVL1Stuff *nltvl1,
+        float *ener_N,
+        const PatchIndexes index,
+        const float lambda,  // weight of the data term
+        const float theta
+        );
 
 
 
@@ -45,53 +42,50 @@ void eval_nltvl1(
 */
 
 void nltvl1_getP(
-            float *v1, 
-            float *v2,
-            float *div_p1, 
-            float *div_p2,  
-            int *mask,
-            float theta, 
-            float tau, 
-            const int ii, // initial column
-            const int ij, // initial row
-            const int ei, // end column
-            const int ej, // end row
-            const int w,
-            float *u1,
-            float *u2,
-            float *err
-    );
+        float *v1,
+        float *v2,
+        float *div_p1,
+        float *div_p2,
+        int *mask,
+        float theta,
+        float tau,
+        const int ii, // initial column
+        const int ij, // initial row
+        const int ei, // end column
+        const int ej, // end row
+        const int w,
+        float *u1,
+        float *u2,
+        float *err
+        );
 
- void nltvl1_getD(
-          float *u1,
-          float *u2,
-          const int ii, // initial column
-          const int ij, // initial row
-          const int ei, // end column
-          const int ej, // end row
-          const int w,
-          int n_d,
-          float tau,
-          DualVariables *p1,
-          DualVariables *p2
-);
+void nltvl1_getD(
+        float *u1,
+        float *u2,
+        const int ii, // initial column
+        const int ij, // initial row
+        const int ei, // end column
+        const int ej, // end row
+        const int w,
+        int n_d,
+        float tau,
+        DualVariables *p1,
+        DualVariables *p2
+        );
 
 void guided_nltvl1(
-    float *I0,           // source image
-    float *I1,           // target image
-    OpticalFlowData *ofD,
-    NonLocalTVL1Stuff *nltvl1,
-    float *ener_N,
-    const int ii, // initial column
-    const int ij, // initial row
-    const int ei, // end column
-    const int ej, // end row
-    const float lambda,  // weight of the data term
-    const float theta,   // weight of the data term
-    const float tau,     // time step
-    const float tol_OF,  // tol max allowed
-    const int   warps,   // number of warpings per scale
-    const bool  verbose  // enable/disable the verbose mode
-    );
+        const float *I0,           // source image
+        const float *I1,           // target image
+        OpticalFlowData *ofD,
+        NonLocalTVL1Stuff *nltvl1,
+        float *ener_N,
+        const PatchIndexes index, // end row
+        const float lambda,  // weight of the data term
+        const float theta,   // weight of the data term
+        const float tau,     // time step
+        const float tol_OF,  // tol max allowed
+        const int   warps,   // number of warpings per scale
+        const bool  verbose  // enable/disable the verbose mode
+        );
 
 #endif //TVL2-L1 functional

@@ -11,8 +11,8 @@ void  free_stuff_tvl2coupled_w(SpecificOFStuff *ofStuff);
 
 
 void eval_tvl2coupled_w(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     Tvl2CoupledOFStuff_W *tvl2w,
     float *ener_N,
@@ -24,8 +24,8 @@ void eval_tvl2coupled_w(
     const float theta
     );
 void guided_tvl2coupled_w(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     Tvl2CoupledOFStuff_W *tvl2w,
     float *ener_N,

@@ -34,20 +34,27 @@ struct BilateralWeight{
     float wt = 0.0;
 };
 
+struct PatchIndexes{
+    int ii; // initial column
+    int ij; // initial row
+    int ei; // end column
+    int ej; // end row
+};
+
 struct OpticalFlowData{
     /* data */
     //TODO: This should be outside of this structure
-    float *u1;
-    float *u2;
-    float *u1_ba;
-    float *u2_ba;
-    float *chi;
-    int   *fixed_points;
-    int   *trust_points;
-    float *saliency; //It stores the saliency value for each pixel.
+    float * __restrict u1;
+    float * __restrict u2;
+    float * __restrict u1_ba;
+    float * __restrict u2_ba;
+    float * __restrict chi;
+    int   * __restrict fixed_points;
+    int   * __restrict trust_points;
+    float * __restrict saliency; //It stores the saliency value for each pixel.
     BilateralWeight *weight;
-    float *u1_ini; //Optical flow values to initialize the local patch
-    float *u2_ini; //Optical flow values to initialize the local patch
+    float * __restrict u1_ini; //Optical flow values to initialize the local patch
+    float * __restrict u2_ini; //Optical flow values to initialize the local patch
     int wr;
     int w;
     int h;
@@ -77,99 +84,40 @@ struct PosNei{
 ////Specific struct for the different functionals
 struct  Tvl2CoupledOFStuff{
     //Dual variables
-    float *xi11 = nullptr;
-    float *xi12 = nullptr;
-    float *xi21 = nullptr;
-    float *xi22 = nullptr;
+    float *xi11;
+    float *xi12;
+    float *xi21;
+    float *xi22;
 
-    float *u1x = nullptr;
-    float *u1y = nullptr;
-    float *u2x = nullptr;
-    float *u2y = nullptr;
+    float *u1x;
+    float *u1y;
+    float *u2x;
+    float *u2y;
 
-    float *v1 = nullptr;
-    float *v2 = nullptr;
+    float *v1;
+    float *v2;
 
-    float *rho_c = nullptr;
-    float *grad = nullptr;
+    float *rho_c;
+    float *grad;
 
-    float *u1_ = nullptr;
-    float *u2_ = nullptr;
+    float *u1_;
+    float *u2_;
 
-    float *u1Aux = nullptr;
-    float *u2Aux = nullptr;
+    float *u1Aux;
+    float *u2Aux;
 
-    float *I1x = nullptr;
-    float *I1y = nullptr;
-    float *I1w = nullptr;
-    float *I1wx = nullptr;
-    float *I1wy = nullptr;
+    float *I1x;
+    float *I1y;
+    float *I1w;
+    float *I1wx;
+    float *I1wy;
 
-    float *div_xi1 = nullptr;
-    float *div_xi2 = nullptr;
-    float *u_N = nullptr;
+    float *div_xi1;
+    float *div_xi2;
+    float *u_N;
 };
 
-// ////Specific struct for the different functionals
-// struct  Tvl1OFStuff
-// {
-//   float *xi11;
-//   float *xi12;
-//   float *xi21;
-//   float *xi22;
-//   float *u1x;
-//   float *u1y;
-//   float *u2x;
-//   float *u2y;
-//   float *v1;
-//   float *v2;
-//   float *rho_c;
-//   float *grad;
-//   float *u1_;
-//   float *u2_;
-//   float *u1Aux;
-//   float *u2Aux;
-//   float *I1x;
-//   float *I1y;
-//   float *I1w;
-//   float *I1wx;
-//   float *I1wy;
-//   float *div_xi1;
-//   float *div_xi2;
-//   float *u_N;
-// };
-
-// struct RotInvariantStuff
-// {
-//   float *xi11;
-//   float *xi12;
-//   float *xi22;
-//   float *u1x;
-//   float *u1y;
-//   float *u2x;
-//   float *u2y;
-//   float *v1;
-//   float *v2;
-//   float *rho_c;
-//   float *grad;
-//   float *u1_;
-//   float *u2_;
-//   float *u1Aux;
-//   float *u2Aux;
-//   float *I1x;
-//   float *I1y;
-//   float *I1w;
-//   float *I1wx;
-//   float *I1wy;
-//   float *div_xi1;
-//   float *div_xi2;
-//   float *u_N;
-// };
-
-
-
-struct NonLocalTVL1Stuff
-{
+struct NonLocalTVL1Stuff{
     DualVariables *p;
     DualVariables *q;
     float *v1;
@@ -359,76 +307,75 @@ struct  TvCsadStuff_W
 ////////////////////////
 /////////OCCLUSIONS/////
 ///////////////////////
-struct  Tvl2CoupledOFStuff_occ
-{
+struct  Tvl2CoupledOFStuff_occ {
     //Occlusion variable
-    float *chi;
-    float *chix;
-    float *chiy;
+    float * __restrict chi;
+    float * __restrict chix;
+    float * __restrict chiy;
 
     //Weigth
-    float *g;
+    float * __restrict g;
 
-    float *diff_u_N;
+    float * __restrict diff_u_N;
 
     //Dual variables
-    float *xi11;
-    float *xi12;
-    float *xi21;
-    float *xi22;
+    float * __restrict xi11;
+    float * __restrict xi12;
+    float * __restrict xi21;
+    float * __restrict xi22;
 
-    float *u1x;
-    float *u1y;
-    float *u2x;
-    float *u2y;
+    float * __restrict u1x;
+    float * __restrict u1y;
+    float * __restrict u2x;
+    float * __restrict u2y;
     //Dual variables for chi
-    float *eta1;
-    float *eta2;
+    float * __restrict eta1;
+    float * __restrict eta2;
 
 
-    float *v1;
-    float *v2;
+    float * __restrict v1;
+    float * __restrict v2;
 
-    float *rho_c1;
-    float *rho_c_1;
-    float *grad_1;
-    float *grad__1;
-
-
-    float *I1x;
-    float *I1y;
-    float *I1w;
-    float *I1wx;
-    float *I1wy;
-
-    float *I_1x;
-    float *I_1y;
-    float *I_1w;
-    float *I_1wx;
-    float *I_1wy;
+    float * __restrict rho_c1;
+    float * __restrict rho_c_1;
+    float * __restrict grad_1;
+    float * __restrict grad__1;
 
 
-    float *vi_div1;
-    float *grad_x1;
-    float *grad_y1;
-    float *vi_div2;
-    float *grad_x2;
-    float *grad_y2;
-    float *g_xi11;
-    float *g_xi12;
-    float *g_xi21;
-    float *g_xi22;
-    float *div_g_xi1;
-    float *div_g_xi2;
+    float * __restrict I1x;
+    float * __restrict I1y;
+    float * __restrict I1w;
+    float * __restrict I1wx;
+    float * __restrict I1wy;
+
+    float * __restrict I_1x;
+    float * __restrict I_1y;
+    float * __restrict I_1w;
+    float * __restrict I_1wx;
+    float * __restrict I_1wy;
 
 
-    float *F;
-    float *G;
+    float * __restrict vi_div1;
+    float * __restrict grad_x1;
+    float * __restrict grad_y1;
+    float * __restrict vi_div2;
+    float * __restrict grad_x2;
+    float * __restrict grad_y2;
+    float * __restrict g_xi11;
+    float * __restrict g_xi12;
+    float * __restrict g_xi21;
+    float * __restrict g_xi22;
+    float * __restrict div_g_xi1;
+    float * __restrict div_g_xi2;
 
-    float *div_u;
-    float *g_eta1;
-    float *g_eta2;
-    float *div_g_eta;
+
+    float * __restrict F;
+    float * __restrict G;
+
+    float * __restrict div_u;
+    float * __restrict g_eta1;
+    float * __restrict g_eta2;
+    float * __restrict div_g_eta;
 };
 
 

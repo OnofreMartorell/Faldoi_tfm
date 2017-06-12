@@ -172,8 +172,8 @@ inline void tvl2coupled_w_getP(
 }
 
 void eval_tvl2coupled_w(
-        float *I0,           // source image
-        float *I1,           // target image
+        const float *I0,           // source image
+        const float *I1,           // target image
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_W *tvl2w,
         float *ener_N,
@@ -250,8 +250,8 @@ void eval_tvl2coupled_w(
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled_w(
-        float *I0,           // source image
-        float *I1,           // target image
+        const float *I0,           // source image
+        const float *I1,           // target image
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_W *tvl2w,
         float *ener_N,
@@ -265,8 +265,7 @@ void guided_tvl2coupled_w(
         const float tol_OF,  // tol max allowed
         const int   warps,   // number of warpings per scale
         const bool  verbose  // enable/disable the verbose mode
-        )
-{
+        ){
 
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;

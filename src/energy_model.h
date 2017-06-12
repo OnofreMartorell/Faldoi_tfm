@@ -10,8 +10,8 @@
 
 ////INITIALIZATION OF AUXILIAR STUFF
 void initialize_auxiliar_stuff(
-        SpecificOFStuff *ofStuff,
-        OpticalFlowData *ofCore
+        SpecificOFStuff& ofStuff,
+        OpticalFlowData& ofCore
         );
 
 void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore);
@@ -20,11 +20,11 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
                    OpticalFlowData *ofCore1,
                    SpecificOFStuff *ofStuff2,
                    OpticalFlowData *ofCore2,
-                   float *i0,
-                   float *i1,
-                   float *i_1,
-                   float *i2,
-                   int pd,
+                   const float *i0,
+                   const float *i1,
+                   const float *i_1,
+                   const float *i2,
+                   const int pd,
                    float **out_i0,
                    float **out_i1,
                    float **out_i_1,
@@ -33,25 +33,17 @@ void prepare_stuff(SpecificOFStuff *ofStuff1,
 void of_estimation(SpecificOFStuff *ofStuff,
                    OpticalFlowData *ofCore,
                    float *ener_N,
-                   float *i0,  //first frame
-                   float *i1, //second frame
-                   float *i_1,
-                   const int ii, // initial column
-                   const int ij, // initial row
-                   const int ei, // end column
-                   const int ej // end row
-                   );
+                   const float *i0,  //first frame
+                   const float *i1, //second frame
+                   const float *i_1,
+                   const PatchIndexes index);
 
-void eval_functional(
-        SpecificOFStuff *ofStuff,
-        OpticalFlowData *ofCore,
-        float *ener_N,
-        float *a,  //first frame
-        float *b,  //second frame
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej // end row,
-        );
+void eval_functional(SpecificOFStuff *ofStuff,
+                     OpticalFlowData *ofCore,
+                     float *ener_N,
+                     const float *i0,  //first frame
+                     const float *i1,  //second frame
+                     const float *i_1,
+                     const PatchIndexes index);
 
 #endif //ENERGY_MODEL_H

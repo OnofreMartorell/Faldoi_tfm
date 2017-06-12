@@ -63,8 +63,8 @@ void  free_stuff_nltvl1_w(SpecificOFStuff *ofStuff)
 
 
 void eval_nltvl1_w(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     NonLocalTVL1Stuff_W *nltvl1w,
     float *ener_N,
@@ -275,8 +275,8 @@ void nltvl1_w_getP(
 }
 
 void guided_nltvl1_w(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     NonLocalTVL1Stuff_W *nltvl1w,
     float *ener_N,

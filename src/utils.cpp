@@ -803,9 +803,7 @@ void image_normalization_4(
             I0n[i] = (I0[i] - min) / den;
             I1n[i] = (I1[i] - min) / den;
             I2n[i] = (I2[i] - min) / den;
-        }
-
-    else
+        }else{
         // copy the original images
         for (int i = 0; i < size; i++) {
             I_1n[i] = I_1[i];
@@ -813,6 +811,7 @@ void image_normalization_4(
             I1n[i] = I1[i];
             I2n[i] = I2[i];
         }
+    }
 }
 
 void init_weight(
@@ -821,10 +820,10 @@ void init_weight(
         float *Iy,
         float size){
 
-    float gamma = PAR_DEFAULT_GAMMA;
+    const float gamma = PAR_DEFAULT_GAMMA;
 
     for (int i = 0; i < size; i++) {
-        float grad = sqrt(Ix[i] * Ix[i] + Iy[i] * Iy[i]);
+        const float grad = sqrt(Ix[i] * Ix[i] + Iy[i] * Iy[i]);
         g[i] = 1/(1 + gamma*grad);
 
     }

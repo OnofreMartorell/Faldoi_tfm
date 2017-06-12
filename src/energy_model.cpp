@@ -47,14 +47,14 @@ extern "C" {
 #define PAR_DEFAULT_LAMBDA  40//40
 #define PAR_DEFAULT_THETA   0.3
 #define PAR_DEFAULT_TAU     0.125 //0.25
-#define PAR_DEFAULT_NWARPS  2  //5
+#define PAR_DEFAULT_NWARPS  1  //5
 #define PAR_DEFAULT_TOL_D   0.01
 #define PAR_DEFAULT_VERBOSE 0  //0
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
 
-void rgb_to_gray(float *in, int w, int h, float *out){
-    int size = w*h;
+void rgb_to_gray(const float *in, const int w, const int h, float *out){
+    const int size = w*h;
 
     for (int i = 0; i < size; i++){
 
@@ -64,11 +64,11 @@ void rgb_to_gray(float *in, int w, int h, float *out){
 
 }
 
-float pow2( float f ) {return f*f;}
+float pow2( const float f ) {return f*f;}
 
 
 //Asume que las imagenes no estan normalizadas
-void rgb_to_lab(float *in, int size, float *out){
+void rgb_to_lab(const float *in, int size, float *out){
 
     const float T = 0.008856;
     const float color_attenuation = 1.5f;
@@ -106,37 +106,36 @@ void rgb_to_lab(float *in, int size, float *out){
 ///////////////////////////////////////////////////////////
 
 void initialize_auxiliar_stuff(
-        SpecificOFStuff *ofStuff,
-        OpticalFlowData *ofCore)
-{
-    switch(ofCore->method)
+        SpecificOFStuff& ofStuff,
+        OpticalFlowData& ofCore){
+    switch(ofCore.method)
     {
     case M_NLTVL1: //NLTV-L1
-        intialize_stuff_nltvl1(ofStuff, ofCore);
+        intialize_stuff_nltvl1(&ofStuff, &ofCore);
         break;
     case M_TVCSAD: //TV-CSAD
-        intialize_stuff_tvcsad(ofStuff, ofCore);
+        intialize_stuff_tvcsad(&ofStuff, &ofCore);
         break;
     case M_NLTVCSAD: //NLTV-CSAD
-        intialize_stuff_nltvcsad(ofStuff, ofCore);
+        intialize_stuff_nltvcsad(&ofStuff, &ofCore);
         break;
     case M_TVL1_W: //TV-l2 coupled con pesos
-        intialize_stuff_tvl2coupled_w(ofStuff, ofCore);
+        intialize_stuff_tvl2coupled_w(&ofStuff, &ofCore);
         break;
     case M_NLTVCSAD_W: //NLTV-CSAD con pesos
-        intialize_stuff_nltvcsad_w(ofStuff, ofCore);
+        intialize_stuff_nltvcsad_w(&ofStuff, &ofCore);
         break;
     case M_NLTVL1_W: //NLTV-L1 con pessos
-        intialize_stuff_nltvl1_w(ofStuff, ofCore);
+        intialize_stuff_nltvl1_w(&ofStuff, &ofCore);
         break;
     case M_TVCSAD_W: //TV-CSAD con pesos
-        intialize_stuff_tvcsad_w(ofStuff, ofCore);
+        intialize_stuff_tvcsad_w(&ofStuff, &ofCore);
         break;
     case M_TVL1_OCC: //TV-l2 with occlusion
         intialize_stuff_tvl2coupled_occ(ofStuff, ofCore);
         break;
     default: //TV-l2 coupled
-        intialize_stuff_tvl2coupled(ofStuff, ofCore);
+        intialize_stuff_tvl2coupled(&ofStuff, &ofCore);
     }
 
 }
@@ -182,11 +181,11 @@ void prepare_stuff(
         OpticalFlowData *ofCore1,
         SpecificOFStuff *ofStuff2,
         OpticalFlowData *ofCore2,
-        float *i0,
-        float *i1,
-        float *i_1,
-        float *i2,
-        int pd,
+        const float *i0,
+        const float *i1,
+        const float *i_1,
+        const float *i2,
+        const int pd,
         float **out_i0,
         float **out_i1,
         float **out_i_1,
@@ -206,8 +205,8 @@ void prepare_stuff(
         float *alb = new float[w*h*pd];
         float *blb = new float[w*h*pd];
 
-        int n_d = NL_DUAL_VAR;
-        int radius = NL_BETA;
+        const int n_d = NL_DUAL_VAR;
+        const int radius = NL_BETA;
 
         rgb_to_lab(i0, w*h, alb);
         rgb_to_lab(i1, w*h, blb);
@@ -216,7 +215,7 @@ void prepare_stuff(
                                 ofStuff1->nltvl1.p, ofStuff1->nltvl1.q);
         nltv_ini_dual_variables(blb, pd, w, h, n_d, radius,
                                 ofStuff2->nltvl1.p, ofStuff2->nltvl1.q);
-        if (pd !=1 ){
+        if (pd != 1){
 
             rgb_to_gray(i0, w, h, a_tmp);
             rgb_to_gray(i1, w, h, b_tmp);
@@ -245,13 +244,13 @@ void prepare_stuff(
     {
         float *a_tmp = new float[w*h];
         float *b_tmp = new float[w*h];
-        int rdt = DT_R;
-        int ndt = DT_NEI;
+        const int rdt = DT_R;
+        const int ndt = DT_NEI;
         std::printf("1 - Inicializado CSAD\n");
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff1->tvcsad.pnei);
         std::printf("2 - Inicializado CSAD\n");
         csad_ini_pos_nei(w, h, ndt, rdt, ofStuff2->tvcsad.pnei);
-        if (pd!=1)
+        if (pd != 1)
         {
             // std::printf("Numero canales:%d\n",pd);
             rgb_to_gray(i0, w, h, a_tmp);
@@ -591,13 +590,10 @@ void of_estimation(
         SpecificOFStuff *ofStuff,
         OpticalFlowData *ofCore,
         float *ener_N,
-        float *i0,  //first frame
-        float *i1,  //second frame
-        float *i_1,
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej // end row
+        const float *i0,  //first frame
+        const float *i1,  //second frame
+        const float *i_1,
+        const PatchIndexes index // end row
         ) {
 
     //TODO: Each method should have its own set of parameters
@@ -615,7 +611,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvl1(i0, i1, ofCore, &(ofStuff->nltvl1), ener_N, ii, ij, ei, ej,
+        guided_nltvl1(i0, i1, ofCore, &(ofStuff->nltvl1), ener_N, index,
                       lambda, theta, tau, tol_OF, warps, verbose);
 
     }
@@ -626,7 +622,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_tvcsad(i0, i1, ofCore, &(ofStuff->tvcsad), ener_N, ii, ij, ei, ej,
+        guided_tvcsad(i0, i1, ofCore, &(ofStuff->tvcsad), ener_N, index.ii, index.ij, index.ei, index.ej,
                       lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -636,7 +632,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvcsad(i0, i1, ofCore, &(ofStuff->nltvcsad), ener_N, ii, ij, ei, ej,
+        guided_nltvcsad(i0, i1, ofCore, &(ofStuff->nltvcsad), ener_N, index.ii, index.ij, index.ei, index.ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -644,7 +640,7 @@ void of_estimation(
     {
         const float central = ofStuff->tvl2w.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        guided_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N, ii, ij, ei, ej,
+        guided_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N, index.ii, index.ij, index.ei, index.ej,
                              lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -656,7 +652,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvcsad_w(i0, i1, ofCore, &(ofStuff->nltvcsadw), ener_N, ii, ij, ei, ej,
+        guided_nltvcsad_w(i0, i1, ofCore, &(ofStuff->nltvcsadw), ener_N, index.ii, index.ij, index.ei, index.ej,
                           lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -669,7 +665,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_nltvl1_w(i0, i1, ofCore, &(ofStuff->nltvl1w), ener_N, ii, ij, ei, ej,
+        guided_nltvl1_w(i0, i1, ofCore, &(ofStuff->nltvl1w), ener_N, index.ii, index.ij, index.ei, index.ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
 
     }
@@ -682,7 +678,7 @@ void of_estimation(
         theta = 0.3;
         tau = 0.1;
         //estimate_tvl1
-        guided_tvcsad_w(i0, i1, ofCore, &(ofStuff->tvcsadw), ener_N, ii, ij, ei, ej,
+        guided_tvcsad_w(i0, i1, ofCore, &(ofStuff->tvcsadw), ener_N, index.ii, index.ij, index.ei, index.ej,
                         lambda, theta, tau, tol_OF, warps, verbose);
     }
         break;
@@ -696,13 +692,13 @@ void of_estimation(
         const float tau_eta = 0.125;
         const float tau_chi = 0.125;
         //estimate_tvl2 with occlusions
-        guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, ii, ij, ei, ej,
+        guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, index,
                            lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_OF, warps, verbose);
     }
         break;
     default: //TV-l2 coupled
         //estimate_tvl2
-        guided_tvl2coupled(i0, i1, ofCore, &(ofStuff->tvl2), ener_N, ii, ij, ei, ej,
+        guided_tvl2coupled(i0, i1, ofCore, &(ofStuff->tvl2), ener_N, index.ii, index.ij, index.ei, index.ej,
                            lambda, theta, tau, tol_OF, warps, verbose);
     }
 }
@@ -711,52 +707,46 @@ void of_estimation(
 
 
 
-void eval_functional(
-        SpecificOFStuff *ofStuff,
+void eval_functional(SpecificOFStuff *ofStuff,
         OpticalFlowData *ofCore,
         float *ener_N,
-        float *a,  //first frame
-        float *b,  //second frame
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej // end row,
-        ) {
+        const float *i0,  //first frame
+        const float *i1,  //second frame
+        const float *i_1,
+        const PatchIndexes index) {
     //TODO: Each method should have its own set of parameters
 
     float lambda  = PAR_DEFAULT_LAMBDA;
     float theta   = PAR_DEFAULT_THETA;
-    //TODO: Borrar
-    //int ww = ofCore->wr*2 + 1;
 
     switch(ofCore->method){
     case M_NLTVL1: //NLTV-L1
     {
         lambda  = 2.0;
-        eval_nltvl1(a, b, ofCore, &(ofStuff->nltvl1), ener_N,
-                    ii, ij, ei, ej, lambda, theta);
+        eval_nltvl1(i0, i1, ofCore, &(ofStuff->nltvl1), ener_N,
+                    index, lambda, theta);
     }
         break;
     case M_TVCSAD: //TV-CSAD
     {
         lambda  = 0.85;
-        eval_tvcsad(a, b, ofCore, &(ofStuff->tvcsad), ener_N,
-                    ii, ij, ei, ej, lambda, theta);
+        eval_tvcsad(i0, i1, ofCore, &(ofStuff->tvcsad), ener_N,
+                    index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
     case M_NLTVCSAD: //NLTV-CSAD
     {
         lambda  = 0.85;
-        eval_nltvcsad(a, b, ofCore, &(ofStuff->nltvcsad), ener_N,
-                      ii, ij, ei, ej, lambda, theta);
+        eval_nltvcsad(i0, i1, ofCore, &(ofStuff->nltvcsad), ener_N,
+                      index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
     case M_TVL1_W: //TV-l2 con pesos
     {
         const float central = ofStuff->tvl2w.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        eval_tvl2coupled_w(a, b, ofCore, &(ofStuff->tvl2w), ener_N,
-                           ii, ij, ei, ej, lambda, theta);
+        eval_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N,
+                           index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
     case M_NLTVCSAD_W: //NLTV-CSAD con pesos
@@ -764,8 +754,8 @@ void eval_functional(
         lambda  = 0.85;
         const float central = ofStuff->nltvcsadw.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        eval_nltvcsad_w(a, b, ofCore, &(ofStuff->nltvcsadw), ener_N,
-                        ii, ij, ei, ej, lambda, theta);
+        eval_nltvcsad_w(i0, i1, ofCore, &(ofStuff->nltvcsadw), ener_N,
+                        index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
     case M_NLTVL1_W: //NLTV-L1 con pesos
@@ -773,8 +763,8 @@ void eval_functional(
         lambda  = 2.0;
         const float central = ofStuff->nltvl1w.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        eval_nltvl1_w(a, b, ofCore, &(ofStuff->nltvl1w), ener_N,
-                      ii, ij, ei, ej, lambda, theta);
+        eval_nltvl1_w(i0, i1, ofCore, &(ofStuff->nltvl1w), ener_N,
+                      index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
     case M_TVCSAD_W: //TV-CSAD
@@ -782,14 +772,30 @@ void eval_functional(
         lambda  = 0.85;
         const float central = ofStuff->tvcsadw.weight[ofCore->wr + 1];
         lambda  = lambda /(central*central);
-        eval_tvcsad_w(a, b, ofCore, &(ofStuff->tvcsadw), ener_N,
-                      ii, ij, ei, ej, lambda, theta);
+        eval_tvcsad_w(i0, i1, ofCore, &(ofStuff->tvcsadw), ener_N,
+                      index.ii, index.ij, index.ei, index.ej, lambda, theta);
+    }
+        break;
+    case M_TVL1_OCC:
+    {
+        lambda = 0.25;
+        theta = 0.3;
+        const float beta = 1;
+        const float alpha = 0.01;
+        eval_tvl2coupled_occ(i0, i1, i_1, ofCore,
+                &(ofStuff->tvl2_occ),
+                ener_N,
+                index,
+                lambda,  // weight of the data term
+                theta,
+                alpha,
+                beta);
     }
         break;
     default: //TV-l2 coupled
     {
-        eval_tvl2coupled(a, b, ofCore, &(ofStuff->tvl2), ener_N,
-                         ii, ij, ei, ej, lambda, theta);
+        eval_tvl2coupled(i0, i1, ofCore, &(ofStuff->tvl2), ener_N,
+                         index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
     }
 }

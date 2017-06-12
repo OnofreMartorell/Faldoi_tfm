@@ -20,8 +20,8 @@ void  intialize_stuff_tvl2coupled(
 void  free_stuff_tvl2coupled(SpecificOFStuff *ofStuff);
 
 void eval_tvl2coupled(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     Tvl2CoupledOFStuff *tvl2,
     float *ener_N,
@@ -38,8 +38,8 @@ void eval_tvl2coupled(
 // s.t u = u_0 for i.seeds
 // J(u) = (u_x, u_y; v_x, v_y)
 void guided_tvl2coupled(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     Tvl2CoupledOFStuff *tvl2,
     float *ener_N,

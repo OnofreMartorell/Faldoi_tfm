@@ -1,8 +1,8 @@
 #! /usr/bin/python
-"""
- Litle script for faldoy to execute the data from sift matches.
+#"""
+# Litle script for faldoy to execute the data from sift matches.
 
-"""
+#"""
 import argparse
 import os
 import subprocess
@@ -18,8 +18,13 @@ from auxiliar_faldoi_functions import delete_outliers as delete
 parser = argparse.ArgumentParser(description = 'Faldoy Minimization')
 parser.add_argument("file_images", help = "File with images")
 
+method = 8
+local_of = True
+global_of = True
+
+
 #Energy model
-parser.add_argument("-vm", default = '8',
+parser.add_argument("-vm", default = str(method),
                     help = "Variational Method "
                     "(tv-l2 coupled: 0, tv-l2 coupled_w: 1, NLTVL1:2, NLTVL1:3...")
 #M_TVL1       0
@@ -31,6 +36,15 @@ parser.add_argument("-vm", default = '8',
 #M_NLTVCSAD   6
 #M_NLTVCSAD_W 7
 #M_TVL1_OCC   8       
+
+if method == 0:
+	method_extension = 'tvl1'
+elif method == 8:
+	method_extension = 'tvl1_occ'
+else:
+	method_extension = ''
+
+
 
 #Local Wise Minimization 
 parser.add_argument("-wr", default = '5',
@@ -90,11 +104,13 @@ sparse_name_1 = '%s%s_exp_mt_1.flo'%(f_path, core_name1)
 match_name_2 = '%s%s_exp_mt_2.txt'%(f_path, core_name2)
 sparse_name_2 = '%s%s_exp_mt_2.flo'%(f_path, core_name2)
 
-region_growing = '%s%s_rg.flo'%(f_path, core_name1)
-sim_value = '%s%s_exp_sim.tiff'%(f_path, core_name1)
-var_flow = '%s%s_exp_var.flo'%(f_path, core_name1)
-occlusions_rg = '%s%s_rg_occ.png'%(f_path, core_name1)
-occlusions_var = '%s%s_var_occ.png'%(f_path, core_name1)
+region_growing = '%s%s_rg_%s.flo'%(f_path, core_name1, method_extension)
+sim_value = '%s%s_exp_sim_%s.tiff'%(f_path, core_name1, method_extension)
+var_flow = '%s%s_exp_var_%s.flo'%(f_path, core_name1, method_extension)
+
+occlusions_rg = '%s%s_rg_occ_%s.png'%(f_path, core_name1, method_extension)
+occlusions_var = '%s%s_var_occ%s.png'%(f_path, core_name1, method_extension)
+
 #Obtain the matches' list for both (I0-I1 and I1-I0)
 print('Obtaining list of matches from DeepMatching')
 max_scale = math.sqrt(2)
@@ -123,22 +139,26 @@ os.system(command_line)
 
 
 #Create a dense flow from a sparse set of initial seeds
-print('Computing local faldoi')
+
 options = '-m %s -wr %s'%(var_m, windows_radio)
 param = '%s %s %s %s %s %s %s\n'%(args.file_images, sparse_name_1, sparse_name_2, 
                             region_growing, sim_value, occlusions_rg, options)
 #print param
 command_line = '%s %s\n'%(match_propagation, param)
 #print(command_line)
-#os.system(command_line)
+if local_of:
+	print('Computing local faldoi')
+	os.system(command_line)
 
 
 #Put the dense flow as input for a variational method
-print('Computing global faldoi')
+
 # Tv-l2 coupled 0 Du 1
 options = '-m %s -w %s'%(var_m, warps)
 param = '%s %s %s %s %s %s\n'%(args.file_images,
                             region_growing, var_flow, occlusions_rg, occlusions_var, options)
 command_line = '%s %s\n'%(of_var, param)
-print(command_line)
-os.system(command_line)
+#print(command_line)
+if global_of:
+	print('Computing global faldoi')
+	os.system(command_line)

@@ -40,6 +40,7 @@ using namespace std;
 
 #define PRESMOOTHING_SIGMA  0.90
 #define PAR_DEFAULT_NPROC   0    //0
+
 #define PAR_DEFAULT_LAMBDA  40//40
 #define PAR_DEFAULT_THETA   0.1
 #define PAR_DEFAULT_TAU     0.125 //0.25
@@ -427,8 +428,6 @@ void duOF(
 
     const float l_t = lambda * theta;
     const int   size = nx * ny;
-
-    size_t sd = sizeof(float);
 
 
     float *u1x    = new float[size];
@@ -1590,8 +1589,7 @@ void nltvcsad_PD(
         const bool  verbose, // enable/disable the verbose mode
         float *u1,       // x component of the optical flow
         float *u2      // y component of the optical flow
-        )
-{
+        ) {
 
     const int   size = w * h;
     const float l_t = lambda * theta;
@@ -1807,7 +1805,7 @@ static char *pick_option(int *c, char ***v, char *o, char *d) {
             char *r = argv[i+id]+1-id;
             *c -= id+1;
             for (int j = i; j < argc - id; j++)
-                (*v)[j] = (*v)[j+id+1];
+                (*v)[j] = (*v)[j + id + 1];
             return r;
         }
     return d;
@@ -1831,8 +1829,8 @@ static char *pick_option(int *c, char ***v, char *o, char *d) {
  */
 int main(int argc, char *argv[]) {
 
-    char *var_reg = pick_option(&argc, &argv, (char *)"m", (char *)"0");
-    char *warps_val = pick_option(&argc, &argv, (char *)"w", (char *)"1");
+    char *var_reg = pick_option(&argc, &argv, (char *)"m", (char *)"8");
+    char *warps_val = pick_option(&argc, &argv, (char *)"w", (char *)"4");
 
 
     if (argc != 6 && argc != 4) {
@@ -1864,9 +1862,10 @@ int main(int argc, char *argv[]) {
     char* occ_output = argv[i]; i++;
 
     //filename of images
-    char *filename_i_1;
-    char *filename_i0;
-    char *filename_i1;
+    char *filename_i_1 = nullptr;
+    char *filename_i0 = nullptr;
+    char *filename_i1 = nullptr;
+    char *filename_i2 = nullptr;
 
     //Read txt file of images
     string line;
@@ -1884,6 +1883,10 @@ int main(int argc, char *argv[]) {
             }else{
                 if (num_files == 2){
                     filename_i1  = strdup(line.c_str());
+                }else{
+                    if (num_files == 4){
+                        filename_i2  = strdup(line.c_str());
+                    }
                 }
             }
         }
@@ -1937,12 +1940,15 @@ int main(int argc, char *argv[]) {
 
 
     // open input images
-    int w[5], h[5], pd[5];
+    int w[6], h[6], pd[6];
     float *i_1;
-    if (num_files == 3){
+    float *i2;
+    if (num_files == 4){
         i_1 = iio_read_image_float_split(filename_i_1, w + 3, h + 3, pd + 3);
+        i2 = iio_read_image_float_split(filename_i2, w + 5, h + 5, pd + 5);
     }else{
         i_1 = iio_read_image_float_split(filename_i1, w + 3, h + 3, pd + 3);
+        i2 = iio_read_image_float_split(filename_i2, w + 5, h + 5, pd + 5);
     }
 
     float *i0   = iio_read_image_float_split(filename_i0, w + 0, h + 0, pd + 0);
@@ -1966,12 +1972,7 @@ int main(int argc, char *argv[]) {
         return fprintf(stderr, "ERROR: input flow field size mismatch\n");
 
 
-
-
     float *a = nullptr;
-    float *i0n = nullptr;
-    float *i1n = nullptr;
-    float *i_1n = nullptr;
     float *xi11 = nullptr;
     float *xi12 = nullptr;
     float *xi21 = nullptr;
@@ -1986,15 +1987,16 @@ int main(int argc, char *argv[]) {
         image_to_lab(i0, size, a);
     }
 
-    i0n = new float[size];
-    i1n = new float[size];
-    i_1n = new float[size];
-
+    float *i0n = new float[size];
+    float *i1n = new float[size];
+    float *i_1n = new float[size];
+    float *i2n = new float[size];
     if (pd[0] != 1){
 
         rgb2gray(i0, w[0], h[0], i0n);
         rgb2gray(i1, w[0], h[0], i1n);
         rgb2gray(i_1, w[0], h[0], i_1n);
+        rgb2gray(i2, w[0], h[0], i2n);
 
     }else{
 
@@ -2002,7 +2004,7 @@ int main(int argc, char *argv[]) {
         memcpy(i1n, i1, size*sizeof(float));
         memcpy(i_1n, i_1, size*sizeof(float));
     }
-    image_normalization_3(i0n, i1n, i_1n, i0n, i1n, i_1n, size);
+    image_normalization_4(i0n, i1n, i_1n, i2n, i0n, i1n, i_1n, i2n, size);
     gaussian(i0n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i1n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i_1n, w[0], h[0], PRESMOOTHING_SIGMA);
@@ -2100,6 +2102,8 @@ int main(int argc, char *argv[]) {
 
     delete [] i0n;
     delete [] i1n;
+    delete [] i_1n;
+    delete [] i2n;
 
     return EXIT_SUCCESS;
 }

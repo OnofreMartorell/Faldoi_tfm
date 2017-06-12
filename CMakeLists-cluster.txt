@@ -1,3 +1,8 @@
+# cd build
+# cmake ../src -DCMAKE_BUILD_TYPE=RELEASE
+# make -j5 sparse_flow
+# make -j5
+
 project(faldoi_qtcreator)
 cmake_minimum_required(VERSION 2.8.1)
 aux_source_directory(. SRC_LIST)

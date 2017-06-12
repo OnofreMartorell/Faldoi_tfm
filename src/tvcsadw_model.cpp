@@ -87,8 +87,8 @@ void  free_stuff_tvcsad_w(SpecificOFStuff *ofStuff){
 }
 
 void eval_tvcsad_w(
-    float *I0,
-    float *I1,
+    const float *I0,
+    const float *I1,
     OpticalFlowData *ofD,
     TvCsadStuff_W *tvcsadw,
     float *ener_N,
@@ -269,8 +269,8 @@ void tvcsad_w_getD(
 
 
 void guided_tvcsad_w(
-    float *I0,           // source image
-    float *I1,           // target image
+    const float *I0,           // source image
+    const float *I1,           // target image
     OpticalFlowData *ofD,
     TvCsadStuff_W *tvcsadw,
     float *ener_N,
