@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <string.h>
 #include <queue>
 #include <random>
 #include "energy_structures.h"
@@ -36,7 +37,7 @@ using namespace std;
 
 //GLOBAL VARIABLES
 // char GLOBAL_TMP_FILE[] = "/tmp/faldoy_XXXXXX"; // template for our file.
-#define PRESMOOTHING_SIGMA  0.90
+
 #define LOCAL_ITER 3
 #define TU_TOL 0.01
 #define FB_TOL 2
@@ -726,7 +727,7 @@ inline void copy_fixed_coordinates(
     int *fixed = ofD->fixed_points;
 
     for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++){ 
+        for (int k = ii; k < ei; k++){
             //Copy only fixed values from the patch
             const int i = l*w + k;
             if (fixed[i] == 1){
@@ -956,7 +957,7 @@ int insert_initial_seeds(
             //Indicates the initial seed in the similarity map
             if (std::isfinite(in[j*w +i]) && std::isfinite(in[w*h + j*w + i])){
 
-                out[j*w + i] = in[j*w + i];                
+                out[j*w + i] = in[j*w + i];
                 out[w*h + j*w + i] = in[w*h + j*w +i];
                 ofD->fixed_points[j*w + i] = 1;
 
@@ -1233,15 +1234,15 @@ void match_growing_variational(
     //Insert initial seeds to queues
     std::printf("Inserting initial seeds\n");
 #pragma omp parallel num_threads(2)
-        {
+    {
 #pragma omp sections
-            {
+        {
 #pragma omp section
-                nfixed_go = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
+            nfixed_go = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
 #pragma omp section
-                nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
-            } /// End of sections
-        } /// End of parallel section
+            nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+        } /// End of sections
+    } /// End of parallel section
 
     std::printf("Finished inserting initial seeds\n");
 
@@ -1251,31 +1252,31 @@ void match_growing_variational(
     int   p[2] = {1 , 0};
 
 
-//    int numCPU = omp_get_num_procs();
-//    int half_num_threads_0 = numCPU/2;
-//    int half_num_threads_1 = numCPU - half_num_threads_0;
+    //    int numCPU = omp_get_num_procs();
+    //    int half_num_threads_0 = numCPU/2;
+    //    int half_num_threads_1 = numCPU - half_num_threads_0;
 
-//    omp_set_nested(1);
+    //    omp_set_nested(1);
     for (int i = 0; i < iter; i++){
         std::printf("Iteration: %d\n", i);
 
 
-//#pragma omp parallel num_threads(2)
-//        {
-//            if (omp_get_thread_num() == 0){
-//#pragma omp parallel num_threads(half_num_threads_0)
-//                {
-//                    //Estimate local minimization I0-I1
-//                    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0);
-//                }
-//            }else{
-//#pragma omp parallel num_threads(half_num_threads_1)
-//                {
-//                    //Estimate local minimzation I1-I0
-//                    local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1);
-//                }
-//            }
-//        }
+        //#pragma omp parallel num_threads(2)
+        //        {
+        //            if (omp_get_thread_num() == 0){
+        //#pragma omp parallel num_threads(half_num_threads_0)
+        //                {
+        //                    //Estimate local minimization I0-I1
+        //                    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0);
+        //                }
+        //            }else{
+        //#pragma omp parallel num_threads(half_num_threads_1)
+        //                {
+        //                    //Estimate local minimzation I1-I0
+        //                    local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1);
+        //                }
+        //            }
+        //        }
 
 
 #pragma omp parallel num_threads(2)
@@ -1440,22 +1441,51 @@ static float *read_image(const char *filename, int *w, int *h){
     return f;
 }
 
+static Parameters init_params(const char *file_params, int warps){
+    Parameters params;
+    if (file_params == "0"){
+        params.lambda = PAR_DEFAULT_LAMBDA;
+        params.beta = PAR_DEFAULT_BETA;
+        params.theta = PAR_DEFAULT_THETA;
+        params.tau = PAR_DEFAULT_TAU;
+        params.alpha = PAR_DEFAULT_ALPHA;
+        params.tau_u = PAR_DEFAULT_TAU_U;
+        params.tau_eta = PAR_DEFAULT_TAU_ETA;
+        params.tau_chi = PAR_DEFAULT_TAU_CHI;
+    }else{
+        string::size_type sz;
+        string line;
+        ifstream infile;
+        infile.open(file_params);
+        getline(infile, line);
 
+        params.lambda = std::stof(line, &sz); getline(infile, line);
+        params.theta = std::stof(line, &sz); getline(infile, line);
+        params.tau = std::stof(line, &sz); getline(infile, line);
+        params.beta = std::stof(line, &sz); getline(infile, line);
+        params.alpha = std::stof(line, &sz); getline(infile, line);
+        params.tau_u = std::stof(line, &sz); getline(infile, line);
+        params.tau_eta = std::stof(line, &sz); getline(infile, line);
+        params.tau_chi = std::stof(line, &sz); getline(infile, line);
 
-#include <cstdio>
-#include <string.h>
+        infile.close();
+    }
+    params.tol_OF = PAR_DEFAULT_TOL_D;
+    params.verbose = PAR_DEFAULT_VERBOSE;
+    params.warps = warps;
+    return params;
+}
+
 // @c pointer to original argc
 // @v pointer to original argv
 // @o option name (after hyphen)
 // @d default value
-static char *pick_option(int *c, char ***v, char *o, char *d)
-{
+static char *pick_option(int *c, char ***v, char *o, char *d) {
     int argc = *c;
     char **argv = *v;
     int id = d ? 1 : 0;
     for (int i = 0; i < argc - id; i++)
-        if (argv[i][0] == '-' && 0 == strcmp(argv[i] + 1, o))
-        {
+        if (argv[i][0] == '-' && 0 == strcmp(argv[i] + 1, o)){
             char *r = argv[i + id] + 1 - id;
             *c -= id + 1;
             for (int j = i; j < argc - id; j++)
@@ -1465,26 +1495,66 @@ static char *pick_option(int *c, char ***v, char *o, char *d)
     return d;
 }
 
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
+static bool pick_option(std::vector<std::string>& args, const std::string& option){
+
+    auto it = std::find(args.begin(), args.end(), "-" + option);
+
+    bool found = it != args.end();
+    if (found)
+        args.erase(it);
+
+    return found;
+}
+
+static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value)
+{
+    auto arg = "-" + option;
+
+    for (auto it = args.begin(); it != args.end(); it++) {
+        if (*it == arg) {
+            auto next = it+1;
+            if (next == args.end())
+                continue;
+            auto result = *next;
+            args.erase(it, it+2);
+            return result;
+        }
+    }
+    return default_value;
+}
+
+
+
 
 //Main function that expands sparse flow
-int main(int c, char *v[]){
-    // process input
-    char *windows_radio = pick_option(&c, &v, (char *)"wr", (char *)"5"); //Warpings
-    char *var_reg       = pick_option(&c, &v, (char *)"m", (char *)"8"); //Method
+int main(int argc, char* argv[]){
 
-    if (c != 7 && c != 9) {
+
+    // process input
+    std::vector<std::string> args(argv, argv+argc);
+    auto windows_ratio = pick_option(args, "mw", "5"); // Warpings
+    auto var_reg       = pick_option(args, "m",  "8"); // Methods
+    auto parameters    = pick_option(args, "p",  "0"); // Methods
+
+
+    if (argc != 7 && argc != 9) {
         fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
                 //                          0        1     2       3       4       5         6
-                "[-m method_id] [-wr windows_radio]\n", c, *v);
+                "[-m method_id] [-wr windows_radio]\n", argc, *argv);
         fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
                 //                          0      1     2       3       4       5         6
-                "[-m method_id] [-wr windows_radio]\n", c, *v);
+                "[-m method_id] [-wr windows_radio]\n", argc, *argv);
 
         return 1;
     }
 
     //filename that contains all the images to use
-    char *filename_images = v[1];
+    char *filename_images = argv[1];
     char *filename_i_1  = nullptr;
     char *filename_i0 = nullptr;
     char *filename_i1 = nullptr;
@@ -1524,22 +1594,29 @@ int main(int c, char *v[]){
     }
 
     //Save other arguments
-    char *filename_go  = v[2];
-    char *filename_ba  = v[3];
-    char *filename_out = v[4];
-    char *filenme_sim  = v[5];
-    char *filename_occ = v[6];
+    char *filename_go  = argv[2];
+    char *filename_ba  = argv[3];
+    char *filename_out = argv[4];
+    char *filenme_sim  = argv[5];
+    char *filename_occ = argv[6];
     char *filename_sal0 = nullptr;
     char *filename_sal1 = nullptr;
 
-    if (c == 9){
-        filename_sal0 = v[7];
-        filename_sal1 = v[8];
+    if (argc == 9){
+        filename_sal0 = argv[7];
+        filename_sal1 = argv[8];
     }
 
     //Optional arguments
-    int w_radio = atoi(windows_radio);// Default: 5
-    int val_method = atoi(var_reg);// Default: TV-l2 coupled
+
+    int w_radio = stoi(windows_ratio);
+    int val_method = stoi(var_reg);
+    const char *file_params = parameters.data();
+
+    //Initialize parameters
+    int warps = PAR_DEFAULT_NWARPS_LOCAL;
+    Parameters params =  init_params(file_params, warps);
+
 
     // Open input images and .flo
     // pd: number of channels
@@ -1588,7 +1665,7 @@ int main(int c, char *v[]){
     //Load or compute saliency
     float *sal0 = nullptr;
     float *sal1 = nullptr;
-    if (c == 9){
+    if (argc == 9){
         sal0 = iio_read_image_float(filename_sal0, w + 4, h + 4);
         sal1 = iio_read_image_float(filename_sal1, w + 5, h + 5);
         fprintf(stderr, "Reading saliency values given\n");
@@ -1700,7 +1777,7 @@ int main(int c, char *v[]){
     free(go);
     free(ba);
 
-    if (c ==  8){ //c == 8
+    if (argc ==  8){ //c == 8
         free(sal0);
         free(sal1);
     }else{

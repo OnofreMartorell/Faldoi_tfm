@@ -40,18 +40,6 @@ extern "C" {
 //Models with occlusions
 #include "tvl2_model_occ.h"
 
-//IMAGE_PARAMETERS
-#define PRESMOOTHING_SIGMA  0.90
-
-//OPTICAL FLOW PARAMETERS
-#define PAR_DEFAULT_LAMBDA  40//40
-#define PAR_DEFAULT_THETA   0.3
-#define PAR_DEFAULT_TAU     0.125 //0.25
-#define PAR_DEFAULT_NWARPS  1  //5
-#define PAR_DEFAULT_TOL_D   0.01
-#define PAR_DEFAULT_VERBOSE 0  //0
-#define PAR_DEFAULT_GAMMA 0.05  //0
-
 
 void rgb_to_gray(const float *in, const int w, const int h, float *out){
     const int size = w*h;
@@ -602,7 +590,7 @@ void of_estimation(
     float tau     = PAR_DEFAULT_TAU;
     float tol_OF  = PAR_DEFAULT_TOL_D;
     int    verbose = PAR_DEFAULT_VERBOSE;
-    int    warps   = PAR_DEFAULT_NWARPS;
+    int    warps   = PAR_DEFAULT_NWARPS_LOCAL;
 
     switch(ofCore->method) {
     case M_NLTVL1: //NLTV-L1

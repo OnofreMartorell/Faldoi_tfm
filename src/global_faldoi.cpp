@@ -25,7 +25,7 @@ extern "C" {
 
 #include "tvl2_model_occ.h"
 #include "utils.h"
-
+#include "parameters.h"
 
 #include <iostream>
 #include <fstream>
@@ -34,30 +34,6 @@ extern "C" {
 #include <cstring>
 
 using namespace std;
-
-#define GRAD_IS_ZERO_GLOBAL 1E-10
-#define MAX_ITERATIONS 400
-
-#define PRESMOOTHING_SIGMA  0.90
-#define PAR_DEFAULT_NPROC   0    //0
-
-#define PAR_DEFAULT_LAMBDA  40//40
-#define PAR_DEFAULT_THETA   0.1
-#define PAR_DEFAULT_TAU     0.125 //0.25
-#define PAR_DEFAULT_NWARPS  5  //5
-#define PAR_DEFAULT_TOL_D   0.01
-#define PAR_DEFAULT_NPROC   0    //0
-#define PAR_DEFAULT_VERBOSE 1  //0
-
-#define M_TVL1       0
-#define M_TVL1_W     1
-#define M_NLTVL1     2
-#define M_NLTVL1_W   3
-#define M_TVCSAD     4
-#define M_TVCSAD_W   5
-#define M_NLTVCSAD   6
-#define M_NLTVCSAD_W 7
-#define M_TVL1_OCC   8
 
 
 //#ifndef DISABLE_OMP

@@ -1,5 +1,4 @@
-#define MAX_ITERATIONS_OF 4
-#define GRAD_IS_ZERO 1E-8
+
 /////////////////////////////
 
 

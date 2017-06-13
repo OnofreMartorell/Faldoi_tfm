@@ -286,8 +286,43 @@ void eval_tvl2coupled_occ(
             m++;
         }
     }
-    ener /=(m*1.0);
+    ener /= (m*1.0);
     *ener_N = ener;
+
+    if (!(ener >= 0.0)){
+        fprintf(stderr, "ener: %f\n", ener);
+        fprintf(stderr, "m: %f\n", m);
+        ener = 0.0;
+        for (int l = index.ij; l < index.ej; l++){
+            for (int k = index.ii; k < index.ei; k++){
+                const int i = l*nx + k;
+
+                const float diff_uv_term = (1/(2*theta))*
+                        ((u1[i] - v1[i])*(u1[i]- v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
+                const float norm_v_term = (alpha/2)*chi[i]*(v1[i]*v1[i] + v2[i]*v2[i]);
+
+                const float div_u_term = beta*chi[i]*div_u[i];
+
+                const float rho_1 = fabs(rho_c1[i]
+                                         + I1wx[i] * v1[i] + I1wy[i] * v2[i]);
+                const float rho__1 = fabs(rho_c_1[i]
+                                          + I_1wx[i] * v1[i] + I_1wy[i] * v2[i]);
+
+                const float data_term = lambda * ((1 - chi[i])*rho_1 + chi[i]*rho__1);
+
+
+                const float grad_u1 = sqrt(u1x[i] * u1x[i] + u1y[i] * u1y[i]);
+                const float grad_u2 = sqrt(u2x[i] * u2x[i] + u2y[i] * u2y[i]);
+                const float grad_chi = sqrt(chix[i] * chix[i] + chiy[i] * chiy[i]);
+
+
+                const float smooth_term = g[i]*(grad_u1 + grad_u2 + grad_chi);
+
+                ener += data_term + smooth_term + div_u_term + norm_v_term + diff_uv_term;
+                fprintf(stderr, "l: %d, k: %d, ener: %f\n", l, k, ener);
+            }
+        }
+    }
     assert(ener >= 0.0);
 }
 

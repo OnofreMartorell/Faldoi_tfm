@@ -4,7 +4,7 @@ aux_source_directory(. SRC_LIST)
 
 message("Build type: ${CMAKE_BUILD_TYPE}")
 
-include_directories(./lib)
+#include_directories(./lib)
 
 find_library(ZLIB libz.so PATHS lib)
 
@@ -37,3 +37,4 @@ add_executable(global_faldoi ${SHARED_C_SRC} ${SHARED_CPP_SRC} global_faldoi.cpp
 target_link_libraries(sparse_flow ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
 target_link_libraries(local_faldoi ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
 target_link_libraries(global_faldoi ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
+
