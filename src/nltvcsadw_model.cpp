@@ -15,9 +15,9 @@ void  intialize_stuff_nltvcsad_w(
           SpecificOFStuff *ofStuff,
           OpticalFlowData *ofCore)
 {
-  const int w = ofCore->w;
-  const int h = ofCore->h;
-  ofStuff->nltvcsadw.weight = new float[ofCore->wr*2 + 1];
+  const int w = ofCore->params.w;
+  const int h = ofCore->params.h;
+  ofStuff->nltvcsadw.weight = new float[ofCore->params.w_radio*2 + 1];
   ofStuff->nltvcsadw.p    = new DualVariables[w*h];
   ofStuff->nltvcsadw.q    = new DualVariables[w*h];
   ofStuff->nltvcsadw.pnei = new PosNei[w*h];
@@ -86,8 +86,8 @@ void eval_nltvcsad_w(
 
 
   //Columns and Rows
-  const int w = ofD->w;
-  const int h = ofD->h;
+  const int w = ofD->params.w;
+  const int h = ofD->params.h;
 
   float *I1w = nltvcsadw->I1w;
   DualVariables *p = nltvcsadw->p;
@@ -317,8 +317,8 @@ void guided_nltvcsad_w(
   float *u2 = ofD->u2;
   int *mask = ofD->fixed_points;
   //Columns and Rows
-  const int w = ofD->w;
-  const int h = ofD->h;
+  const int w = ofD->params.w;
+  const int h = ofD->params.h;
 
   DualVariables *p = nltvcsadw->p;
   DualVariables *q = nltvcsadw->q;

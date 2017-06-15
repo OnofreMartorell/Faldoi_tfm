@@ -48,7 +48,8 @@ void guided_tvl2coupled_occ(
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
-        const PatchIndexes index,
+        const PatchIndexes index
+        /*,
         const float lambda,  // weight of the data term
         const float theta,   // weight of the data term
         const float tau_u,     // time step for u
@@ -58,7 +59,7 @@ void guided_tvl2coupled_occ(
         const float alpha, //weight of the norm term
         const float tol_OF,  // tol max allowed
         const int   warps,   // number of warpings
-        const bool  verbose  // enable/disable the verbose mode
+        const bool  verbose  // enable/disable the verbose mode*/
         );
 
 void tvl2OF_occ(
@@ -72,17 +73,6 @@ void tvl2OF_occ(
         float *xi21,
         float *xi22,
         float *chi,
-        const float lambda,  // weight of the data term
-        const float theta,   // weight of the data term
-        const float tau_u,     // time step for u
-        const float tau_eta,     // time step for eta
-        const float tau_chi,     // time step for chi
-        const float beta,
-        const float alpha, //weight of the norm term
-        const float tol_OF,  // tol max allowed
-        const int   w,      // image width
-        const int   h,      // image height
-        const int   warps,   // number of warpings per scale
-        const bool  verbose  // enable/disable the verbose mode
+        const Parameters params
         );
 #endif //TVL2-L1 functional with occlusions

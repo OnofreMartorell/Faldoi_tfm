@@ -14,7 +14,7 @@
 #include <cassert>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-#include <omp.h>
+//#include <omp.h>
 
 extern "C" {
 //#include "mask.h"
@@ -29,8 +29,8 @@ void  intialize_stuff_tvl2coupled_occ(
         SpecificOFStuff& ofStuff,
         const OpticalFlowData& ofCore) {
 
-    const int w = ofCore.w;
-    const int h = ofCore.h;
+    const int w = ofCore.params.w;
+    const int h = ofCore.params.h;
 
     //Occlusion variable
     ofStuff.tvl2_occ.chix = new float[w*h];
@@ -166,11 +166,14 @@ void eval_tvl2coupled_occ(
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
-        const PatchIndexes index, // end row
-        const float lambda,  // weight of the data term
-        const float theta,
-        const float alpha,
-        const float beta
+        const PatchIndexes index,
+        Parameters params
+
+
+//        const float lambda,  // weight of the data term
+//        const float theta,
+//        const float alpha,
+//        const float beta
         ){
 
     const float *u1 = ofD->u1;
@@ -184,8 +187,8 @@ void eval_tvl2coupled_occ(
     float *chiy = tvl2_occ->chiy;
 
     //Columns and Rows
-    const int nx = ofD->w;
-    const int ny = ofD->h;
+    const int nx = ofD->params.w;
+    const int ny = ofD->params.h;
 
     //Optical flow derivatives
     const float *v1   = tvl2_occ->v1;
@@ -226,7 +229,7 @@ void eval_tvl2coupled_occ(
     forward_gradient_patch(chi, chix, chiy, index.ii, index.ij, index.ei, index.ej, nx);
     divergence_patch(u1, u2, div_u, index.ii, index.ij, index.ei, index.ej, nx);
 
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
@@ -248,24 +251,24 @@ void eval_tvl2coupled_occ(
     //Energy for all the patch. Maybe it would be useful only the 8 pixels around the seed.
     int m  = 0;
 
-#pragma omp simd collapse(2) reduction(+:ener)
+//#pragma omp simd collapse(2) reduction(+:ener)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
             const int i = l*nx + k;
 
-            const float diff_uv_term = (1/(2*theta))*
+            const float diff_uv_term = (1/(2*params.theta))*
                     ((u1[i] - v1[i])*(u1[i]- v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
-            const float norm_v_term = (alpha/2)*chi[i]*(v1[i]*v1[i] + v2[i]*v2[i]);
+            const float norm_v_term = (params.alpha/2)*chi[i]*(v1[i]*v1[i] + v2[i]*v2[i]);
 
-            const float div_u_term = beta*chi[i]*div_u[i];
+            const float div_u_term = params.beta*chi[i]*div_u[i];
 
             const float rho_1 = fabs(rho_c1[i]
                                      + I1wx[i] * v1[i] + I1wy[i] * v2[i]);
             const float rho__1 = fabs(rho_c_1[i]
                                       + I_1wx[i] * v1[i] + I_1wy[i] * v2[i]);
 
-            const float data_term = lambda * ((1 - chi[i])*rho_1 + chi[i]*rho__1);
+            const float data_term = params.lambda * ((1 - chi[i])*rho_1 + chi[i]*rho__1);
 
 
             const float grad_u1 = sqrt(u1x[i] * u1x[i] + u1y[i] * u1y[i]);
@@ -286,43 +289,11 @@ void eval_tvl2coupled_occ(
             m++;
         }
     }
+//    cerr << index << "\n";
+    //std::cerr << "i: " << index.i << ", j: " << index.j << "\n";
+    //fprintf(stderr, "i: %d, j: %d\n", index.i, index.j);
     ener /= (m*1.0);
     *ener_N = ener;
-
-    if (!(ener >= 0.0)){
-        fprintf(stderr, "ener: %f\n", ener);
-        fprintf(stderr, "m: %f\n", m);
-        ener = 0.0;
-        for (int l = index.ij; l < index.ej; l++){
-            for (int k = index.ii; k < index.ei; k++){
-                const int i = l*nx + k;
-
-                const float diff_uv_term = (1/(2*theta))*
-                        ((u1[i] - v1[i])*(u1[i]- v1[i]) + (u2[i] - v2[i])*(u2[i] - v2[i]));
-                const float norm_v_term = (alpha/2)*chi[i]*(v1[i]*v1[i] + v2[i]*v2[i]);
-
-                const float div_u_term = beta*chi[i]*div_u[i];
-
-                const float rho_1 = fabs(rho_c1[i]
-                                         + I1wx[i] * v1[i] + I1wy[i] * v2[i]);
-                const float rho__1 = fabs(rho_c_1[i]
-                                          + I_1wx[i] * v1[i] + I_1wy[i] * v2[i]);
-
-                const float data_term = lambda * ((1 - chi[i])*rho_1 + chi[i]*rho__1);
-
-
-                const float grad_u1 = sqrt(u1x[i] * u1x[i] + u1y[i] * u1y[i]);
-                const float grad_u2 = sqrt(u2x[i] * u2x[i] + u2y[i] * u2y[i]);
-                const float grad_chi = sqrt(chix[i] * chix[i] + chiy[i] * chiy[i]);
-
-
-                const float smooth_term = g[i]*(grad_u1 + grad_u2 + grad_chi);
-
-                ener += data_term + smooth_term + div_u_term + norm_v_term + diff_uv_term;
-                fprintf(stderr, "l: %d, k: %d, ener: %f\n", l, k, ener);
-            }
-        }
-    }
     assert(ener >= 0.0);
 }
 
@@ -354,16 +325,14 @@ static void tvl2coupled_get_xi_patch(
         float *g_xi22,
         float *div_g_xi1,
         float *div_g_xi2,
-        const float tau_u, //Time step for xi
-        const float beta,
-        const float theta,
         const PatchIndexes index,
-        const int nx
+        const Parameters params
         ){
-
+    float tau_theta = params.tau_u/params.theta;
+    int nx = params.w;
     for (int k = 1; k < ITER_XI; k++){
         //What goes inside gradient
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
@@ -378,13 +347,13 @@ static void tvl2coupled_get_xi_patch(
         divergence_patch(g_xi11, g_xi12, div_g_xi1, index.ii, index.ij, index.ei, index.ej, nx);
         divergence_patch(g_xi21, g_xi22, div_g_xi2, index.ii, index.ij, index.ei, index.ej, nx);
 
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
-                vi_div1[i] = v1[i] + theta*div_g_xi1[i] + theta*beta*chix[i];
-                vi_div2[i] = v2[i] + theta*div_g_xi2[i] + theta*beta*chiy[i];
+                vi_div1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta*params.beta*chix[i];
+                vi_div2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta*params.beta*chiy[i];
             }
         }
 
@@ -393,7 +362,7 @@ static void tvl2coupled_get_xi_patch(
         forward_gradient_patch(vi_div2, grad_x2, grad_y2, index.ii, index.ij, index.ei, index.ej, nx);
 
 
-        //#pragma omp simd collapse(2)
+        ////#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
@@ -403,21 +372,21 @@ static void tvl2coupled_get_xi_patch(
                 const float vec11 = g[i]*grad_x1[i];
                 const float vec12 = g[i]*grad_y1[i];
                 const float norm_vec1 = sqrt(vec11 * vec11 + vec12 * vec12);
-                xi11[i] = (xi11[i] + tau_u/theta*vec11)/(1 + tau_u/theta*norm_vec1);
-                xi12[i] = (xi12[i] + tau_u/theta*vec12)/(1 + tau_u/theta*norm_vec1);
+                xi11[i] = (xi11[i] + tau_theta*vec11)/(1 + tau_theta*norm_vec1);
+                xi12[i] = (xi12[i] + tau_theta*vec12)/(1 + tau_theta*norm_vec1);
 
 
                 //Dual variables x21 and x22
                 const float vec21 = g[i]*grad_x2[i];
                 const float vec22 = g[i]*grad_y2[i];
                 const float norm_vec2 = sqrt(vec21 * vec21 + vec22 * vec22);
-                xi21[i] = (xi21[i] + tau_u/theta*vec21)/(1 + tau_u/theta*norm_vec2);
-                xi22[i] = (xi22[i] + tau_u/theta*vec22)/(1 + tau_u/theta*norm_vec2);
+                xi21[i] = (xi21[i] + tau_theta*vec21)/(1 + tau_theta*norm_vec2);
+                xi22[i] = (xi22[i] + tau_theta*vec22)/(1 + tau_theta*norm_vec2);
             }
         }
     }
     //Compute divergence for last time
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int j = index.ii; j < index.ei; j++){
@@ -449,25 +418,22 @@ static void tvl2coupled_get_chi_patch(
         float *g_eta1,
         float *g_eta2,
         float *div_g_eta,
-        const float tau_eta,
-        const float tau_chi,
-        const float beta,
         const PatchIndexes index, // end row
-        const int nx){
+        Parameters params){
 
-
+    int nx = params.w;
     for (int k = 1; k < ITER_CHI; k++){
 
         //Compute dual variable eta
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
 
                 //Compute new values of eta
-                const float eta_new1 = eta1[i] + tau_eta * g[i] * chix[i];
-                const float eta_new2 = eta2[i] + tau_eta * g[i] * chiy[i];
+                const float eta_new1 = eta1[i] + params.tau_eta * g[i] * chix[i];
+                const float eta_new2 = eta2[i] + params.tau_eta * g[i] * chiy[i];
                 const float norm_eta = sqrt(eta_new1*eta_new1 + eta_new2*eta_new2);
                 //Put eta in the unit ball, [0, 1]
                 if (norm_eta <= 1){
@@ -489,12 +455,12 @@ static void tvl2coupled_get_chi_patch(
         divergence_patch(g_eta1, g_eta2, div_g_eta, index.ii, index.ij, index.ei, index.ej, nx);
 
         //Compute chi
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
-                const float chi_new = chi[i] + tau_chi*(div_g_eta[i] - beta*div_u[i] - F[i] - G[i]);
+                const float chi_new = chi[i] + params.tau_chi*(div_g_eta[i] - params.beta*div_u[i] - F[i] - G[i]);
                 chi[i] = max(min(chi_new, 1), 0);
                 //fprintf(stderr, "%f\n", chi[i]);
             }
@@ -525,17 +491,7 @@ void guided_tvl2coupled_occ(
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_occ *tvl2_occ,
         float *ener_N,
-        const PatchIndexes index, // end row
-        const float lambda,  // weight of the data term
-        const float theta,   // weight of the data term
-        const float tau_u,     // time step for u
-        const float tau_eta,     // time step for eta
-        const float tau_chi,     // time step for chi
-        const float beta,
-        const float alpha, //weight of the norm term
-        const float tol_OF,  // tol max allowed
-        const int   warps,   // number of warpings
-        const bool  verbose  // enable/disable the verbose mode
+        const PatchIndexes index
         ) {
 
     float *u1 = ofD->u1;
@@ -544,8 +500,8 @@ void guided_tvl2coupled_occ(
     float *u2_ba = ofD->u2_ba;
 
     //Columns and Rows
-    const int nx = ofD->w;
-    const int ny = ofD->h;
+    const int nx = ofD->params.w;
+    const int ny = ofD->params.h;
 
     float *diff_u_N = tvl2_occ->diff_u_N;
 
@@ -612,10 +568,15 @@ void guided_tvl2coupled_occ(
     float *g_eta2 = tvl2_occ->g_eta2;
     float *div_g_eta = tvl2_occ->div_g_eta;
 
+
+    const float alpha = ofD->params.alpha;
+    const float theta = ofD->params.theta;
+    const float lambda = ofD->params.lambda;
+
     const float l_t = lambda * theta;
 
     //Initialization of dual variables and updating backward flow
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
@@ -628,7 +589,7 @@ void guided_tvl2coupled_occ(
         }
     }
 
-    for (int warpings = 0; warpings < warps; warpings++) {
+    for (int warpings = 0; warpings < ofD->params.warps; warpings++) {
         // Compute the warping of I1 and its derivatives I1(x + u1o), I1x (x + u1o) and I1y (x + u2o)
         bicubic_interpolation_warp_patch(I1,  u1, u2, I1w, index.ii, index.ij, index.ei, index.ej, nx, ny, false);
         bicubic_interpolation_warp_patch(I1x, u1, u2, I1wx, index.ii, index.ij, index.ei, index.ej, nx, ny, false);
@@ -641,7 +602,7 @@ void guided_tvl2coupled_occ(
 
 
         //Compute values that will not change during the whole wraping
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int k = index.ii; k < index.ei; k++){
@@ -668,12 +629,12 @@ void guided_tvl2coupled_occ(
         //Minimization of the functional
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF){
+        while (err_D > ofD->params.tol_OF*ofD->params.tol_OF && n < MAX_ITERATIONS_OF){
 
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding operator TH)
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
             //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
@@ -737,10 +698,10 @@ void guided_tvl2coupled_occ(
             tvl2coupled_get_xi_patch(xi11, xi12, xi21, xi22, g, v1, v2,
                                      chix, chiy, vi_div1, grad_x1, grad_y1, vi_div2, grad_x2, grad_y2,
                                      g_xi11, g_xi12, g_xi21, g_xi22, div_g_xi1, div_g_xi2,
-                                     tau_u, beta, theta, index, nx);
+                                     index, ofD->params);
 
             //Compute several stuff
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
             //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
@@ -751,8 +712,8 @@ void guided_tvl2coupled_occ(
                     const float u2k = u2[i];
 
                     //New value for (u1, u2)
-                    u1[i] = v1[i] + theta*div_g_xi1[i] + theta * beta * chix[i];
-                    u2[i] = v2[i] + theta*div_g_xi2[i] + theta * beta * chiy[i];
+                    u1[i] = v1[i] + theta*div_g_xi1[i] + theta * ofD->params.beta * chix[i];
+                    u2[i] = v2[i] + theta*div_g_xi2[i] + theta * ofD->params.beta * chiy[i];
 
                     //Difference between previous and new value of u
                     diff_u_N[i] = (u1[i] - u1k) * (u1[i] - u1k) +
@@ -772,8 +733,7 @@ void guided_tvl2coupled_occ(
             //Compute chi
             tvl2coupled_get_chi_patch(chi, chix, chiy, F, G,
                                       g, eta1, eta2, div_u, g_eta1, g_eta2,
-                                      div_g_eta, tau_eta, tau_chi, beta,
-                                      index, nx);
+                                      div_g_eta, index, ofD->params);
 
 
             //Get the max val
@@ -789,11 +749,11 @@ void guided_tvl2coupled_occ(
             }
             err_D = err_u;
         }
-        if (verbose)
-            std::printf("Warping: %d, Iter: %d "
-                        "Error: %f\n", warpings, n, err_D);
+//        if (ofD->params.verbose)
+//            std::printf("Warping: %d, Iter: %d "
+//                        "Error: %f\n", warpings, n, err_D);
     }
-    eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, ener_N, index, lambda, theta, alpha, beta);
+    eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, ener_N, index, ofD->params);
 }
 
 /////////////////////////////////////
@@ -823,16 +783,16 @@ static void tvl2coupled_get_xi(
         float *g_xi22,
         float *div_g_xi1,
         float *div_g_xi2,
-        const float tau_u, //Time step for xi
-        const float beta,
-        const float theta,
-        const int nx,
-        const int ny
+        const Parameters params
         ){
+
+    const int nx = params.w;
+    const int ny = params.h;
     const int size = nx*ny;
+    const float tau_theta = params.tau_u/params.theta;
     for (int k = 1; k < ITER_XI; k++){
         //What goes inside gradient
-//#pragma omp simd
+        ////#pragma omp simd
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int i = 0; i < size; i++){
             g_xi11[i] = g[i]*xi11[i];
@@ -845,11 +805,11 @@ static void tvl2coupled_get_xi(
         divergence(g_xi11, g_xi12, div_g_xi1, nx, ny);
         divergence(g_xi21, g_xi22, div_g_xi2, nx, ny);
 
-//#pragma omp simd
+        ////#pragma omp simd
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int i = 0; i < size; i++){
-            vi_div1[i] = v1[i] + theta*div_g_xi1[i] + theta*beta*chix[i];
-            vi_div2[i] = v2[i] + theta*div_g_xi2[i] + theta*beta*chiy[i];
+            vi_div1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta*params.beta*chix[i];
+            vi_div2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta*params.beta*chiy[i];
         }
 
 
@@ -857,7 +817,7 @@ static void tvl2coupled_get_xi(
         forward_gradient(vi_div2, grad_x2, grad_y2, nx, ny);
 
 
-//#pragma omp simd
+        ////#pragma omp simd
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int i = 0; i < size; i++){
 
@@ -865,21 +825,21 @@ static void tvl2coupled_get_xi(
             const float vec11 = g[i]*grad_x1[i];
             const float vec12 = g[i]*grad_y1[i];
             const float norm_vec1 = sqrt(vec11 * vec11 + vec12 * vec12);
-            xi11[i] = (xi11[i] + tau_u/theta*vec11)/(1 + tau_u/theta*norm_vec1);
-            xi12[i] = (xi12[i] + tau_u/theta*vec12)/(1 + tau_u/theta*norm_vec1);
+            xi11[i] = (xi11[i] + tau_theta*vec11)/(1 + tau_theta*norm_vec1);
+            xi12[i] = (xi12[i] + tau_theta*vec12)/(1 + tau_theta*norm_vec1);
 
 
             //Dual variables x21 and x22
             const float vec21 = g[i]*grad_x2[i];
             const float vec22 = g[i]*grad_y2[i];
             const float norm_vec2 = sqrt(vec21 * vec21 + vec22 * vec22);
-            xi21[i] = (xi21[i] + tau_u/theta*vec21)/(1 + tau_u/theta*norm_vec2);
-            xi22[i] = (xi22[i] + tau_u/theta*vec22)/(1 + tau_u/theta*norm_vec2);
+            xi21[i] = (xi21[i] + tau_theta*vec21)/(1 + tau_theta*norm_vec2);
+            xi22[i] = (xi22[i] + tau_theta*vec22)/(1 + tau_theta*norm_vec2);
         }
     }
 
     //Compute divergence for last time
-//#pragma omp simd
+    ////#pragma omp simd
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int i = 0; i < size; i++){
         g_xi11[i] = g[i]*xi11[i];
@@ -909,23 +869,23 @@ static void tvl2coupled_get_chi(
         float *g_eta1,
         float *g_eta2,
         float *div_g_eta,
-        const float tau_eta,
-        const float tau_chi,
-        const float beta,
-        const int nx,
-        const int ny){
+        const Parameters params
+        ){
+
+    const int nx = params.w;
+    const int ny = params.h;
     const int size = nx*ny;
 
     for (int k = 1; k < ITER_CHI; k++){
 
         //Compute dual variable eta
-//#pragma omp simd
+        ////#pragma omp simd
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int i = 0; i < size; i++){
 
             //Compute new values of eta
-            const float eta_new1 = eta1[i] + tau_eta * g[i] * chix[i];
-            const float eta_new2 = eta2[i] + tau_eta * g[i] * chiy[i];
+            const float eta_new1 = eta1[i] + params.tau_eta * g[i] * chix[i];
+            const float eta_new2 = eta2[i] + params.tau_eta * g[i] * chiy[i];
             const float norm_eta = sqrt(eta_new1*eta_new1 + eta_new2*eta_new2);
             //Put eta in the unit interval, [0, 1]
             if (norm_eta <= 1){
@@ -946,11 +906,11 @@ static void tvl2coupled_get_chi(
         divergence(g_eta1, g_eta2, div_g_eta, nx, ny);
 
         //Compute chi
-//#pragma omp simd
+        ////#pragma omp simd
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int i = 0; i < size; i++){
 
-            const float chi_new = chi[i] + tau_chi*(div_g_eta[i] - beta*div_u[i] - F[i] - G[i]);
+            const float chi_new = chi[i] + params.tau_chi*(div_g_eta[i] - params.beta*div_u[i] - F[i] - G[i]);
             chi[i] = max(min(chi_new, 1), 0);
         }
 
@@ -975,21 +935,12 @@ void tvl2OF_occ(
         float *xi21,
         float *xi22,
         float *chi,
-        const float lambda,  // weight of the data term
-        const float theta,   // weight of the data term
-        const float tau_u,     // time step for u
-        const float tau_eta,     // time step for eta
-        const float tau_chi,     // time step for chi
-        const float beta,
-        const float alpha, //weight of the norm term
-        const float tol_OF,  // tol max allowed
-        const int   w,      // image width
-        const int   h,      // image height
-        const int   warps,   // number of warpings per scale
-        const bool  verbose  // enable/disable the verbose mode
+        const Parameters params
         ) {
 
-    const float l_t = lambda * theta;
+    const float l_t = params.lambda * params.theta;
+    int w = params.w;
+    int h = params.h;
     const int   size = w * h;
 
     float *u1_ba = new float[w*h];
@@ -1060,7 +1011,7 @@ void tvl2OF_occ(
 
 
     //Initialization of backward flow
-//#pragma omp simd
+    ////#pragma omp simd
     for (int i = 0; i < size; i++){
 
         u1_ba[i] = -u1[i];
@@ -1075,7 +1026,7 @@ void tvl2OF_occ(
     //Initialize weight
     init_weight(g, I0x, I0y, size);
 
-    for (int warpings = 0; warpings < warps; warpings++){
+    for (int warpings = 0; warpings < params.warps; warpings++){
         //printf("warpings: %d\n", warpings);
         // Compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
         bicubic_interpolation_warp(I1,  u1, u2, I1w,  nx, ny, true);
@@ -1086,7 +1037,7 @@ void tvl2OF_occ(
         bicubic_interpolation_warp(I_1x, u1_ba, u2_ba, I_1wx, nx, ny, true);
         bicubic_interpolation_warp(I_1y, u1_ba, u2_ba, I_1wy, nx, ny, true);
 
-//#pragma omp simd
+        ////#pragma omp simd
         for (int i = 0; i < size; i++){
             const float I1_x2 = I1wx[i] * I1wx[i];
             const float I1_y2 = I1wy[i] * I1wy[i];
@@ -1106,12 +1057,12 @@ void tvl2OF_occ(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF_GLOBAL){
+        while (err_D > params.tol_OF*params.tol_OF && n < MAX_ITERATIONS_OF_GLOBAL){
 
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding opterator TH)
-//#pragma omp simd
+            ////#pragma omp simd
             for (int i = 0; i < size; i++){
                 // rho function forward and backward
                 const float rho_1 = rho_c1[i]
@@ -1133,10 +1084,10 @@ void tvl2OF_occ(
                     rho = rho_1;
                 }else{
                     eps = -1;
-                    alpha_i = 1/(1 + alpha*theta);
-                    mu = l_t/(1 + alpha*theta);
+                    alpha_i = 1/(1 + params.alpha*params.theta);
+                    mu = l_t/(1 + params.alpha*params.theta);
                     Lambda = rho__1 +
-                            alpha*theta/(1 + alpha*theta) * (u1[i]*I_1wx[i] + u2[i]*I_1wy[i]);
+                            params.alpha*params.theta/(1 + params.alpha*params.theta) * (u1[i]*I_1wx[i] + u2[i]*I_1wy[i]);
                     grad = grad__1[i];
                     Iwx = I_1wx[i];
                     Iwy = I_1wy[i];
@@ -1172,12 +1123,12 @@ void tvl2OF_occ(
             tvl2coupled_get_xi(xi11, xi12, xi21, xi22, g, v1, v2,
                                chix, chiy, vi_div1, grad_x1, grad_y1, vi_div2, grad_x2, grad_y2,
                                g_xi11, g_xi12, g_xi21, g_xi22, div_g_xi1, div_g_xi2,
-                               tau_u, beta, theta, nx, ny);
+                               params);
 
 
             //Compute primal variables, u1, u2
 
-//#pragma omp simd
+            ////#pragma omp simd
             //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int i = 0; i < size; i++){
 
@@ -1186,8 +1137,8 @@ void tvl2OF_occ(
                 const float u2k = u2[i];
 
                 //New value for (u1, u2)
-                u1[i] = v1[i] + theta*div_g_xi1[i] + theta * beta * chix[i];
-                u2[i] = v2[i] + theta*div_g_xi2[i] + theta * beta * chiy[i];
+                u1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta * params.beta * chix[i];
+                u2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta * params.beta * chiy[i];
 
                 //Difference between previous and new value of u
                 diff_u_N[i] = (u1[i] - u1k) * (u1[i] - u1k) +
@@ -1199,8 +1150,8 @@ void tvl2OF_occ(
                 const float rho_1 = rho_c1[i]
                         + I1wx[i] * v1[i] + I1wy[i] * v2[i];
 
-                F[i] = lambda*(std::abs(rho__1) - std::abs(rho_1));
-                G[i] = alpha/2*(v1[i]*v1[i] + v2[i]*v2[i]);
+                F[i] = params.lambda*(std::abs(rho__1) - std::abs(rho_1));
+                G[i] = params.alpha/2*(v1[i]*v1[i] + v2[i]*v2[i]);
             }
 
 
@@ -1208,8 +1159,7 @@ void tvl2OF_occ(
 
             tvl2coupled_get_chi(chi, chix, chiy, F, G,
                                 g, eta1, eta2, div_u, g_eta1, g_eta2,
-                                div_g_eta, tau_eta, tau_chi, beta,
-                                nx, ny);
+                                div_g_eta, params);
             //Get the max val
             float err_u = 0;
             for (int i = 0; i < size; i++){
@@ -1220,12 +1170,10 @@ void tvl2OF_occ(
             err_D = err_u;
         }
 
-        if (verbose)
+        if (params.verbose)
             fprintf(stderr, "Warping: %d, Iter: %d, "
                             "Error: %f\n", warpings, n, err_D);
     }
-
-
 
 
     free(u1_ba);
@@ -1286,3 +1234,50 @@ void tvl2OF_occ(
 
 
 #endif //TVL2-L1 functional
+
+
+
+
+//    fprintf(stderr, "i: %d, j: %d\n", index.i, index.j);
+//    if (!(ener >= 0.0)){
+//        fprintf(stderr, "ener: %f\n", ener);
+//        fprintf(stderr, "m: %d\n", m);
+//        m = 0;
+//        ener = 0.0;
+
+//        fprintf(stderr, "u1: \n");
+//        for (int l = index.ij; l < index.ej; l++){
+//            for (int k = index.ii; k < index.ei; k++){
+//                const int i = l*nx + k;
+//                fprintf(stderr, "%f ", u1[i]);
+//            }
+//            fprintf(stderr, "\n");
+//        }
+//        fprintf(stderr, "u2: \n");
+//        for (int l = index.ij; l < index.ej; l++){
+//            for (int k = index.ii; k < index.ei; k++){
+//                const int i = l*nx + k;
+//                fprintf(stderr, "%f   ", u2[i]);
+//            }
+//            fprintf(stderr, "\n");
+//        }
+//        fprintf(stderr, "div(u): \n");
+//        for (int l = index.ij; l < index.ej; l++){
+//            for (int k = index.ii; k < index.ei; k++){
+//                const int i = l*nx + k;
+//                fprintf(stderr, "%f   ", div_u[i]);
+//                if (l == 223 && k == 1023){
+//                    //fprintf(stderr, "i: %d, ener: %f\n", i, ener);
+//                    //fprintf(stderr, "data term: %f, smooth term: %f, div(u) term: %f\n", data_term, smooth_term, div_u_term);
+//                    //fprintf(stderr, "norm(v) term: %f, u-v term: %f\n", norm_v_term, diff_uv_term);
+//                    //fprintf(stderr, "chi: %f,. div(u): %f\n", chi[i], div_u[i]);
+//                }
+//                m++;
+//            }
+//            fprintf(stderr, "\n");
+//        }
+//        //fprintf(stderr, "i: %u, j: %u\n", index.i, index.j);
+//        ener /= (m*1.0);
+//        fprintf(stderr, "ener: %f\n", ener);
+//        fprintf(stderr, "m: %d\n", m);
+//    }

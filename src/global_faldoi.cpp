@@ -1767,24 +1767,66 @@ void rgb2gray(float *in, int w, int h, float *out) {
 
 }
 
+static Parameters init_params(const std::string& file_params, int warps){
+    Parameters params;
+    if (file_params == ""){
+        params.lambda = PAR_DEFAULT_LAMBDA;
+        params.beta = PAR_DEFAULT_BETA;
+        params.theta = PAR_DEFAULT_THETA;
+        params.tau = PAR_DEFAULT_TAU;
+        params.alpha = PAR_DEFAULT_ALPHA;
+        params.tau_u = PAR_DEFAULT_TAU_U;
+        params.tau_eta = PAR_DEFAULT_TAU_ETA;
+        params.tau_chi = PAR_DEFAULT_TAU_CHI;
+    }else{
+        string::size_type sz;
+        string line;
+        ifstream infile;
+        infile.open(file_params);
+        getline(infile, line);
 
-// @c pointer to original argc
-// @v pointer to original argv
-// @o option name (after hyphen)
-// @d default value
-static char *pick_option(int *c, char ***v, char *o, char *d) {
-    int argc = *c;
-    char **argv = *v;
-    int id = d ? 1 : 0;
-    for (int i = 0; i < argc - id; i++)
-        if (argv[i][0] == '-' && 0 == strcmp(argv[i]+1, o)) {
-            char *r = argv[i+id]+1-id;
-            *c -= id+1;
-            for (int j = i; j < argc - id; j++)
-                (*v)[j] = (*v)[j + id + 1];
-            return r;
+        params.lambda = std::stof(line, &sz); getline(infile, line);
+        params.theta = std::stof(line, &sz); getline(infile, line);
+        params.tau = std::stof(line, &sz); getline(infile, line);
+        params.beta = std::stof(line, &sz); getline(infile, line);
+        params.alpha = std::stof(line, &sz); getline(infile, line);
+        params.tau_u = std::stof(line, &sz); getline(infile, line);
+        params.tau_eta = std::stof(line, &sz); getline(infile, line);
+        params.tau_chi = std::stof(line, &sz); getline(infile, line);
+
+        infile.close();
+    }
+    params.tol_OF = PAR_DEFAULT_TOL_D;
+    params.verbose = PAR_DEFAULT_VERBOSE;
+    params.warps = warps;
+    return params;
+}
+
+static bool pick_option(std::vector<std::string>& args, const std::string& option){
+
+    auto it = std::find(args.begin(), args.end(), "-" + option);
+
+    bool found = it != args.end();
+    if (found)
+        args.erase(it);
+
+    return found;
+}
+
+static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value) {
+    auto arg = "-" + option;
+
+    for (auto it = args.begin(); it != args.end(); it++) {
+        if (*it == arg) {
+            auto next = it + 1;
+            if (next == args.end())
+                continue;
+            auto result = *next;
+            args.erase(it, it + 2);
+            return result;
         }
-    return d;
+    }
+    return default_value;
 }
 
 
@@ -1804,26 +1846,34 @@ static char *pick_option(int *c, char ***v, char *o, char *d) {
  *
  */
 int main(int argc, char *argv[]) {
+    using namespace std::chrono;
+    system_clock::time_point today = system_clock::now();
+    time_t tt;
 
-    char *var_reg = pick_option(&argc, &argv, (char *)"m", (char *)"8");
-    char *warps_val = pick_option(&argc, &argv, (char *)"w", (char *)"4");
+    tt = system_clock::to_time_t ( today );
+    std::cerr << "today is: " << ctime(&tt);
 
+    // process input
+    std::vector<std::string> args(argv, argv + argc);
+    auto warps_val      = pick_option(args, "w", "4"); // Warpings
+    auto var_reg        = pick_option(args, "m",  "8"); // Methods
+    auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
-    if (argc != 6 && argc != 4) {
+    if (args.size() != 6 && args.size() != 4) {
         fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo"
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
-                "\n", argc);
+                "\n", args.size());
         fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo occl_input.png occl_out.png"
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
-                "\n", argc);
+                "\n", args.size());
         // 4
         return EXIT_FAILURE;
     }
     // O TV-l2 coupled 1 - ||Du + Du'||_{F}
-    int val_method = atoi(var_reg);
-    int nwarps = atoi(warps_val);
+    int val_method = stoi(var_reg);
+    int nwarps = stoi(warps_val);
 
 
     //read the parameters
@@ -1831,37 +1881,34 @@ int main(int argc, char *argv[]) {
     //images
     int i = 1;
     //filename that contains all the images to use
-    char* filename_images  = argv[i]; i++;
-    char* image_flow_name = argv[i]; i++;
-    char* outfile = argv[i]; i++;
-    char* occ_input = argv[i]; i++;
-    char* occ_output = argv[i]; i++;
+    const std::string& filename_images = args[1];
+    const std::string& image_flow_name = args[2];
+    const std::string& outfile = args[3];
+    const std::string& occ_input = args[4];
+    const std::string& occ_output = argv[5];
 
     //filename of images
-    char *filename_i_1 = nullptr;
-    char *filename_i0 = nullptr;
-    char *filename_i1 = nullptr;
-    char *filename_i2 = nullptr;
+    std::string filename_i_1, filename_i0, filename_i1, filename_i2;
 
     //Read txt file of images
-    string line;
-    ifstream infile;
+
+    ifstream infile(filename_images);
     int num_files = 0;
-    infile.open (filename_images);
+    string line;
     while(getline(infile, line)){
 
         ++num_files;
         if (num_files == 3){
-            filename_i_1  = strdup(line.c_str());
+            filename_i_1  = line;
         }else{
             if (num_files == 1){
-                filename_i0  = strdup(line.c_str());
+                filename_i0  = line;
             }else{
                 if (num_files == 2){
-                    filename_i1  = strdup(line.c_str());
+                    filename_i1  = line;
                 }else{
                     if (num_files == 4){
-                        filename_i2  = strdup(line.c_str());
+                        filename_i2  = line;
                     }
                 }
             }
@@ -1869,45 +1916,38 @@ int main(int argc, char *argv[]) {
     }
     infile.close();
 
-    //read parameters
-    float lambda  = (argc > i)? atof(argv[i]): PAR_DEFAULT_LAMBDA; i++;
-    float theta   = (argc > i)? atof(argv[i]): PAR_DEFAULT_THETA;  i++;
-    float tau     = (argc > i)? atof(argv[i]): PAR_DEFAULT_TAU;    i++;
-    float tol_D   = (argc > i)? atof(argv[i]): PAR_DEFAULT_TOL_D;    i++;
-    int   nproc    = (argc > i)? atoi(argv[i]): PAR_DEFAULT_NPROC;   i++;
-    int   verbose  = (argc > i)? atoi(argv[i]): PAR_DEFAULT_VERBOSE; i++;
 
 
-    //check parameters
-    if (lambda <= 0) {
-        lambda = PAR_DEFAULT_LAMBDA;
-        if (verbose) fprintf(stderr, "warning: "
-                                     "lambda changed to %g\n", lambda);
-    }
+//    //check parameters
+//    if (lambda <= 0) {
+//        lambda = PAR_DEFAULT_LAMBDA;
+//        if (verbose) fprintf(stderr, "warning: "
+//                                     "lambda changed to %g\n", lambda);
+//    }
 
-    if (theta <= 0) {
-        tau = PAR_DEFAULT_THETA;
-        if (verbose) fprintf(stderr, "warning: "
-                                     "theta changed to %g\n", theta);
-    }
+//    if (theta <= 0) {
+//        tau = PAR_DEFAULT_THETA;
+//        if (verbose) fprintf(stderr, "warning: "
+//                                     "theta changed to %g\n", theta);
+//    }
 
-    if (tau <= 0 || tau > 0.25) {
-        tau = PAR_DEFAULT_TAU;
-        if (verbose) fprintf(stderr, "warning: "
-                                     "tau changed to %g\n", tau);
-    }
+//    if (tau <= 0 || tau > 0.25) {
+//        tau = PAR_DEFAULT_TAU;
+//        if (verbose) fprintf(stderr, "warning: "
+//                                     "tau changed to %g\n", tau);
+//    }
 
-    if (tol_D <= 0) {
-        tol_D = PAR_DEFAULT_TOL_D;
-        if (verbose) fprintf(stderr, "warning: "
-                                     "tol_D changed to %f\n", tol_D);
-    }
+//    if (tol_D <= 0) {
+//        tol_D = PAR_DEFAULT_TOL_D;
+//        if (verbose) fprintf(stderr, "warning: "
+//                                     "tol_D changed to %f\n", tol_D);
+//    }
 
-    if (nproc < 0) {
-        nproc = PAR_DEFAULT_NPROC;
-        if (verbose) fprintf(stderr, "warning: "
-                                     "nproc changed to %d\n", nproc);
-    }
+//    if (nproc < 0) {
+//        nproc = PAR_DEFAULT_NPROC;
+//        if (verbose) fprintf(stderr, "warning: "
+//                                     "nproc changed to %d\n", nproc);
+//    }
 
 
 
@@ -1920,17 +1960,17 @@ int main(int argc, char *argv[]) {
     float *i_1;
     float *i2;
     if (num_files == 4){
-        i_1 = iio_read_image_float_split(filename_i_1, w + 3, h + 3, pd + 3);
-        i2 = iio_read_image_float_split(filename_i2, w + 5, h + 5, pd + 5);
+        i_1 = iio_read_image_float_split(filename_i_1.c_str(), w + 3, h + 3, pd + 3);
+        i2 = iio_read_image_float_split(filename_i2.c_str(), w + 5, h + 5, pd + 5);
     }else{
-        i_1 = iio_read_image_float_split(filename_i1, w + 3, h + 3, pd + 3);
-        i2 = iio_read_image_float_split(filename_i2, w + 5, h + 5, pd + 5);
+        i_1 = iio_read_image_float_split(filename_i1.c_str(), w + 3, h + 3, pd + 3);
+        i2 = iio_read_image_float_split(filename_i2.c_str(), w + 5, h + 5, pd + 5);
     }
 
-    float *i0   = iio_read_image_float_split(filename_i0, w + 0, h + 0, pd + 0);
-    float *i1   = iio_read_image_float_split(filename_i1, w + 1, h + 1, pd + 1);
-    float *flow = iio_read_image_float_split(image_flow_name, w + 2, h + 2, pd + 2);
-    float *occ  = iio_read_image_float_split(occ_input, w + 4, h + 4, pd + 4);
+    float *i0   = iio_read_image_float_split(filename_i0.c_str(), w + 0, h + 0, pd + 0);
+    float *i1   = iio_read_image_float_split(filename_i1.c_str(), w + 1, h + 1, pd + 1);
+    float *flow = iio_read_image_float_split(image_flow_name.c_str(), w + 2, h + 2, pd + 2);
+    float *occ  = iio_read_image_float_split(occ_input.c_str(), w + 4, h + 4, pd + 4);
     //Ensure that dimensions match
     if (num_files == 3){
         if (w[0] != w[1] || h[0] != h[1] || pd[0] != pd[1])
@@ -1947,6 +1987,14 @@ int main(int argc, char *argv[]) {
     if (w[0] != w[2] || h[0] != h[2] || pd[2] != 2)
         return fprintf(stderr, "ERROR: input flow field size mismatch\n");
 
+
+
+    //Initialize parameters
+    Parameters params =  init_params(file_params, nwarps);
+    params.w = w[0];
+    params.h = h[0];
+    params.val_method = val_method;
+    cerr << params;
 
     float *a = nullptr;
     float *xi11 = nullptr;
@@ -1986,9 +2034,9 @@ int main(int argc, char *argv[]) {
     gaussian(i_1n, w[0], h[0], PRESMOOTHING_SIGMA);
 
 
-    if (verbose)
+    if (params.verbose)
         fprintf(stderr,"tau = %2.3f tol_D = %2.3f theta = %2.3f"
-                       " lambda = %2.3f\n", tau, tol_D, theta, lambda);
+                       " lambda = %2.3f\n", params.tau, params.tol_OF, params.theta, params.lambda);
 
     //allocate memory for the flow
     float *u = new float[size*2];
@@ -2023,45 +2071,44 @@ int main(int argc, char *argv[]) {
     if (val_method == M_TVL1 || val_method == M_TVL1_W){
         printf("TV-l2 coupled\n");
         tvl2OF(i0n, i1n, u, v, xi11, xi12, xi21, xi22,
-               lambda, theta, tau, tol_D, w[0], h[0], nwarps, verbose);
+               params.lambda, params.theta, params.tau, params.tol_OF, w[0], h[0], params.warps, params.verbose);
     }else if (val_method == M_NLTVCSAD || val_method == M_NLTVCSAD_W){
-        lambda = 0.85;
-        theta  = 0.3;
-        tau    = 0.1;
+        params.lambda = 0.85;
+        params.theta  = 0.3;
+        params.tau    = 0.1;
         printf("NLTV-CSAD\n");
-        nltvcsad_PD(i0n, i1n, a, pd[0], lambda, theta, tau, tol_D,
-                w[0], h[0], nwarps, verbose, u, v);
+        nltvcsad_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau, params.tol_OF,
+                w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_NLTVL1 || val_method == M_NLTVL1_W){
-        lambda = 2.0;
-        theta  = 0.3;
-        tau    = 0.1;
+        params.lambda = 2.0;
+        params.theta  = 0.3;
+        params.tau    = 0.1;
         printf("NLTV-L1\n");
-        nltvl1_PD(i0n, i1n, a, pd[0], lambda, theta, tau, tol_D,
-                w[0], h[0], nwarps, verbose, u, v);
+        nltvl1_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau, params.tol_OF,
+                w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_TVCSAD || val_method == M_TVCSAD_W){
-        lambda = 0.85;
-        theta  = 0.3;
-        tau    = 0.125;
+        params.lambda = 0.85;
+        params.theta  = 0.3;
+        params.tau    = 0.125;
         printf("TV-CSAD\n");
         tvcsad_PD(i0n, i1n, xi11, xi12, xi21, xi22,
-                  lambda, theta, tau, tol_D, w[0], h[0], nwarps, verbose, u,v);
+                  params.lambda, params.theta, params.tau, params.tol_OF, w[0], h[0], params.warps, params.verbose, u,v);
 
     }else if (val_method == M_TVL1_OCC){
         fprintf(stderr, "TV-l2 occlusions\n");
 
-        lambda = 0.25;
-        theta = 0.3;
-        const float beta = 1;
-        const float alpha = 0.01;
-        const float tau_u = 0.125;
-        const float tau_eta = 0.125;
-        const float tau_chi = 0.125;
-        tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi,
-               lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_D, w[0], h[0], nwarps, verbose);
+//        lambda = 0.25;
+//        theta = 0.3;
+//        const float beta = 1;
+//        const float alpha = 0.01;
+//        const float tau_u = 0.125;
+//        const float tau_eta = 0.125;
+//        const float tau_chi = 0.125;
+        tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi, params);
 
     }
-    iio_save_image_float_split(outfile, u, w[0], h[0], 2);
-    iio_save_image_float(occ_output, chi, w[0], h[0]);
+    iio_save_image_float_split(outfile.c_str(), u, w[0], h[0], 2);
+    iio_save_image_float(occ_output.c_str(), chi, w[0], h[0]);
 
     //delete allocated memory
     delete [] u;
@@ -2080,7 +2127,10 @@ int main(int argc, char *argv[]) {
     delete [] i1n;
     delete [] i_1n;
     delete [] i2n;
+    today = system_clock::now();
 
+    tt = system_clock::to_time_t ( today );
+    std::cerr << "today is: " << ctime(&tt);
     return EXIT_SUCCESS;
 }
 

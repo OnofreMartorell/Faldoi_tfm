@@ -14,8 +14,8 @@ void  intialize_stuff_nltvl1(
         OpticalFlowData *ofCore)
 
 {
-    const int w = ofCore->w;
-    const int h = ofCore->h;
+    const int w = ofCore->params.w;
+    const int h = ofCore->params.h;
     ofStuff->nltvl1.p = new DualVariables[w*h];
     ofStuff->nltvl1.q = new DualVariables[w*h];
     ofStuff->nltvl1.v1 =  new float[w*h];
@@ -78,8 +78,8 @@ void eval_nltvl1(
 
 
     //Columns and Rows
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
 
     float *I1w = nltvl1->I1w;
     DualVariables *p = nltvl1->p;
@@ -284,8 +284,8 @@ void guided_nltvl1(
     float *u2 = ofD->u2;
     int *mask = ofD->fixed_points;
     //Columns and Rows
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
 
     DualVariables *p = nltvl1->p;
     DualVariables *q = nltvl1->q;

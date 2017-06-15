@@ -53,10 +53,10 @@ void divergence_patch(
         ){
 
     // compute the divergence on the central body of the image
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
 //#pragma omp for schedule(dynamic, 1) collapse(2)
-    for (int j = ij + 1; j < ej-1; j++){
-        for (int i = ii + 1; i < ei-1; i++){
+    for (int j = ij + 1; j < ej - 1; j++){
+        for (int i = ii + 1; i < ei - 1; i++){
             const int p  = j * nx + i;
             const int p1 = p - 1;
             const int p2 = p - nx;
@@ -68,27 +68,28 @@ void divergence_patch(
         }
     }
     // compute the divergence on the first and last rows
-    for (int i = ii + 1; i < ei-1; i++) {
-        const int p = (ej-1) * nx + i;
+    for (int i = ii + 1; i < ei - 1; i++) {
+        const int p = (ej - 1) * nx + i;
 
         div[i] = v1[i] - v1[i-1] + v2[i];
         div[p] = v1[p] - v1[p-1] - v2[p-nx];
     }
 
     // compute the divergence on the first and last columns
-    for (int j = 1; j < ej-1; j++) {
+    for (int j = 1; j < ej - 1; j++) {
         const int p1 = j * nx;
-        const int p2 = (j+1) * nx - 1;
+        const int p2 = (j + 1) * nx - 1;
 
-        div[p1] =  v1[p1]   + v2[p1] - v2[p1 - nx];
-        div[p2] = -v1[p2-1] + v2[p2] - v2[p2 - nx];
+        div[p1] =  v1[p1]     + v2[p1] - v2[p1 - nx];
+        div[p2] = -v1[p2 - 1] + v2[p2] - v2[p2 - nx];
 
     }
+    div[ij*nx + ii]           =  v1[ij*nx + ii]          + v2[ij*nx + ii];
+    //div[ei - 1 + ii]          = -v1[ei + ii  - 2]        + v2[ei + ii - 1];
+    div[ij*nx + ei-1]          = -v1[ij*nx + ei-2]        + v2[ij*nx + ei-1];
+    div[(ej - 1)*nx + ii]     =  v1[(ej - 1)*nx + ii]    - v2[(ej - 2)*nx + ii];
+    div[(ej - 1)*nx + ei - 1] = -v1[(ej - 1)*nx + ei -2] - v2[(ej - 2)*nx + ei -1];
 
-    div[ij*nx + ii] =  v1[ij*nx + ii] + v2[ij*nx + ii];
-    div[ei - 1 + ii]      = -v1[ei + ii  - 2] + v2[ei + ii - 1];
-    div[(ej - 1)*nx + ii] =  v1[(ej - 1)*nx + ii] - v2[(ej - 2)*nx + ii];
-    div[(ej - 1)*nx + ei - 1]   = -v1[(ej - 1)*nx + ei -2] - v2[(ej - 2)*nx + ei -1];
 }
 
 
@@ -106,7 +107,7 @@ void forward_gradient_mixed_bound_patch(
         ){
 
     // compute the divergence on the central body of the image
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
 //#pragma omp parallel for schedule(dynamic, 1) collapse(2)
     for (int j = ij; j < ej-1; j++){
         for (int i = ii; i < ei-1; i++){
@@ -164,7 +165,7 @@ void forward_gradient_patch(
         ){
 
     // compute the divergence on the central body of the image
-#pragma omp simd collapse(2)
+//#pragma omp simd collapse(2)
 //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int j = ij; j < ej-1; j++){
         for (int i = ii; i < ei-1; i++){
@@ -223,7 +224,7 @@ void divergence(
         const int ny     // image height
         ) {
     // compute the divergence on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny - 1; i++) {
         for(int j = 1; j < nx - 1; j++){
             const int p  = i * nx + j;
@@ -246,7 +247,7 @@ void divergence(
     }
 
     // compute the divergence on the first and last columns
-    for (int i = 1; i < ny-1; i++){
+    for (int i = 1; i < ny - 1; i++){
         const int p1 = i * nx;
         const int p2 = (i+1) * nx - 1;
 
@@ -269,7 +270,7 @@ void forward_gradient(
         const int ny    //image height
         ){
     // compute the gradient on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < ny-1; i++){
         for(int j = 0; j < nx-1; j++){
             const int p  = i * nx + j;
@@ -310,7 +311,7 @@ void backward_gradient(
         const int ny    //image height
         ){
     // compute the gradient on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny; i++){
         for(int j = 1; j < nx; j++){
             const int p  = i * nx + j;
@@ -352,7 +353,7 @@ void centered_gradient(
         ) {
 
     // compute the gradient on the center body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny-1; i++){
         for(int j = 1; j < nx-1; j++){
 
@@ -418,7 +419,7 @@ void five_point_gradient(
 
 
     // compute the gradient on the center body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 2; i < ny-2; i++){
         for(int j = 2; j < nx-2; j++)
         {

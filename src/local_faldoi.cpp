@@ -16,6 +16,9 @@
 #include <string.h>
 #include <queue>
 #include <random>
+#include <future>
+#include <algorithm>
+#include <vector>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
 #include "energy_model.h"
@@ -46,24 +49,7 @@ using namespace std;
 
 #define MAX(x,y) ((x)>(y)?(x):(y))
 
-//Struct
-struct SparseOF {
-    int i; // column
-    int j; // row
-    float u; //x- optical flow component
-    float v; //y- optical flow component
-    float sim_node; //similarity measure for the actual pixel
-    float occluded; //similarity measure for the accumulated path.
-};
 
-class CompareSparseOF {
-public:
-    bool operator()(SparseOF& e1, SparseOF& e2){
-        return e1.sim_node > e2.sim_node;
-    }
-};
-
-typedef std::priority_queue<SparseOF, std::vector<SparseOF>, CompareSparseOF> pq_cand;
 // typedef  __gnu_pbds::priority_queue<SparseOF, CompareSparseOF,__gnu_pbds::pairing_heap_tag> pq_cand;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -292,8 +278,8 @@ void delete_not_trustable_candidates(
     int *mask = ofD->trust_points;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
-    int w = ofD->w;
-    int h = ofD->h;
+    int w = ofD->params.w;
+    int h = ofD->params.h;
     int n = 0;
     for (int i = 0; i < w*h; i++) {
         if (mask[i] == 0) {
@@ -337,7 +323,7 @@ inline void interpolate_constant(
         const int ei, // end column
         const int ej, // end row
         float *v) {
-    const int nx = ofD->w;
+    const int nx = ofD->params.w;
     int *mask = ofD->fixed_points;
     for (int l = ij; l < ej; l++)
         for (int k = ii; k < ei; k++) {
@@ -363,7 +349,7 @@ void interpolate_poisson(
     int w = ei - ii;
     int h = ej - ij;
     int *mask = ofD->fixed_points;
-    int wR = ofD->w;
+    int wR = ofD->params.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float buf_in[2*MAX_PATCH*MAX_PATCH];
@@ -410,8 +396,8 @@ void nltv_regularization(
     int n_d = NL_DUAL_VAR;
 
     //Columns and Rows
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
 
     BilateralWeight *p = ofD->weight;
 
@@ -488,8 +474,8 @@ void bilateral_filter_regularization(
     int n_d = NL_DUAL_VAR;
 
     //Columns and Rows
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
 
     BilateralWeight *p = ofD->weight;
 
@@ -563,7 +549,7 @@ void interpolate_poisson_nltv(
     int w = ei - ii;
     int h = ej - ij;
     int *mask = ofD->fixed_points;
-    int wR = ofD->w;
+    int wR = ofD->params.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float buf_in[2*MAX_PATCH*MAX_PATCH];
@@ -613,8 +599,8 @@ void insert_candidates(
         {0, 1}, {0, -1}, {1, 0}, {-1, 0},
         {1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
 
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     const float *sal = ofD->saliency;
 
     for (int k = 0; k < n_neigh; k++){
@@ -653,10 +639,12 @@ inline PatchIndexes get_index_patch(
         ) {
     PatchIndexes index;
     //Points to begin and end. End is the previous value
-    index.ii = (((i - factor * wr) < 0)? 0 : (i - factor * wr));
-    index.ij = (((j - factor * wr) < 0)? 0 : (j - factor * wr));
-    index.ei = (((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr));
-    index.ej = (((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr));
+    index.i = i;
+    index.j = j;
+    index.ii = ((i - factor * wr) < 0)? 0 : (i - factor * wr);
+    index.ij = ((j - factor * wr) < 0)? 0 : (j - factor * wr);
+    index.ei = ((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr);
+    index.ej = ((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr);
     return index;
 
 }
@@ -720,8 +708,8 @@ inline void copy_fixed_coordinates(
         int ei, // end column
         int ej  // end row
         ) {
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     int *fixed = ofD->fixed_points;
@@ -747,8 +735,8 @@ static inline void update_fixed_coordinates(
         int ei, // end column
         int ej  // end row
         ) {
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     int *fixed = ofD->fixed_points;
@@ -780,7 +768,7 @@ void copy_ini_patch(
         ) {
     int w = ei - ii;
     int h = ej - ij;
-    int wR = ofD->w;
+    int wR = ofD->params.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float *u1_ini = ofD->u1_ini;
@@ -812,7 +800,7 @@ void copy_mix_patch(
     int h = ej - ij;
     int *fixed = ofD->fixed_points;
     int *trust = ofD->trust_points;
-    int wR = ofD->w;
+    int wR = ofD->params.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     for (int j = 0; j < h; j++)
@@ -841,8 +829,8 @@ int check_trustable_patch(
         int ej // end row
         ) {
 
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     int *fixed = ofD->trust_points;
 
     for (int l = ij; l < ej; l++)
@@ -874,15 +862,15 @@ static void add_neighbors(
         float *out_occ
         ) {
 
-    const int w  = ofD->w;
-    const int h  = ofD->h;
-    const int wr = ofD->wr;
+    const int w  = ofD->params.w;
+    const int h  = ofD->params.h;
+    const int wr = ofD->params.w_radio;
     float ener_N;
 
 
-    PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
-
-    int method = ofD->method;
+    const PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
+    //    fprintf()
+    int method = ofD->params.val_method;
 
     //TODO: Arreglar los de los pesos
     get_index_weight(method, ofS, wr, i, j);
@@ -935,9 +923,9 @@ int insert_initial_seeds(
         float *out,
         float *out_occ
         ) {
-    const int w = ofD->w;
-    const int h = ofD->h;
-    const int wr = ofD->wr;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
+    const int wr = ofD->params.w_radio;
     int nfixed = 0;
 
     //Set to the initial conditions all the stuff
@@ -949,7 +937,7 @@ int insert_initial_seeds(
         out_occ[i] = 0;
     }
 
-    ofD->wr = 1;
+    ofD->params.w_radio = 1;
     //Fix the initial seeds.
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++){
@@ -972,7 +960,7 @@ int insert_initial_seeds(
                 ene_val[j*w + i] = 0.0;
             }
         }
-    ofD->wr = wr;
+    ofD->params.w_radio = wr;
 
     return nfixed;
 }
@@ -992,8 +980,8 @@ void insert_potential_candidates(
         float *out_occ
         ){
     //Note: in and out are the same pointer
-    int w = ofD->w;
-    int h = ofD->h;
+    int w = ofD->params.w;
+    int h = ofD->params.h;
 
     //Fixed the initial seeds.
     for (int j = 0; j < h; j++)
@@ -1034,9 +1022,9 @@ static void update_energy_map(
         const float *out
         ) {
 
-    const int w  = ofD->w;
-    const int h  = ofD->h;
-    const int wr = ofD->wr;
+    const int w  = ofD->params.w;
+    const int h  = ofD->params.h;
+    const int wr = ofD->params.w_radio;
     const float *sal = ofD->saliency;
     float ener_N;
 
@@ -1052,7 +1040,7 @@ static void update_energy_map(
         for (int i = 0; i < w; i++) {
 
             //TODO:Arreglar los de los pesos
-            int method = ofD->method;
+            int method = ofD->params.val_method;
             get_index_weight(method, ofS, wr, i, j);
             //////////////////////////////////////////
             //
@@ -1073,8 +1061,8 @@ void prepare_data_for_growing(
         float *ene_val,
         float *out
         ) {
-    int w = ofD->w;
-    int h = ofD->h;
+    int w = ofD->params.w;
+    int h = ofD->params.h;
 
     //Set to the initial conditions all the stuff
     for (int i = 0; i < w*h; i++) {
@@ -1100,8 +1088,8 @@ void local_growing(
         float *out_occ
         ) {
 
-    const int w = ofD->w;
-    const int h = ofD->h;
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     std::printf("Queue size at start = %d\n", (int)queue->size());
     while (! queue->empty()) {
 
@@ -1146,11 +1134,10 @@ void local_growing(
 //Initialize optical flow data
 static OpticalFlowData init_Optical_Flow_Data(
         float *saliency,
-        int w,
-        int h,
-        int w_radio,
-        int method) {
-
+        const Parameters& params
+        ) {
+    int w = params.w;
+    int h = params.h;
     OpticalFlowData of;
     of.u1  = new float[w*h*2];
     of.u2  = of.u1 + w*h;
@@ -1160,15 +1147,11 @@ static OpticalFlowData init_Optical_Flow_Data(
     of.fixed_points = new int[w*h];
     of.trust_points = new int[w*h];
     of.saliency = saliency;
-    of.wr = w_radio;
-    of.w = w;
-    of.h = h;
-    of.method = method;
     //TODO: Only to keep if it presents better performance.
     of.weight = new BilateralWeight[w*h]; // weight of non local
-    of.u1_ini = new float[(2*w_radio + 1)*(2*w_radio + 1)];
-    of.u2_ini = new float[(2*w_radio + 1)*(2*w_radio + 1)];
-
+    of.u1_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
+    of.u2_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
+    of.params = params;
     return of;
 }
 
@@ -1181,26 +1164,25 @@ void match_growing_variational(
         float *i2,
         float *sal_go,
         float *sal_ba,
-        int pd,
-        int w,
-        int h,
-        int w_radio,
-        int method,
+        Parameters params,
         float *ene_val,
         float *out_flow,
         float *out_occ
         ){
+    int w = params.w;
+    int h = params.h;
     std::printf("Initializing stuff\n");
+
     //Initialize all the stuff for optical flow computation
     //Optical flow t, t+1
-    OpticalFlowData ofGo = init_Optical_Flow_Data(sal_go, w, h, w_radio, method);
+    OpticalFlowData ofGo = init_Optical_Flow_Data(sal_go, params);
     float *oft0 = new float[w*h*2];
     float *ene_Go = new float[w*h];
     float *occ_Go = new float[w*h];
 
 
     //Optical flow t+1, t
-    OpticalFlowData ofBa = init_Optical_Flow_Data(sal_ba, w, h, w_radio, method);
+    OpticalFlowData ofBa = init_Optical_Flow_Data(sal_ba, params);
     float *oft1 = new float[w*h*2];
     float *ene_Ba = new float[w*h];
     float *occ_Ba = new float[w*h];
@@ -1226,21 +1208,23 @@ void match_growing_variational(
     float *i2n = nullptr;
 
     //Prepare data based on the functional chosen (energy_model.cpp)
-    prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, pd, &i0n, &i1n, &i_1n, &i2n);
+    prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, params.pd, &i0n, &i1n, &i_1n, &i2n);
     std::printf("Finished initializing stuff\n");
 
 
     ////FIXED POINTS////
     //Insert initial seeds to queues
     std::printf("Inserting initial seeds\n");
-#pragma omp parallel num_threads(2)
+    //#pragma omp parallel num_threads(2)
     {
-#pragma omp sections
+        //#pragma omp sections
         {
-#pragma omp section
-            nfixed_go = insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
-#pragma omp section
+            //#pragma omp section
+            auto future_nfixed_go = std::async(std::launch::async,
+                                               [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
+            //#pragma omp section
             nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+            nfixed_go = future_nfixed_go.get();
         } /// End of sections
     } /// End of parallel section
 
@@ -1252,43 +1236,21 @@ void match_growing_variational(
     int   p[2] = {1 , 0};
 
 
-    //    int numCPU = omp_get_num_procs();
-    //    int half_num_threads_0 = numCPU/2;
-    //    int half_num_threads_1 = numCPU - half_num_threads_0;
-
-    //    omp_set_nested(1);
     for (int i = 0; i < iter; i++){
         std::printf("Iteration: %d\n", i);
 
-
         //#pragma omp parallel num_threads(2)
-        //        {
-        //            if (omp_get_thread_num() == 0){
-        //#pragma omp parallel num_threads(half_num_threads_0)
-        //                {
-        //                    //Estimate local minimization I0-I1
-        //                    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed, ene_Go, oft0);
-        //                }
-        //            }else{
-        //#pragma omp parallel num_threads(half_num_threads_1)
-        //                {
-        //                    //Estimate local minimzation I1-I0
-        //                    local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed, ene_Ba, oft1);
-        //                }
-        //            }
-        //        }
-
-
-#pragma omp parallel num_threads(2)
         {
-#pragma omp sections
+            //#pragma omp sections
             {
-#pragma omp section
+                //#pragma omp section
                 //Estimate local minimization I0-I1
-                local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go);
-#pragma omp section
+                auto growing_fwd = std::async(std::launch::async,
+                                              [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go); });
+                //#pragma omp section
                 //Estimate local minimzation I1-I0
                 local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed_ba, ene_Ba, oft1, occ_Ba);
+                growing_fwd.get();
             } /// End of sections
         } /// End of parallel section
 
@@ -1441,9 +1403,9 @@ static float *read_image(const char *filename, int *w, int *h){
     return f;
 }
 
-static Parameters init_params(const char *file_params, int warps){
+static Parameters init_params(const std::string& file_params, int warps){
     Parameters params;
-    if (file_params == "0"){
+    if (file_params == ""){
         params.lambda = PAR_DEFAULT_LAMBDA;
         params.beta = PAR_DEFAULT_BETA;
         params.theta = PAR_DEFAULT_THETA;
@@ -1476,29 +1438,7 @@ static Parameters init_params(const char *file_params, int warps){
     return params;
 }
 
-// @c pointer to original argc
-// @v pointer to original argv
-// @o option name (after hyphen)
-// @d default value
-static char *pick_option(int *c, char ***v, char *o, char *d) {
-    int argc = *c;
-    char **argv = *v;
-    int id = d ? 1 : 0;
-    for (int i = 0; i < argc - id; i++)
-        if (argv[i][0] == '-' && 0 == strcmp(argv[i] + 1, o)){
-            char *r = argv[i + id] + 1 - id;
-            *c -= id + 1;
-            for (int j = i; j < argc - id; j++)
-                (*v)[j] = (*v)[j + id + 1];
-            return r;
-        }
-    return d;
-}
 
-#include <algorithm>
-#include <iostream>
-#include <string>
-#include <vector>
 
 static bool pick_option(std::vector<std::string>& args, const std::string& option){
 
@@ -1511,17 +1451,16 @@ static bool pick_option(std::vector<std::string>& args, const std::string& optio
     return found;
 }
 
-static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value)
-{
+static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value) {
     auto arg = "-" + option;
 
     for (auto it = args.begin(); it != args.end(); it++) {
         if (*it == arg) {
-            auto next = it+1;
+            auto next = it + 1;
             if (next == args.end())
                 continue;
             auto result = *next;
-            args.erase(it, it+2);
+            args.erase(it, it + 2);
             return result;
         }
     }
@@ -1535,50 +1474,54 @@ static std::string pick_option(std::vector<std::string>& args, const std::string
 int main(int argc, char* argv[]){
 
 
+    using namespace std::chrono;
+
+    system_clock::time_point today = system_clock::now();
+    time_t tt;
+
+    tt = system_clock::to_time_t ( today );
+    std::cerr << "today is: " << ctime(&tt);
+
+
     // process input
-    std::vector<std::string> args(argv, argv+argc);
-    auto windows_ratio = pick_option(args, "mw", "5"); // Warpings
+    std::vector<std::string> args(argv, argv + argc);
+    auto windows_ratio = pick_option(args, "wr", "5"); // Warpings
     auto var_reg       = pick_option(args, "m",  "8"); // Methods
-    auto parameters    = pick_option(args, "p",  "0"); // Methods
+    auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
-
-    if (argc != 7 && argc != 9) {
+    if (args.size() != 7 && args.size() != 9) {
         fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
                 //                          0        1     2       3       4       5         6
-                "[-m method_id] [-wr windows_radio]\n", argc, *argv);
+                " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
         fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
                 //                          0      1     2       3       4       5         6
-                "[-m method_id] [-wr windows_radio]\n", argc, *argv);
+                " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
 
         return 1;
     }
 
     //filename that contains all the images to use
-    char *filename_images = argv[1];
-    char *filename_i_1  = nullptr;
-    char *filename_i0 = nullptr;
-    char *filename_i1 = nullptr;
-    char *filename_i2 = nullptr;
+    std::string filename_i_1, filename_i0, filename_i1, filename_i2;
 
     //Read txt file of images
-    string line;
-    ifstream infile;
+    const std::string& filename_images = args[1];
+    ifstream infile(filename_images);
     int num_files = 0;
-    infile.open (filename_images);
+    string line;
     while(getline(infile, line)){
 
         ++num_files;
         if (num_files == 3){
-            filename_i_1  = strdup(line.c_str());
+            filename_i_1  = line;
         }else{
             if (num_files == 1){
-                filename_i0  = strdup(line.c_str());
+                filename_i0  = line;
             }else{
                 if (num_files == 2){
-                    filename_i1  = strdup(line.c_str());
+                    filename_i1  = line;
                 }else{
                     if (num_files == 4){
-                        filename_i2  = strdup(line.c_str());
+                        filename_i2  = line;
                     }
                 }
             }
@@ -1594,29 +1537,22 @@ int main(int argc, char* argv[]){
     }
 
     //Save other arguments
-    char *filename_go  = argv[2];
-    char *filename_ba  = argv[3];
-    char *filename_out = argv[4];
-    char *filenme_sim  = argv[5];
-    char *filename_occ = argv[6];
-    char *filename_sal0 = nullptr;
-    char *filename_sal1 = nullptr;
+    const std::string& filename_go  = args[2];
+    const std::string& filename_ba  = args[3];
+    const std::string& filename_out = args[4];
+    const std::string& filenme_sim  = args[5];
+    const std::string& filename_occ = args[6];
+    const char *filename_sal0 = nullptr;
+    const char *filename_sal1 = nullptr;
 
-    if (argc == 9){
-        filename_sal0 = argv[7];
-        filename_sal1 = argv[8];
+    if (args.size() == 9){
+        filename_sal0 = args[7].c_str();
+        filename_sal1 = args[8].c_str();
     }
 
     //Optional arguments
-
     int w_radio = stoi(windows_ratio);
     int val_method = stoi(var_reg);
-    const char *file_params = parameters.data();
-
-    //Initialize parameters
-    int warps = PAR_DEFAULT_NWARPS_LOCAL;
-    Parameters params =  init_params(file_params, warps);
-
 
     // Open input images and .flo
     // pd: number of channels
@@ -1626,20 +1562,20 @@ int main(int argc, char* argv[]){
     float *i_1 = nullptr;
     float *i2 = nullptr;
     if (num_files == 4){
-        i_1 = iio_read_image_float_split(filename_i_1, w + 6, h + 6, pd + 4);
-        i2 = iio_read_image_float_split(filename_i2, w + 7, h + 7, pd + 5);
+        i_1 = iio_read_image_float_split(filename_i_1.c_str(), w + 6, h + 6, pd + 4);
+        i2 = iio_read_image_float_split(filename_i2.c_str(), w + 7, h + 7, pd + 5);
     }else{
-        i_1 = iio_read_image_float_split(filename_i0, w + 6, h + 6, pd + 4);
-        i2 = iio_read_image_float_split(filename_i1, w + 7, h + 7, pd + 5);
+        i_1 = iio_read_image_float_split(filename_i0.c_str(), w + 6, h + 6, pd + 4);
+        i2 = iio_read_image_float_split(filename_i1.c_str(), w + 7, h + 7, pd + 5);
     }
 
     //Frames t and t+1
-    float *i0 = iio_read_image_float_split(filename_i1, w + 0, h + 0, pd + 0);
-    float *i1 = iio_read_image_float_split(filename_i2, w + 1, h + 1, pd + 1);
+    float *i0 = iio_read_image_float_split(filename_i1.c_str(), w + 0, h + 0, pd + 0);
+    float *i1 = iio_read_image_float_split(filename_i2.c_str(), w + 1, h + 1, pd + 1);
 
     //Sparse Optical flow forward and backward
-    float *go = iio_read_image_float_split(filename_go, w + 2, h + 2, pd + 2);
-    float *ba = iio_read_image_float_split(filename_ba, w + 3, h + 3, pd + 3);
+    float *go = iio_read_image_float_split(filename_go.c_str(), w + 2, h + 2, pd + 2);
+    float *ba = iio_read_image_float_split(filename_ba.c_str(), w + 3, h + 3, pd + 3);
 
 
     //Ensure dimensions match in images
@@ -1665,7 +1601,7 @@ int main(int argc, char* argv[]){
     //Load or compute saliency
     float *sal0 = nullptr;
     float *sal1 = nullptr;
-    if (argc == 9){
+    if (args.size() == 9){
         sal0 = iio_read_image_float(filename_sal0, w + 4, h + 4);
         sal1 = iio_read_image_float(filename_sal1, w + 5, h + 5);
         fprintf(stderr, "Reading saliency values given\n");
@@ -1696,7 +1632,7 @@ int main(int argc, char* argv[]){
     float *out_flow = new float[w[0]*h[0]*2];
     float *out_occ = new float[w[0]*h[0]];
     float *ene_val = new float[w[0]*h[0]];
-#pragma omp parallel for
+
     for (int i = 0; i < w[0]*h[0]*2; i++){
         out_flow[i] = NAN;
     }
@@ -1757,16 +1693,22 @@ int main(int argc, char* argv[]){
             }
         }
     }
+    //Initialize parameters
+    int warps = PAR_DEFAULT_NWARPS_LOCAL;
+    Parameters params =  init_params(file_params, warps);
+    params.w = w[0];
+    params.h = h[0];
+    params.w_radio = w_radio;
+    params.val_method = val_method;
 
     //Match growing algorithm
-    match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, pd[0],
-            w[0], h[0], w_radio, val_method, ene_val, out_flow, out_occ);
+    match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, params, ene_val, out_flow, out_occ);
 
 
     // Save results
-    iio_save_image_float_split(filename_out, out_flow, w[0], h[0], 2);
-    iio_save_image_float(filenme_sim, ene_val, w[0], h[0]);
-    iio_save_image_float(filename_occ, out_occ, w[0], h[0]);
+    iio_save_image_float_split(filename_out.c_str(), out_flow, w[0], h[0], 2);
+    iio_save_image_float(filenme_sim.c_str(), ene_val, w[0], h[0]);
+    iio_save_image_float(filename_occ.c_str(), out_occ, w[0], h[0]);
 
     // cleanup and exit
     free(i_1);
@@ -1777,7 +1719,7 @@ int main(int argc, char* argv[]){
     free(go);
     free(ba);
 
-    if (argc ==  8){ //c == 8
+    if (args.size() ==  8){ //c == 8
         free(sal0);
         free(sal1);
     }else{
@@ -1788,6 +1730,11 @@ int main(int argc, char* argv[]){
     delete [] out_flow;
     delete [] ene_val;
     delete [] out_occ;
+
+    today = system_clock::now();
+
+    tt = system_clock::to_time_t ( today );
+    std::cerr << "today is: " << ctime(&tt);
     return 0;
 }
 #endif

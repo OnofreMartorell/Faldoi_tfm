@@ -2,6 +2,7 @@
 # cmake ../src -DCMAKE_BUILD_TYPE=RELEASE
 # make -j5 sparse_flow
 # make -j5
+# rsync -av --checksum --delete ~/Documents/Faldoi_tfm/src/ omartorell@hpc.dtic.upf.edu:Faldoi/src/ --exclude #CMakeLists.txt --exclude CMakeLists.txt.user --exclude Results/
 
 project(faldoi_qtcreator)
 cmake_minimum_required(VERSION 2.8.1)

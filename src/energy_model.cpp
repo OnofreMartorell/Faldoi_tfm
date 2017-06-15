@@ -96,7 +96,7 @@ void rgb_to_lab(const float *in, int size, float *out){
 void initialize_auxiliar_stuff(
         SpecificOFStuff& ofStuff,
         OpticalFlowData& ofCore){
-    switch(ofCore.method)
+    switch(ofCore.params.val_method)
     {
     case M_NLTVL1: //NLTV-L1
         intialize_stuff_nltvl1(&ofStuff, &ofCore);
@@ -130,7 +130,7 @@ void initialize_auxiliar_stuff(
 
 void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore)
 {
-    const int method = ofCore->method;
+    const int method = ofCore->params.val_method;
 
     switch(method)
     {
@@ -180,9 +180,9 @@ void prepare_stuff(
         float **out_i2
         ) {
 
-    const int method = ofCore1->method;
-    const int w = ofCore1->w;
-    const int h = ofCore1->h;
+    const int method = ofCore1->params.val_method;
+    const int w = ofCore1->params.w;
+    const int h = ofCore1->params.h;
 
     switch(method){
     case M_NLTVL1: //NLTV-L1
@@ -217,9 +217,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvl1.I1x, ofStuff1->nltvl1.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->nltvl1.I1x, ofStuff2->nltvl1.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -254,9 +254,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvcsad.I1x, ofStuff1->tvcsad.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->tvcsad.I1x, ofStuff2->tvcsad.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
@@ -301,9 +301,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvcsad.I1x, ofStuff1->nltvcsad.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->nltvcsad.I1x, ofStuff2->nltvcsad.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -320,8 +320,8 @@ void prepare_stuff(
 
         float *weight1 = ofStuff1->tvl2w.weight;
         float *weight2 = ofStuff2->tvl2w.weight;
-        gaussian1Dweight(weight1, ofCore1->wr);
-        gaussian1Dweight(weight2, ofCore2->wr);
+        gaussian1Dweight(weight1, ofCore1->params.w_radio);
+        gaussian1Dweight(weight2, ofCore2->params.w_radio);
 
         std::printf("Pesos\n");
         float *a_tmp = new float[w*h];
@@ -342,9 +342,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvl2w.I1x, ofStuff1->tvl2w.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->tvl2w.I1x, ofStuff2->tvl2w.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
 
@@ -355,8 +355,8 @@ void prepare_stuff(
 
         float *weight1 = ofStuff1->nltvcsadw.weight;
         float *weight2 = ofStuff2->nltvcsadw.weight;
-        gaussian1Dweight(weight1, ofCore1->wr);
-        gaussian1Dweight(weight2, ofCore2->wr);
+        gaussian1Dweight(weight1, ofCore1->params.w_radio);
+        gaussian1Dweight(weight2, ofCore2->params.w_radio);
 
         float *a_tmp = new float[w*h];
         float *b_tmp = new float[w*h];
@@ -395,9 +395,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvcsadw.I1x, ofStuff1->nltvcsadw.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->nltvcsadw.I1x, ofStuff2->nltvcsadw.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -413,8 +413,8 @@ void prepare_stuff(
     {
         float *weight1 = ofStuff1->nltvl1w.weight;
         float *weight2 = ofStuff2->nltvl1w.weight;
-        gaussian1Dweight(weight1, ofCore1->wr);
-        gaussian1Dweight(weight2, ofCore2->wr);
+        gaussian1Dweight(weight1, ofCore1->params.w_radio);
+        gaussian1Dweight(weight2, ofCore2->params.w_radio);
         float *a_tmp = new float[w*h];
         float *b_tmp = new float[w*h];
 
@@ -446,9 +446,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvl1w.I1x, ofStuff1->nltvl1w.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->nltvl1w.I1x, ofStuff2->nltvl1w.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -461,8 +461,8 @@ void prepare_stuff(
     {
         float *weight1 = ofStuff1->tvcsadw.weight;
         float *weight2 = ofStuff2->tvcsadw.weight;
-        gaussian1Dweight(weight1, ofCore1->wr);
-        gaussian1Dweight(weight2, ofCore2->wr);
+        gaussian1Dweight(weight1, ofCore1->params.w_radio);
+        gaussian1Dweight(weight2, ofCore2->params.w_radio);
         float *a_tmp = new float[w*h];
         float *b_tmp = new float[w*h];
         int rdt = DT_R;
@@ -486,9 +486,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvcsadw.I1x, ofStuff1->tvcsadw.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->tvcsadw.I1x, ofStuff2->tvcsadw.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
@@ -563,9 +563,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvl2.I1x, ofStuff1->tvl2.I1y,
-                          ofCore1->w, ofCore1->h);
+                          ofCore1->params.w, ofCore1->params.h);
         centered_gradient(a_tmp, ofStuff2->tvl2.I1x, ofStuff2->tvl2.I1y,
-                          ofCore2->w, ofCore2->h);
+                          ofCore2->params.w, ofCore2->params.h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
 
@@ -592,7 +592,7 @@ void of_estimation(
     int    verbose = PAR_DEFAULT_VERBOSE;
     int    warps   = PAR_DEFAULT_NWARPS_LOCAL;
 
-    switch(ofCore->method) {
+    switch(ofCore->params.val_method) {
     case M_NLTVL1: //NLTV-L1
     {
         lambda = 2;
@@ -626,7 +626,7 @@ void of_estimation(
         break;
     case M_TVL1_W: //TV-l2 coupled con pesos
     {
-        const float central = ofStuff->tvl2w.weight[ofCore->wr + 1];
+        const float central = ofStuff->tvl2w.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         guided_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N, index.ii, index.ij, index.ei, index.ej,
                              lambda, theta, tau, tol_OF, warps, verbose);
@@ -635,7 +635,7 @@ void of_estimation(
     case M_NLTVCSAD_W: //NLTV-CSAD con pesos
     {
         lambda = 0.85; //80/(49-2)
-        const float central = ofStuff->nltvcsadw.weight[ofCore->wr + 1];
+        const float central = ofStuff->nltvcsadw.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         theta = 0.3;
         tau = 0.1;
@@ -648,7 +648,7 @@ void of_estimation(
     {
         lambda = 2;
         lambda = 0.85; //80/(49-2)
-        const float central = ofStuff->nltvl1w.weight[ofCore->wr + 1];
+        const float central = ofStuff->nltvl1w.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         theta = 0.3;
         tau = 0.1;
@@ -661,7 +661,7 @@ void of_estimation(
     case M_TVCSAD_W: //TVCSAD con pesos
     {
         lambda = 0.85; //80/(49-2)
-        const float central = ofStuff->tvcsadw.weight[ofCore->wr + 1];
+        const float central = ofStuff->tvcsadw.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         theta = 0.3;
         tau = 0.1;
@@ -672,16 +672,15 @@ void of_estimation(
         break;
     case M_TVL1_OCC:
     {
-        lambda = 0.25;
-        theta = 0.3;
-        const float beta = 1;
-        const float alpha = 0.01;
-        const float tau_u = 0.125;
-        const float tau_eta = 0.125;
-        const float tau_chi = 0.125;
+        lambda = ofCore->params.lambda;
+        theta = ofCore->params.theta;
+        const float beta = ofCore->params.beta;
+        const float alpha = ofCore->params.alpha;
+        const float tau_u = ofCore->params.tau_u;
+        const float tau_eta = ofCore->params.tau_eta;
+        const float tau_chi = ofCore->params.tau_chi;
         //estimate_tvl2 with occlusions
-        guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, index,
-                           lambda, theta, tau_u, tau_eta, tau_chi, beta, alpha, tol_OF, warps, verbose);
+        guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, index);
     }
         break;
     default: //TV-l2 coupled
@@ -707,7 +706,7 @@ void eval_functional(SpecificOFStuff *ofStuff,
     float lambda  = PAR_DEFAULT_LAMBDA;
     float theta   = PAR_DEFAULT_THETA;
 
-    switch(ofCore->method){
+    switch(ofCore->params.val_method){
     case M_NLTVL1: //NLTV-L1
     {
         lambda  = 2.0;
@@ -731,7 +730,7 @@ void eval_functional(SpecificOFStuff *ofStuff,
         break;
     case M_TVL1_W: //TV-l2 con pesos
     {
-        const float central = ofStuff->tvl2w.weight[ofCore->wr + 1];
+        const float central = ofStuff->tvl2w.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         eval_tvl2coupled_w(i0, i1, ofCore, &(ofStuff->tvl2w), ener_N,
                            index.ii, index.ij, index.ei, index.ej, lambda, theta);
@@ -740,7 +739,7 @@ void eval_functional(SpecificOFStuff *ofStuff,
     case M_NLTVCSAD_W: //NLTV-CSAD con pesos
     {
         lambda  = 0.85;
-        const float central = ofStuff->nltvcsadw.weight[ofCore->wr + 1];
+        const float central = ofStuff->nltvcsadw.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         eval_nltvcsad_w(i0, i1, ofCore, &(ofStuff->nltvcsadw), ener_N,
                         index.ii, index.ij, index.ei, index.ej, lambda, theta);
@@ -749,7 +748,7 @@ void eval_functional(SpecificOFStuff *ofStuff,
     case M_NLTVL1_W: //NLTV-L1 con pesos
     {
         lambda  = 2.0;
-        const float central = ofStuff->nltvl1w.weight[ofCore->wr + 1];
+        const float central = ofStuff->nltvl1w.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         eval_nltvl1_w(i0, i1, ofCore, &(ofStuff->nltvl1w), ener_N,
                       index.ii, index.ij, index.ei, index.ej, lambda, theta);
@@ -758,27 +757,27 @@ void eval_functional(SpecificOFStuff *ofStuff,
     case M_TVCSAD_W: //TV-CSAD
     {
         lambda  = 0.85;
-        const float central = ofStuff->tvcsadw.weight[ofCore->wr + 1];
+        const float central = ofStuff->tvcsadw.weight[ofCore->params.w_radio + 1];
         lambda  = lambda /(central*central);
         eval_tvcsad_w(i0, i1, ofCore, &(ofStuff->tvcsadw), ener_N,
                       index.ii, index.ij, index.ei, index.ej, lambda, theta);
     }
         break;
-    case M_TVL1_OCC:
-    {
-        lambda = 0.25;
-        theta = 0.3;
-        const float beta = 1;
-        const float alpha = 0.01;
-        eval_tvl2coupled_occ(i0, i1, i_1, ofCore,
-                &(ofStuff->tvl2_occ),
-                ener_N,
-                index,
-                lambda,  // weight of the data term
-                theta,
-                alpha,
-                beta);
-    }
+//    case M_TVL1_OCC:
+//    {
+//        lambda = 0.25;
+//        theta = 0.3;
+//        const float beta = 1;
+//        const float alpha = 0.01;
+//        eval_tvl2coupled_occ(i0, i1, i_1, ofCore,
+//                &(ofStuff->tvl2_occ),
+//                ener_N,
+//                index,
+//                ofCore->params.lambda,  // weight of the data term
+//                ofCore->params.theta,
+//                ofCore->params.alpha,
+//                ofCore->params.beta);
+//    }
         break;
     default: //TV-l2 coupled
     {
@@ -811,7 +810,7 @@ void eval_functional_occ(
     float lambda  = PAR_DEFAULT_LAMBDA;
     float theta   = PAR_DEFAULT_THETA;
 
-    switch(ofCore->method){
+    switch(ofCore->params.val_method){
 
     case M_TVL1_OCC:
     {

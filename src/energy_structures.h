@@ -3,9 +3,31 @@
 
 #include <vector>
 #include "parameters.h"
+#include <iostream>
+#include <queue>
 
 #define MAX(x,y) ((x)>(y)?(x):(y))
 
+
+//Struct
+struct SparseOF {
+    int i; // column
+    int j; // row
+    float u; //x- optical flow component
+    float v; //y- optical flow component
+    float sim_node; //similarity measure for the actual pixel
+    float occluded; //similarity measure for the accumulated path.
+};
+
+class CompareSparseOF {
+public:
+    bool operator()(SparseOF& e1, SparseOF& e2){
+        return e1.sim_node > e2.sim_node;
+    }
+};
+
+//Priority queue
+typedef std::priority_queue<SparseOF, std::vector<SparseOF>, CompareSparseOF> pq_cand;
 
 
 struct BilateralWeight{
@@ -16,6 +38,8 @@ struct BilateralWeight{
 };
 
 struct PatchIndexes{
+    int i;
+    int j;
     int ii; // initial column
     int ij; // initial row
     int ei; // end column
@@ -34,7 +58,17 @@ struct Parameters{
     float tol_OF;
     int verbose;
     int warps;
+    int w;
+    int h;
+    int pd;
+    int w_radio;
+    int val_method;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const Parameters& p){
+os << "Parameters: \n lambda: " << p.lambda << ", theta: " << p.theta << ", beta: " << p.beta <<
+      ", alpha: " << p.alpha << ", \n, tau_u: " << p.tau_u << ", tau_eta: " << p.tau_eta << "tau_chi: " << p.tau_chi << "\n";
+}
 
 struct OpticalFlowData{
     /* data */
@@ -50,10 +84,7 @@ struct OpticalFlowData{
     BilateralWeight *weight;
     float * __restrict u1_ini; //Optical flow values to initialize the local patch
     float * __restrict u2_ini; //Optical flow values to initialize the local patch
-    int wr;
-    int w;
-    int h;
-    int method; //
+    Parameters params;
 };
 
 struct DualVariables{

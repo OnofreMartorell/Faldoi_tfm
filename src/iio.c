@@ -3556,7 +3556,7 @@ static void iio_save_image_default(const char *filename, struct iio_image *x) {
 	xfclose(f);
 }
 
-void iio_save_image_uint8_matrix_rgb(char *filename, uint8_t (**data)[3],
+void iio_save_image_uint8_matrix_rgb(const char *filename, uint8_t (**data)[3],
 		int w, int h)
 {
 	struct iio_image x[1];
@@ -3569,7 +3569,7 @@ void iio_save_image_uint8_matrix_rgb(char *filename, uint8_t (**data)[3],
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_uint8_matrix(char *filename, uint8_t **data, int w, int h)
+void iio_save_image_uint8_matrix(const char *filename, uint8_t **data, int w, int h)
 {
 	struct iio_image x[1];
 	x->dimension = 2;
@@ -3581,7 +3581,7 @@ void iio_save_image_uint8_matrix(char *filename, uint8_t **data, int w, int h)
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_float_vec(char *filename, float *data,
+void iio_save_image_float_vec(const char *filename, float *data,
 		int w, int h, int pd)
 {
 	struct iio_image x[1];
@@ -3595,7 +3595,7 @@ void iio_save_image_float_vec(char *filename, float *data,
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_float_split(char *filename, float *data,
+void iio_save_image_float_split(const char *filename, float *data,
 		int w, int h, int pd)
 {
 	float *rdata = xmalloc(w*h*pd*sizeof*rdata);
@@ -3604,7 +3604,7 @@ void iio_save_image_float_split(char *filename, float *data,
 	xfree(rdata);
 }
 
-void iio_save_image_double_vec(char *filename, double *data,
+void iio_save_image_double_vec(const char *filename, double *data,
 		int w, int h, int pd)
 {
 	struct iio_image x[1];
@@ -3618,7 +3618,7 @@ void iio_save_image_double_vec(char *filename, double *data,
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_float(char *filename, float *data, int w, int h){
+void iio_save_image_float(const char *filename, float *data, int w, int h){
 	struct iio_image x[1];
 	x->dimension = 2;
 	x->sizes[0] = w;
@@ -3630,7 +3630,7 @@ void iio_save_image_float(char *filename, float *data, int w, int h){
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_double(char *filename, double *data, int w, int h)
+void iio_save_image_double(const char *filename, double *data, int w, int h)
 {
 	struct iio_image x[1];
 	x->dimension = 2;
@@ -3643,7 +3643,7 @@ void iio_save_image_double(char *filename, double *data, int w, int h)
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_int(char *filename, int *data, int w, int h)
+void iio_save_image_int(const char *filename, int *data, int w, int h)
 {
 	struct iio_image x[1];
 	x->dimension = 2;
@@ -3657,7 +3657,7 @@ void iio_save_image_int(char *filename, int *data, int w, int h)
 }
 
 
-void iio_save_image_uint8_vec(char *filename, uint8_t *data,
+void iio_save_image_uint8_vec(const char *filename, uint8_t *data,
 		int w, int h, int pd)
 {
 	struct iio_image x[1];
@@ -3671,7 +3671,7 @@ void iio_save_image_uint8_vec(char *filename, uint8_t *data,
 	iio_save_image_default(filename, x);
 }
 
-void iio_save_image_uint16_vec(char *filename, uint16_t *data,
+void iio_save_image_uint16_vec(const char *filename, uint16_t *data,
 		int w, int h, int pd)
 {
 	struct iio_image x[1];

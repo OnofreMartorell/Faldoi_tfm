@@ -17,10 +17,10 @@ void  intialize_stuff_tvl2coupled_w(
         OpticalFlowData *ofCore)
 
 {
-    const int w = ofCore->w;
-    const int h = ofCore->h;
+    const int w = ofCore->params.w;
+    const int h = ofCore->params.h;
     //fprintf(stderr, "W x H :%d x %d\n", w, h);
-    ofStuff->tvl2w.weight = new float[ofCore->wr*2 + 1];
+    ofStuff->tvl2w.weight = new float[ofCore->params.w_radio*2 + 1];
     ofStuff->tvl2w.xi11 = new float[w*h];
     ofStuff->tvl2w.xi12 = new float[w*h];
     ofStuff->tvl2w.xi21 = new float[w*h];
@@ -191,8 +191,8 @@ void eval_tvl2coupled_w(
 
 
     //Columns and Rows
-    const int nx = ofD->w;
-    const int ny = ofD->h;
+    const int nx = ofD->params.w;
+    const int ny = ofD->params.h;
 
     //Optical flow derivatives
     float *v1   = tvl2w->v1;
@@ -271,8 +271,8 @@ void guided_tvl2coupled_w(
     float *u2 = ofD->u2;
     int *mask = ofD->fixed_points;
     //Columns and Rows
-    const int nx = ofD->w;
-    const int ny = ofD->h;
+    const int nx = ofD->params.w;
+    const int ny = ofD->params.h;
 
 
     float *u1_  = tvl2w->u1_;

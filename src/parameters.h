@@ -15,18 +15,6 @@
 //IMAGE_PARAMETERS
 #define PRESMOOTHING_SIGMA  0.90
 
-//float lambda;
-//float theta;
-//float tau;
-//float beta;
-//float alpha;
-//float tau_u;
-//float tau_eta;
-//float tau_chi;
-//float tol_OF;
-//int verbose;
-//int warps;
-
 
 //lambda = 0.25;
 //theta = 0.3;
@@ -38,16 +26,16 @@
 
 
 //OPTICAL FLOW PARAMETERS
-#define PAR_DEFAULT_LAMBDA  40//40
+#define PAR_DEFAULT_LAMBDA  1//40
 #define PAR_DEFAULT_THETA   0.3
 #define PAR_DEFAULT_TAU     0.125 //0.25
 #define PAR_DEFAULT_BETA    1
 #define PAR_DEFAULT_ALPHA   0.01
 #define PAR_DEFAULT_TAU_U   0.125
 #define PAR_DEFAULT_TAU_ETA 0.125
-#define PAR_DEFAULT_TAU_CHI 0.125
+#define PAR_DEFAULT_TAU_CHI 0.1
 #define PAR_DEFAULT_TOL_D   0.01
-#define PAR_DEFAULT_VERBOSE 0  //0
+#define PAR_DEFAULT_VERBOSE 1  //0
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 

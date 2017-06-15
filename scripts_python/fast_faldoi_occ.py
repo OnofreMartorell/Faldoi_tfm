@@ -20,7 +20,7 @@ parser.add_argument("file_images", help = "File with images")
 
 method = 8
 local_of = True
-global_of = True
+global_of = False
 
 
 #Energy model
@@ -145,9 +145,10 @@ param = '%s %s %s %s %s %s %s\n'%(args.file_images, sparse_name_1, sparse_name_2
                             region_growing, sim_value, occlusions_rg, options)
 #print param
 command_line = '%s %s\n'%(match_propagation, param)
-#print(command_line)
+
 if local_of:
 	print('Computing local faldoi')
+	print(command_line)
 	os.system(command_line)
 
 
