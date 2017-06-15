@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description = 'Faldoy Minimization')
 parser.add_argument("file_images", help = "File with images")
 
 method = 8
+matchings = False
 local_of = True
 global_of = False
 
@@ -65,6 +66,7 @@ with open(args.file_images, 'r') as file:
 for i in range(len(data)):
 	data[i] = data[i][:-1]
 
+sequence = data[0].split('.')[2].split('/')[-2]
 core_name1 = data[0].split('.')[2].split('/')[-1]
 core_name2 = data[1].split('.')[2].split('/')[-1]
 var_m = args.vm
@@ -84,8 +86,10 @@ root_path = '%s/'%(os.getcwd())
 #binary_path = root_path + "bin/"
 binary_path = '../build/'
 #f_path = root_path + "Results/"
-f_path = '../Results/'
-#Set the folder where the binaries are.
+f_path = '../Results/' + sequence + '/'
+if not os.path.exists(f_path):
+    os.makedirs(f_path)
+
 #Set the images input.
 im_name0 = os.path.abspath(data[0])
 im_name1 = os.path.abspath(data[1])
@@ -118,12 +122,14 @@ max_scale = math.sqrt(2)
 #I0-I1
 param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name0, im_name1, max_scale, match_name_1)
 command_line = '%s %s\n'%(match_comparison, param)
-#os.system(command_line)
+if matchings:
+	os.system(command_line)
 
 #I1-I0
 param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name1, im_name0, max_scale, match_name_2)
 command_line = '%s %s\n'%(match_comparison, param)
-#os.system(command_line)
+if matchings:
+	os.system(command_line)
 
 
 #Create a sparse flow from the deepmatching matches.
@@ -147,7 +153,7 @@ param = '%s %s %s %s %s %s %s\n'%(args.file_images, sparse_name_1, sparse_name_2
 command_line = '%s %s\n'%(match_propagation, param)
 
 if local_of:
-	print('Computing local faldoi')
+	#print('Computing local faldoi')
 	print(command_line)
 	os.system(command_line)
 
