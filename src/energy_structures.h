@@ -66,8 +66,8 @@ struct Parameters{
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Parameters& p){
-return os << "Parameters: \n lambda: " << p.lambda << ", theta: " << p.theta << ", beta: " << p.beta
-   << ", alpha: " << p.alpha << ", \n, tau_u: " << p.tau_u << ", tau_eta: " << p.tau_eta << "tau_chi: " << p.tau_chi << "\n";
+    return os << "Parameters: \n lambda: " << p.lambda << ", theta: " << p.theta << ", beta: " << p.beta
+              << ", alpha: " << p.alpha << ", \n tau_u: " << p.tau_u << ", tau_eta: " << p.tau_eta << ", tau_chi: " << p.tau_chi << "\n";
 
 }
 

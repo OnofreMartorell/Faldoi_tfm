@@ -86,7 +86,7 @@ void divergence_patch(
     }
     div[ij*nx + ii]           =  v1[ij*nx + ii]          + v2[ij*nx + ii];
     //div[ei - 1 + ii]          = -v1[ei + ii  - 2]        + v2[ei + ii - 1];
-    div[ij*nx + ei-1]          = -v1[ij*nx + ei-2]        + v2[ij*nx + ei-1];
+    div[ij*nx + ei - 1]       = -v1[ij*nx + ei - 2]      + v2[ij*nx + ei - 1];
     div[(ej - 1)*nx + ii]     =  v1[(ej - 1)*nx + ii]    - v2[(ej - 2)*nx + ii];
     div[(ej - 1)*nx + ei - 1] = -v1[(ej - 1)*nx + ei -2] - v2[(ej - 2)*nx + ei -1];
 
@@ -109,8 +109,8 @@ void forward_gradient_mixed_bound_patch(
     // compute the divergence on the central body of the image
 //#pragma omp simd collapse(2)
 //#pragma omp parallel for schedule(dynamic, 1) collapse(2)
-    for (int j = ij; j < ej-1; j++){
-        for (int i = ii; i < ei-1; i++){
+    for (int j = ij; j < ej - 1; j++){
+        for (int i = ii; i < ei - 1; i++){
             const int p = j*nx + i;
             const int p1 = p + 1;
             const int p2 = p + nx;

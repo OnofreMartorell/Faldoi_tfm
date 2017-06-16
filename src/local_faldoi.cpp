@@ -1220,6 +1220,7 @@ void match_growing_variational(
         //#pragma omp sections
         {
             //#pragma omp section
+            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
             auto future_nfixed_go = std::async(std::launch::async,
                                                [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
             //#pragma omp section
@@ -1700,6 +1701,7 @@ int main(int argc, char* argv[]){
     params.h = h[0];
     params.w_radio = w_radio;
     params.val_method = val_method;
+    cerr << params;
 
     //Match growing algorithm
     match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, params, ene_val, out_flow, out_occ);

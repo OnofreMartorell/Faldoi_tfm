@@ -17,9 +17,7 @@
 //#include <omp.h>
 
 extern "C" {
-//#include "mask.h"
 #include "bicubic_interpolation.h"
-//#include "iio.h"
 }
 #include "utils.h"
 #include <iostream>
@@ -168,12 +166,6 @@ void eval_tvl2coupled_occ(
         float *ener_N,
         const PatchIndexes index,
         Parameters params
-
-
-//        const float lambda,  // weight of the data term
-//        const float theta,
-//        const float alpha,
-//        const float beta
         ){
 
     const float *u1 = ofD->u1;
@@ -289,7 +281,6 @@ void eval_tvl2coupled_occ(
             m++;
         }
     }
-//    cerr << index << "\n";
     //std::cerr << "i: " << index.i << ", j: " << index.j << "\n";
     //fprintf(stderr, "i: %d, j: %d\n", index.i, index.j);
     ener /= (m*1.0);
@@ -362,7 +353,7 @@ static void tvl2coupled_get_xi_patch(
         forward_gradient_patch(vi_div2, grad_x2, grad_y2, index.ii, index.ij, index.ei, index.ej, nx);
 
 
-        ////#pragma omp simd collapse(2)
+        //#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
