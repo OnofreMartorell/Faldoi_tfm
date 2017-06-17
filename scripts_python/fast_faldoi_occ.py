@@ -20,7 +20,7 @@ parser.add_argument("file_images", help = "File with images")
 
 method = 8
 matchings = False
-local_of = False
+local_of = True
 global_of = True
 
 
