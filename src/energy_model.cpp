@@ -258,9 +258,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvl1.I1x, ofStuff1->nltvl1.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->nltvl1.I1x, ofStuff2->nltvl1.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -295,9 +295,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvcsad.I1x, ofStuff1->tvcsad.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->tvcsad.I1x, ofStuff2->tvcsad.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
@@ -342,9 +342,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvcsad.I1x, ofStuff1->nltvcsad.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->nltvcsad.I1x, ofStuff2->nltvcsad.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -383,9 +383,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvl2w.I1x, ofStuff1->tvl2w.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->tvl2w.I1x, ofStuff2->tvl2w.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
 
@@ -436,9 +436,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvcsadw.I1x, ofStuff1->nltvcsadw.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->nltvcsadw.I1x, ofStuff2->nltvcsadw.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -487,9 +487,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->nltvl1w.I1x, ofStuff1->nltvl1w.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->nltvl1w.I1x, ofStuff2->nltvl1w.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
 
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
@@ -527,9 +527,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvcsadw.I1x, ofStuff1->tvcsadw.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->tvcsadw.I1x, ofStuff2->tvcsadw.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
         std::printf("Salimos de CSAD\n");
@@ -604,9 +604,9 @@ void prepare_stuff(
         gaussian(a_tmp, w, h, PRESMOOTHING_SIGMA);
         gaussian(b_tmp, w, h, PRESMOOTHING_SIGMA);
         centered_gradient(b_tmp, ofStuff1->tvl2.I1x, ofStuff1->tvl2.I1y,
-                          ofCore1->params.w, ofCore1->params.h);
+                          w, h);
         centered_gradient(a_tmp, ofStuff2->tvl2.I1x, ofStuff2->tvl2.I1y,
-                          ofCore2->params.w, ofCore2->params.h);
+                          w, h);
         *out_i0 = a_tmp;
         *out_i1 = b_tmp;
 
@@ -713,13 +713,7 @@ void of_estimation(
         break;
     case M_TVL1_OCC:
     {
-//        lambda = ofCore->params.lambda;
-//        theta = ofCore->params.theta;
-//        const float beta = ofCore->params.beta;
-//        const float alpha = ofCore->params.alpha;
-//        const float tau_u = ofCore->params.tau_u;
-//        const float tau_eta = ofCore->params.tau_eta;
-//        const float tau_chi = ofCore->params.tau_chi;
+
         //estimate_tvl2 with occlusions
         guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, index);
     }

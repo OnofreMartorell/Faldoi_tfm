@@ -282,6 +282,8 @@ void eval_tvl2coupled_occ(
             if (!std::isfinite(smooth_term)){
                 std::printf("Regularizacion corrupta\n");
             }
+//            assert(std::isfinite(data_term)); // std::printf("Datos corruptos\n");
+//            assert(std::isfinite(smooth_term)); // std::printf("Regularizacion corrupta\n");
             ener += data_term + smooth_term + div_u_term + norm_v_term + diff_uv_term;
             m++;
         }

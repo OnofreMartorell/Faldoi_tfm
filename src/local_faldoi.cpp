@@ -342,15 +342,12 @@ inline void interpolate_constant(
 //Poisson Interpolation
 void interpolate_poisson(
         OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej // end row
+        const PatchIndexes& patch
         ) {
-    int w = ei - ii;
-    int h = ej - ij;
+    int w = patch.ei - patch.ii;
+    int h = patch.ej - patch.ij;
     int *mask = ofD->fixed_points;
-    int wR = ofD->params.w;
+    int wR = ofD->params.bounds.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float buf_in[2*MAX_PATCH*MAX_PATCH];
@@ -358,8 +355,8 @@ void interpolate_poisson(
     assert(w * h < MAX_PATCH * MAX_PATCH);
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++) {
-            int x = i + ii;
-            int y = j + ij;
+            int x = i + patch.ii;
+            int y = j + patch.ij;
             int xy = y * wR + x;
             //1 fixed - 0 not
             if (mask[xy] == 1) {
@@ -373,8 +370,8 @@ void interpolate_poisson(
     elap_recursive_separable(buf_out, buf_in, w, h, 2, 0.4, 3, 7);
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++) {
-            int x = i + ii;
-            int y = j + ij;
+            int x = i + patch.ii;
+            int y = j + patch.ij;
             int xy = y * wR + x;
             u1[ xy ] = buf_out[ j*w + i       ];
             u2[ xy ] = buf_out[ j*w + i + w*h ];
@@ -474,7 +471,9 @@ void bilateral_filter_regularization(
     int n_d = NL_DUAL_VAR;
 
     //Columns and Rows
-    const int w = ofD->params.w;
+    const int w = ofD->params.bounds.w;
+
+
 
     BilateralWeight *p = ofD->weight;
 
@@ -585,7 +584,7 @@ void interpolate_poisson_nltv(
 
 //Insert 8-connected candidates into the priority queue with their energies.
 void insert_candidates(
-        pq_cand *queue,
+        pq_cand& queue,
         float *ene_val,
         OpticalFlowData *ofD,
         const int i,
@@ -620,7 +619,7 @@ void insert_candidates(
                 element.v = ofD->u2[py*w + px];
                 element.sim_node = new_ener;
                 element.occluded = ofD->chi[py*w + px];
-                queue->push(element);
+                queue.push(element);
             }
         }
     }
@@ -706,9 +705,8 @@ inline void copy_fixed_coordinates(
         int ij, // initial row
         int ei, // end column
         int ej  // end row
+        const PatchIndexes& patch
         ) {
-    const int w = ofD->params.w;
-    const int h = ofD->params.h;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     int *fixed = ofD->fixed_points;
@@ -881,20 +879,20 @@ static void add_neighbors(
     //Poisson Interpolation (4wr x 4wr + 1)
     if (mode == 0) {
         //it > 0. Interpolate over the survivors of the pruning.
-        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
-        interpolate_poisson(ofD, index.ii, index.ij, index.ei, index.ej);
+        copy_fixed_coordinates(ofD, out, index);
+        interpolate_poisson(ofD, index);
 
     }else if (check_trustable_patch(ofD, index.ii, index.ij, index.ei, index.ej) == 0) {
 
-        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
-        interpolate_poisson(ofD, index.ii, index.ij, index.ei, index.ej);
+        copy_fixed_coordinates(ofD, out, index);
+        interpolate_poisson(ofD, index);
     }
 
     // Optical flow method on patch (2*wr x 2wr + 1)
     of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, index);
 
     // update_fixed_coordinates(out, ofD, ii, ij, ei, ej);
-    insert_candidates(queue, ene_val, ofD, i, j, (float) ener_N);
+    insert_candidates(*queue, ene_val, ofD, i, j, (float) ener_N);
 
     //TODO:It is a strange step, if the energy over the patch is lower thant the
     //stored energy, we put the new one, if it's not, we put the old one.
@@ -974,13 +972,12 @@ void insert_potential_candidates(
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         pq_cand *queue,
+        pq_cand& queue,
         float *ene_val,
         float *out,
         float *out_occ
         ){
     //Note: in and out are the same pointer
-    int w = ofD->params.w;
-    int h = ofD->params.h;
 
     //Fixed the initial seeds.
     for (int j = 0; j < h; j++)
@@ -1073,6 +1070,7 @@ void prepare_data_for_growing(
 
 }
 
+//static const auto MAIN_THREAD_ID = std::this_thread::get_id();
 void local_growing(        
         const float *i0,
         const float *i1,
@@ -1197,7 +1195,7 @@ void match_growing_variational(
         //#pragma omp sections
         {
             //#pragma omp section
-//            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
+            //            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
             auto future_nfixed_go = std::async(std::launch::async,
                                                [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
             //#pragma omp section
@@ -1241,8 +1239,8 @@ void match_growing_variational(
         delete_not_trustable_candidates(&stuffBa, &ofBa, oft1, ene_Ba);
 
         //Insert each pixel into the queue as possible candidate
-        insert_potential_candidates(i0n, i1n, oft0, &stuffGo, &ofGo, &queueGo, ene_Go, oft0, occ_Go);
-        insert_potential_candidates(i1n, i0n, oft1, &stuffBa, &ofBa, &queueBa, ene_Ba, oft1, occ_Ba);
+        insert_potential_candidates(i0n, i1n, oft0, &stuffGo, &ofGo, queueGo, ene_Go, oft0, occ_Go);
+        insert_potential_candidates(i1n, i0n, oft1, &stuffBa, &ofBa, queueBa, ene_Ba, oft1, occ_Ba);
 
         prepare_data_for_growing(&ofGo, &stuffGo, ene_Go, oft0);
         prepare_data_for_growing(&ofBa, &stuffBa, ene_Ba, oft1);

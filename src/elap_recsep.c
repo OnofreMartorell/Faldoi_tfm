@@ -12,7 +12,6 @@
 //#ifndef DISABLE_OMP
 //#include <omp.h>
 //#endif//DISABLE_OMP
-#include "xmalloc.h"
 #include "mask.h"
 #include "zoom.h"
 
@@ -55,26 +54,26 @@ static float perform_one_iteration(float *x, int w, int h,
 		int j = mask[p][1];
 		int idx = j*w + i;
 
-		float new = x[idx] + tstep * laplacian(x, w, h, i, j);
+		float new_ = x[idx] + tstep * laplacian(x, w, h, i, j);
 
-		float update = fabs(x[idx] - new);
+		float update = fabs(x[idx] - new_);
 		if (update > maxupdate)
 			maxupdate = update;
 
-		x[idx] = new;
+		x[idx] = new_;
 	}
 	return maxupdate;
 }
 
 // build a mask of the NAN positions on image "x"
 // the output "mask[i][2]" contains the two coordinates of the ith masked pixel
-static int (*build_mask(int *out_nmask, float *x, int w, int h))[2]
+static void build_mask(int *out_nmask, float *x, int w, int h, int mask[w*h][2])
 {
 	int nmask = 0;
 	for (int i = 0; i < w*h; i++)
 		if (isnan(x[i]))
 			nmask += 1;
-	int (*mask)[2] = xmalloc(w*h*2*sizeof(int)), cx = 0;
+	int cx = 0;
 	for (int j = 0; j < h; j++)
 	for (int i = 0; i < w; i++)
 		if (isnan(x[j*w + i])) {
@@ -85,7 +84,6 @@ static int (*build_mask(int *out_nmask, float *x, int w, int h))[2]
 	assert(cx == nmask);
 
 	*out_nmask = nmask;
-	return mask;
 }
 
 // fill the holes of the image x using an harmonic function
@@ -100,7 +98,9 @@ static void harmonic_extension_with_init(
 		)
 {
 	// build list of masked pixels
-	int nmask, (*mask)[2] = build_mask(&nmask, x, w, h);
+	int mask[w*h][2];
+	int nmask;
+	build_mask(&nmask, x, w, h, mask);
 
 	// initialize the solution to the given data at the masked pixels
 	for (int i = 0; i < w*h; i++)
@@ -118,7 +118,7 @@ static void harmonic_extension_with_init(
 		//		w, h, i, u);
 	}
 
-	free(mask);
+	//free(mask);
 }
 
 
@@ -134,7 +134,7 @@ static void zoom_out_by_factor_two(float *out, int ow, int oh,
 	assert(abs(2*ow-iw) < 2);
 	assert(abs(2*oh-ih) < 2);
 	if (PREFILTER() > 0) {
-		float *fin = xmalloc(iw*ih*sizeof*fin);
+		float fin[iw*ih];
 		for (int j = 0; j < ih; j++)
 		for (int i = 0; i < iw; i++)
 		{
@@ -183,7 +183,6 @@ static void zoom_out_by_factor_two(float *out, int ow, int oh,
 			}
 		out[ow*j + i] = cx ? m/cx : NAN;
 	}
-	if (PREFILTER() > 0) free(in);
 }
 
 
@@ -205,25 +204,25 @@ static void zoom_in_by_factor_two(float *out, int ow, int oh,
 void elap_recursive(float *out, float *in, int w, int h,
 		float timestep, int niter, int scale)
 {
-	float *init = xmalloc(w*h*sizeof*init);
+	float init[w*h];
 	if (scale > 1)
 	{
 		int ws = ceil(w/2.0);
 		int hs = ceil(h/2.0);
-		float *ins  = xmalloc(ws * hs * sizeof*ins);
-		float *outs = xmalloc(ws * hs * sizeof*outs);
+		float ins[ws * hs];
+		float outs[ws * hs];
 		zoom_out_by_factor_two(ins, ws, hs, in, w, h);
 		elap_recursive(outs, ins, ws, hs, timestep, niter, scale - 1);
 		zoom_in_by_factor_two(init, w, h, outs, ws, hs);
 
-		free(ins);
-		free(outs);
+		//free(ins);
+		//free(outs);
 	} else {
 		for (int i = 0 ; i < w*h; i++)
 			init[i] = 0;
 	}
 	harmonic_extension_with_init(out, in, w, h, timestep, niter, init);
-	free(init);
+	//free(init);
 }
 
 // extension by laplace equation of each channel of a color image
