@@ -22,6 +22,7 @@
 #include "energy_structures.h"
 #include "aux_energy_model.h"
 #include "energy_model.h"
+#include "utils_preprocess.h"
 
 extern "C" {
 #include "iio.h"
@@ -397,7 +398,6 @@ void nltv_regularization(
 
     //Columns and Rows
     const int w = ofD->params.w;
-    const int h = ofD->params.h;
 
     BilateralWeight *p = ofD->weight;
 
@@ -475,7 +475,6 @@ void bilateral_filter_regularization(
 
     //Columns and Rows
     const int w = ofD->params.w;
-    const int h = ofD->params.h;
 
     BilateralWeight *p = ofD->weight;
 
@@ -830,7 +829,7 @@ int check_trustable_patch(
         ) {
 
     const int w = ofD->params.w;
-    const int h = ofD->params.h;
+
     int *fixed = ofD->trust_points;
 
     for (int l = ij; l < ej; l++)
@@ -1131,29 +1130,7 @@ void local_growing(
 }
 
 
-//Initialize optical flow data
-static OpticalFlowData init_Optical_Flow_Data(
-        float *saliency,
-        const Parameters& params
-        ) {
-    int w = params.w;
-    int h = params.h;
-    OpticalFlowData of;
-    of.u1  = new float[w*h*2];
-    of.u2  = of.u1 + w*h;
-    of.u1_ba  = new float[w*h*2];
-    of.u2_ba  = of.u1_ba + w*h;
-    of.chi = new float[w*h];
-    of.fixed_points = new int[w*h];
-    of.trust_points = new int[w*h];
-    of.saliency = saliency;
-    //TODO: Only to keep if it presents better performance.
-    of.weight = new BilateralWeight[w*h]; // weight of non local
-    of.u1_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
-    of.u2_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
-    of.params = params;
-    return of;
-}
+
 
 void match_growing_variational(
         float *go,
@@ -1220,7 +1197,7 @@ void match_growing_variational(
         //#pragma omp sections
         {
             //#pragma omp section
-            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
+//            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
             auto future_nfixed_go = std::async(std::launch::async,
                                                [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
             //#pragma omp section
@@ -1404,42 +1381,6 @@ static float *read_image(const char *filename, int *w, int *h){
     return f;
 }
 
-static Parameters init_params(const std::string& file_params, int warps){
-    Parameters params;
-    if (file_params == ""){
-        params.lambda = PAR_DEFAULT_LAMBDA;
-        params.beta = PAR_DEFAULT_BETA;
-        params.theta = PAR_DEFAULT_THETA;
-        params.tau = PAR_DEFAULT_TAU;
-        params.alpha = PAR_DEFAULT_ALPHA;
-        params.tau_u = PAR_DEFAULT_TAU_U;
-        params.tau_eta = PAR_DEFAULT_TAU_ETA;
-        params.tau_chi = PAR_DEFAULT_TAU_CHI;
-    }else{
-        string::size_type sz;
-        string line;
-        ifstream infile;
-        infile.open(file_params);
-        getline(infile, line);
-
-        params.lambda = std::stof(line, &sz); getline(infile, line);
-        params.theta = std::stof(line, &sz); getline(infile, line);
-        params.tau = std::stof(line, &sz); getline(infile, line);
-        params.beta = std::stof(line, &sz); getline(infile, line);
-        params.alpha = std::stof(line, &sz); getline(infile, line);
-        params.tau_u = std::stof(line, &sz); getline(infile, line);
-        params.tau_eta = std::stof(line, &sz); getline(infile, line);
-        params.tau_chi = std::stof(line, &sz); getline(infile, line);
-
-        infile.close();
-    }
-    params.tol_OF = PAR_DEFAULT_TOL_D;
-    params.verbose = PAR_DEFAULT_VERBOSE;
-    params.warps = warps;
-    return params;
-}
-
-
 
 static bool pick_option(std::vector<std::string>& args, const std::string& option){
 
@@ -1491,10 +1432,10 @@ int main(int argc, char* argv[]){
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
     if (args.size() != 7 && args.size() != 9) {
-        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
+        fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
                 //                          0        1     2       3       4       5         6
                 " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
-        fprintf(stderr, "usage %d :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
+        fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
                 //                          0      1     2       3       4       5         6
                 " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
 
@@ -1695,8 +1636,8 @@ int main(int argc, char* argv[]){
         }
     }
     //Initialize parameters
-    int warps = PAR_DEFAULT_NWARPS_LOCAL;
-    Parameters params =  init_params(file_params, warps);
+    int step_alg = LOCAL_STEP;
+    Parameters params =  init_params(file_params, step_alg);
     params.w = w[0];
     params.h = h[0];
     params.w_radio = w_radio;

@@ -26,6 +26,8 @@ extern "C" {
 #include "tvl2_model_occ.h"
 #include "utils.h"
 #include "parameters.h"
+#include "utils_preprocess.h"
+#include "energy_model.h"
 
 #include <iostream>
 #include <fstream>
@@ -119,7 +121,7 @@ void Dual_TVL1_optic_flow(
 
         int n = 0;
         float error = INFINITY;
-        while (error > epsilon * epsilon && n < MAX_ITERATIONS) {
+        while (error > epsilon * epsilon && n < MAX_ITERATIONS_GLOBAL) {
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding opterator TH)
@@ -465,7 +467,7 @@ void duOF(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS)
+        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_GLOBAL)
         {
 
             n++;
@@ -654,7 +656,7 @@ void tvl2OF(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS)
+        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_GLOBAL)
         {
 
             n++;
@@ -1124,7 +1126,7 @@ void nltvl1_PD(
         int n = 0;
         float err_D = INFINITY;
         // while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS)
-        while (n < MAX_ITERATIONS)
+        while (n < MAX_ITERATIONS_GLOBAL)
         {
 
             n++;
@@ -1214,17 +1216,6 @@ void nltvl1_PD(
     delete [] div_q;
 }
 //////////////////////////////TV-CSAD///////////////////////////////////////////
-#define DT_R  3 //Neighboor 7x7
-#define DT_NEI (2*DT_R + 1)*(2*DT_R + 1) -1 // 5x5
-
-////Struct
-//struct PosNei {
-//    int   api[DT_NEI];
-//    int   apj[DT_NEI];
-//    float b[DT_NEI];
-//    std::vector<float>  ba;
-//    int n;
-//};
 
 ////////////////////////////////////////////////////////////////////////////////
 void initialize_pos_nei(
@@ -1299,7 +1290,6 @@ void tvcsad_getP(float *u1,
                  int size,
                  float *err){
     float err_D = 0.0;
-    float min, max;
 
     //#pragma omp parallel for reduction(+:err_D)
     for (int i = 0; i < size; i++){
@@ -1448,7 +1438,7 @@ void tvcsad_PD(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS)
+        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_GLOBAL)
         {
             n++;
             // estimate the values of the variable (v1, v2)
@@ -1644,7 +1634,7 @@ void nltvcsad_PD(
         int n = 0;
         float err_D = INFINITY;
         // while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS)
-        while (n < MAX_ITERATIONS)
+        while (n < MAX_ITERATIONS_GLOBAL)
         {
             n++;
             // estimate the values of the variable (v1, v2)
@@ -1737,11 +1727,7 @@ void nltvcsad_PD(
 
 
 
-
-
-
-
-///////////////////////////////MAIN///////////
+/////////////////////////MAIN/////////////////////
 
 
 /**
@@ -1767,40 +1753,8 @@ void rgb2gray(float *in, int w, int h, float *out) {
 
 }
 
-static Parameters init_params(const std::string& file_params, int warps){
-    Parameters params;
-    if (file_params == ""){
-        params.lambda = PAR_DEFAULT_LAMBDA;
-        params.beta = PAR_DEFAULT_BETA;
-        params.theta = PAR_DEFAULT_THETA;
-        params.tau = PAR_DEFAULT_TAU;
-        params.alpha = PAR_DEFAULT_ALPHA;
-        params.tau_u = PAR_DEFAULT_TAU_U;
-        params.tau_eta = PAR_DEFAULT_TAU_ETA;
-        params.tau_chi = PAR_DEFAULT_TAU_CHI;
-    }else{
-        string::size_type sz;
-        string line;
-        ifstream infile;
-        infile.open(file_params);
-        getline(infile, line);
 
-        params.lambda = std::stof(line, &sz); getline(infile, line);
-        params.theta = std::stof(line, &sz); getline(infile, line);
-        params.tau = std::stof(line, &sz); getline(infile, line);
-        params.beta = std::stof(line, &sz); getline(infile, line);
-        params.alpha = std::stof(line, &sz); getline(infile, line);
-        params.tau_u = std::stof(line, &sz); getline(infile, line);
-        params.tau_eta = std::stof(line, &sz); getline(infile, line);
-        params.tau_chi = std::stof(line, &sz); getline(infile, line);
 
-        infile.close();
-    }
-    params.tol_OF = PAR_DEFAULT_TOL_D;
-    params.verbose = PAR_DEFAULT_VERBOSE;
-    params.warps = warps;
-    return params;
-}
 
 static bool pick_option(std::vector<std::string>& args, const std::string& option){
 
@@ -1846,6 +1800,7 @@ static std::string pick_option(std::vector<std::string>& args, const std::string
  *
  */
 int main(int argc, char *argv[]) {
+
     using namespace std::chrono;
     system_clock::time_point today = system_clock::now();
     time_t tt;
@@ -1860,11 +1815,11 @@ int main(int argc, char *argv[]) {
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
     if (args.size() != 6 && args.size() != 4) {
-        fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo"
+        fprintf(stderr, "Usage: %lu  ims.txt in_flow.flo  out.flo"
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
                 "\n", args.size());
-        fprintf(stderr, "Usage: %d  ims.txt in_flow.flo  out.flo occl_input.png occl_out.png"
+        fprintf(stderr, "Usage: %lu  ims.txt in_flow.flo  out.flo occl_input.png occl_out.png"
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
                 "\n", args.size());
@@ -1878,8 +1833,7 @@ int main(int argc, char *argv[]) {
 
     //read the parameters
 
-    //images
-    int i = 1;
+
     //filename that contains all the images to use
     const std::string& filename_images = args[1];
     const std::string& image_flow_name = args[2];
@@ -1918,36 +1872,36 @@ int main(int argc, char *argv[]) {
 
 
 
-//    //check parameters
-//    if (lambda <= 0) {
-//        lambda = PAR_DEFAULT_LAMBDA;
-//        if (verbose) fprintf(stderr, "warning: "
-//                                     "lambda changed to %g\n", lambda);
-//    }
+    //    //check parameters
+    //    if (lambda <= 0) {
+    //        lambda = PAR_DEFAULT_LAMBDA;
+    //        if (verbose) fprintf(stderr, "warning: "
+    //                                     "lambda changed to %g\n", lambda);
+    //    }
 
-//    if (theta <= 0) {
-//        tau = PAR_DEFAULT_THETA;
-//        if (verbose) fprintf(stderr, "warning: "
-//                                     "theta changed to %g\n", theta);
-//    }
+    //    if (theta <= 0) {
+    //        tau = PAR_DEFAULT_THETA;
+    //        if (verbose) fprintf(stderr, "warning: "
+    //                                     "theta changed to %g\n", theta);
+    //    }
 
-//    if (tau <= 0 || tau > 0.25) {
-//        tau = PAR_DEFAULT_TAU;
-//        if (verbose) fprintf(stderr, "warning: "
-//                                     "tau changed to %g\n", tau);
-//    }
+    //    if (tau <= 0 || tau > 0.25) {
+    //        tau = PAR_DEFAULT_TAU;
+    //        if (verbose) fprintf(stderr, "warning: "
+    //                                     "tau changed to %g\n", tau);
+    //    }
 
-//    if (tol_D <= 0) {
-//        tol_D = PAR_DEFAULT_TOL_D;
-//        if (verbose) fprintf(stderr, "warning: "
-//                                     "tol_D changed to %f\n", tol_D);
-//    }
+    //    if (tol_D <= 0) {
+    //        tol_D = PAR_DEFAULT_TOL_D;
+    //        if (verbose) fprintf(stderr, "warning: "
+    //                                     "tol_D changed to %f\n", tol_D);
+    //    }
 
-//    if (nproc < 0) {
-//        nproc = PAR_DEFAULT_NPROC;
-//        if (verbose) fprintf(stderr, "warning: "
-//                                     "nproc changed to %d\n", nproc);
-//    }
+    //    if (nproc < 0) {
+    //        nproc = PAR_DEFAULT_NPROC;
+    //        if (verbose) fprintf(stderr, "warning: "
+    //                                     "nproc changed to %d\n", nproc);
+    //    }
 
 
 
@@ -1990,11 +1944,16 @@ int main(int argc, char *argv[]) {
 
 
     //Initialize parameters
-    Parameters params =  init_params(file_params, nwarps);
+    int step_alg = GLOBAL_STEP;
+    Parameters params =  init_params(file_params, step_alg);
     params.w = w[0];
     params.h = h[0];
+    params.warps = nwarps;
     params.val_method = val_method;
-    cerr << params;
+    if (params.verbose)
+        cerr << params;
+
+    OpticalFlowData ofD =  init_Optical_Flow_Data(params);
 
     float *a = nullptr;
     float *xi11 = nullptr;
@@ -2034,14 +1993,11 @@ int main(int argc, char *argv[]) {
     gaussian(i_1n, w[0], h[0], PRESMOOTHING_SIGMA);
 
 
-    if (params.verbose)
-        fprintf(stderr,"tau = %2.3f tol_D = %2.3f theta = %2.3f"
-                       " lambda = %2.3f\n", params.tau, params.tol_OF, params.theta, params.lambda);
 
     //allocate memory for the flow
-    float *u = new float[size*2];
-    float *v = u + size;
-    float *chi = new float[size];
+    float *u = ofD.u1;
+    float *v = ofD.u2;
+    float *chi = ofD.chi;
 
     //Initialize flow with flow from local faldoi
     for (int i = 0; i < size; i++){
@@ -2050,14 +2006,34 @@ int main(int argc, char *argv[]) {
         chi[i] = occ[i];
     }
 
-
-    //Initialize dual variables if necessary (TV)
+    SpecificOFStuff stuffOF;
+    PatchIndexes index;
+    //Initialize dual variables if necessary (TV) and other stuff for TVL1_occ
     if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W
             || val_method == M_TVL1_OCC) {
-        xi11 = new float[size];
-        xi12 = new float[size];
-        xi21 = new float[size];
-        xi22 = new float[size];
+
+        if (val_method == M_TVL1_OCC){
+
+            index.ii = 0;
+            index.ij = 0;
+            index.ei = w[0];
+            index.ej = h[0];
+
+
+            initialize_auxiliar_stuff(stuffOF, ofD);
+            //Derivatives of I0 to compute weight g
+
+            xi11 = stuffOF.tvl2_occ.xi11;
+            xi12 = stuffOF.tvl2_occ.xi12;
+            xi21 = stuffOF.tvl2_occ.xi21;
+            xi22 = stuffOF.tvl2_occ.xi22;
+        }else{
+            xi11 = new float[size];
+            xi12 = new float[size];
+            xi21 = new float[size];
+            xi22 = new float[size];
+        }
+
 
         for (int i = 0; i < size; i++){
             xi11[i] = 0.0;
@@ -2096,15 +2072,19 @@ int main(int argc, char *argv[]) {
 
     }else if (val_method == M_TVL1_OCC){
         fprintf(stderr, "TV-l2 occlusions\n");
+        float ener_N;
 
-//        lambda = 0.25;
-//        theta = 0.3;
-//        const float beta = 1;
-//        const float alpha = 0.01;
-//        const float tau_u = 0.125;
-//        const float tau_eta = 0.125;
-//        const float tau_chi = 0.125;
-        tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi, params);
+        //        lambda = 0.25;
+        //        theta = 0.3;
+        //        const float beta = 1;
+        //        const float alpha = 0.01;
+        //        const float tau_u = 0.125;
+        //        const float tau_eta = 0.125;
+        //        const float tau_chi = 0.125;
+
+
+        guided_tvl2coupled_occ(i0n, i1n, i_1n, &ofD, &(stuffOF.tvl2_occ), &ener_N, index);
+        //tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi, params);
 
     }
     iio_save_image_float_split(outfile.c_str(), u, w[0], h[0], 2);

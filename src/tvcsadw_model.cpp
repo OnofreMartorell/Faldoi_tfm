@@ -403,7 +403,7 @@ void guided_tvcsad_w(
 
     int n = 0;
     float err_D = INFINITY;
-    while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF)
+    while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_LOCAL)
     {
 
       n++;

@@ -76,7 +76,7 @@ void divergence_patch(
     }
 
     // compute the divergence on the first and last columns
-    for (int j = 1; j < ej - 1; j++) {
+    for (int j = ij + 1; j < ej - 1; j++) {
         const int p1 = j * nx;
         const int p2 = (j + 1) * nx - 1;
 

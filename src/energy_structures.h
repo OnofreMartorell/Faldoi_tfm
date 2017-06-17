@@ -63,6 +63,8 @@ struct Parameters{
     int pd;
     int w_radio;
     int val_method;
+    int step_algorithm;
+    int iterations_of;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Parameters& p){
@@ -367,6 +369,8 @@ struct  Tvl2CoupledOFStuff_occ {
     float * __restrict grad_1;
     float * __restrict grad__1;
 
+    float * __restrict I0x;
+    float * __restrict I0y;
 
     float * __restrict I1x;
     float * __restrict I1y;

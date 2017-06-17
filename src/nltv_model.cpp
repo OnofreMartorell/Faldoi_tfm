@@ -386,7 +386,7 @@ void guided_nltvl1(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_OF)
+        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_LOCAL)
         {
             n++;
             // estimate the values of the variable (v1, v2)

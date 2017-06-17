@@ -14,7 +14,7 @@
 #include <cassert>
 #include "energy_structures.h"
 #include "aux_energy_model.h"
-//#include <omp.h>
+#include "parameters.h"
 
 extern "C" {
 #include "bicubic_interpolation.h"
@@ -56,6 +56,11 @@ void  intialize_stuff_tvl2coupled_occ(
     ofStuff.tvl2_occ.rho_c_1 = new float[w*h];
     ofStuff.tvl2_occ.grad_1 = new float[w*h];
     ofStuff.tvl2_occ.grad__1 = new float[w*h];
+
+    if (ofCore.params.step_algorithm){
+        ofStuff.tvl2_occ.I0x = new float[w*h];
+        ofStuff.tvl2_occ.I0y = new float[w*h];
+    }
 
     ofStuff.tvl2_occ.I1x = new float[w*h];
     ofStuff.tvl2_occ.I1y = new float[w*h];
@@ -221,7 +226,7 @@ void eval_tvl2coupled_occ(
     forward_gradient_patch(chi, chix, chiy, index.ii, index.ij, index.ei, index.ej, nx);
     divergence_patch(u1, u2, div_u, index.ii, index.ij, index.ei, index.ej, nx);
 
-//#pragma omp simd collapse(2)
+    //#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
@@ -243,7 +248,7 @@ void eval_tvl2coupled_occ(
     //Energy for all the patch. Maybe it would be useful only the 8 pixels around the seed.
     int m  = 0;
 
-//#pragma omp simd collapse(2) reduction(+:ener)
+    //#pragma omp simd collapse(2) reduction(+:ener)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
@@ -282,7 +287,6 @@ void eval_tvl2coupled_occ(
         }
     }
     //std::cerr << "i: " << index.i << ", j: " << index.j << "\n";
-    //fprintf(stderr, "i: %d, j: %d\n", index.i, index.j);
     ener /= (m*1.0);
     *ener_N = ener;
     assert(ener >= 0.0);
@@ -323,8 +327,7 @@ static void tvl2coupled_get_xi_patch(
     int nx = params.w;
     for (int k = 1; k < ITER_XI; k++){
         //What goes inside gradient
-//#pragma omp simd collapse(2)
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
+        //#pragma omp simd collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
@@ -338,8 +341,8 @@ static void tvl2coupled_get_xi_patch(
         divergence_patch(g_xi11, g_xi12, div_g_xi1, index.ii, index.ij, index.ei, index.ej, nx);
         divergence_patch(g_xi21, g_xi22, div_g_xi2, index.ii, index.ij, index.ei, index.ej, nx);
 
-//#pragma omp simd collapse(2)
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
+        //#pragma omp simd collapse(2)
+
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
@@ -354,7 +357,6 @@ static void tvl2coupled_get_xi_patch(
 
 
         //#pragma omp simd collapse(2)
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
@@ -377,7 +379,7 @@ static void tvl2coupled_get_xi_patch(
         }
     }
     //Compute divergence for last time
-//#pragma omp simd collapse(2)
+    //#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int j = index.ii; j < index.ei; j++){
@@ -416,7 +418,7 @@ static void tvl2coupled_get_chi_patch(
     for (int k = 1; k < ITER_CHI; k++){
 
         //Compute dual variable eta
-//#pragma omp simd collapse(2)
+        //#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
@@ -446,7 +448,7 @@ static void tvl2coupled_get_chi_patch(
         divergence_patch(g_eta1, g_eta2, div_g_eta, index.ii, index.ij, index.ei, index.ej, nx);
 
         //Compute chi
-//#pragma omp simd collapse(2)
+        //#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
@@ -485,6 +487,7 @@ void guided_tvl2coupled_occ(
         const PatchIndexes index
         ) {
 
+
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float *u1_ba = ofD->u1_ba;
@@ -493,6 +496,7 @@ void guided_tvl2coupled_occ(
     //Columns and Rows
     const int nx = ofD->params.w;
     const int ny = ofD->params.h;
+    const int size = nx*ny;
 
     float *diff_u_N = tvl2_occ->diff_u_N;
 
@@ -522,6 +526,8 @@ void guided_tvl2coupled_occ(
     float *grad_1 = tvl2_occ->grad_1;
     float *grad__1 = tvl2_occ->grad__1;
 
+    float *I0x = tvl2_occ->I0x;
+    float *I0y = tvl2_occ->I0y;
 
     //Derivatives and warping of I2
     float *I1x = tvl2_occ->I1x;
@@ -560,6 +566,7 @@ void guided_tvl2coupled_occ(
     float *div_g_eta = tvl2_occ->div_g_eta;
 
 
+
     const float alpha = ofD->params.alpha;
     const float theta = ofD->params.theta;
     const float lambda = ofD->params.lambda;
@@ -567,7 +574,7 @@ void guided_tvl2coupled_occ(
     const float l_t = lambda * theta;
 
     //Initialization of dual variables and updating backward flow
-//#pragma omp simd collapse(2)
+    //#pragma omp simd collapse(2)
     //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
@@ -578,6 +585,16 @@ void guided_tvl2coupled_occ(
             u2_ba[i] = -u2[i];
             //fprintf(stderr, "%f\n", u1_ba[i]);
         }
+    }
+
+    if (ofD->params.step_algorithm == GLOBAL_STEP){
+
+        //Compute derivatives of all images
+        centered_gradient(I1, I1x, I1y, nx, ny);
+        centered_gradient(I_1, I_1x, I_1y, nx, ny);
+        centered_gradient(I0, I0x, I0y, nx, ny);
+        //Initialize weight
+        init_weight(g, I0x, I0y, size);
     }
 
     for (int warpings = 0; warpings < ofD->params.warps; warpings++) {
@@ -593,7 +610,7 @@ void guided_tvl2coupled_occ(
 
 
         //Compute values that will not change during the whole wraping
-//#pragma omp simd collapse(2)
+        //#pragma omp simd collapse(2)
         //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int k = index.ii; k < index.ei; k++){
@@ -620,12 +637,11 @@ void guided_tvl2coupled_occ(
         //Minimization of the functional
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > ofD->params.tol_OF*ofD->params.tol_OF && n < MAX_ITERATIONS_OF){
+        while (err_D > ofD->params.tol_OF*ofD->params.tol_OF && n < ofD->params.iterations_of){
 
             n++;
             // estimate the values of the variable (v1, v2)
-            // (thresholding operator TH)
-//#pragma omp simd collapse(2)
+            //#pragma omp simd collapse(2)
             //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
@@ -692,7 +708,7 @@ void guided_tvl2coupled_occ(
                                      index, ofD->params);
 
             //Compute several stuff
-//#pragma omp simd collapse(2)
+            //#pragma omp simd collapse(2)
             //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
@@ -740,11 +756,13 @@ void guided_tvl2coupled_occ(
             }
             err_D = err_u;
         }
-//        if (ofD->params.verbose)
-//            std::printf("Warping: %d, Iter: %d "
-//                        "Error: %f\n", warpings, n, err_D);
+        if (ofD->params.step_algorithm == GLOBAL_STEP && ofD->params.verbose)
+            std::printf("Warping: %d, Iter: %d "
+                        "Error: %f\n", warpings, n, err_D);
     }
-    eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, ener_N, index, ofD->params);
+    if (ofD->params.step_algorithm == LOCAL_STEP){
+        eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, ener_N, index, ofD->params);
+    }
 }
 
 /////////////////////////////////////

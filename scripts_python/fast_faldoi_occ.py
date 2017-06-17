@@ -20,7 +20,7 @@ parser.add_argument("file_images", help = "File with images")
 
 method = 8
 matchings = False
-local_of = True
+local_of = False
 global_of = True
 
 
@@ -152,9 +152,9 @@ param = '%s %s %s %s %s %s %s\n'%(args.file_images, sparse_name_1, sparse_name_2
 #print param
 command_line = '%s %s\n'%(match_propagation, param)
 
+print(command_line)
 if local_of:
-	#print('Computing local faldoi')
-	print(command_line)
+	print('Computing local faldoi')
 	os.system(command_line)
 
 
@@ -165,7 +165,7 @@ options = '-m %s -w %s'%(var_m, warps)
 param = '%s %s %s %s %s %s\n'%(args.file_images,
                             region_growing, var_flow, occlusions_rg, occlusions_var, options)
 command_line = '%s %s\n'%(of_var, param)
-#print(command_line)
+print(command_line)
 if global_of:
 	print('Computing global faldoi')
 	os.system(command_line)

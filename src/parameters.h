@@ -26,7 +26,7 @@
 
 
 //OPTICAL FLOW PARAMETERS
-#define PAR_DEFAULT_LAMBDA  0.5//40
+#define PAR_DEFAULT_LAMBDA  40//40
 #define PAR_DEFAULT_THETA   0.3
 #define PAR_DEFAULT_TAU     0.125 //0.25
 #define PAR_DEFAULT_BETA    1
@@ -39,8 +39,8 @@
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
-#define MAX_ITERATIONS_OF 4
-#define MAX_ITERATIONS 400
+#define MAX_ITERATIONS_LOCAL 4
+#define MAX_ITERATIONS_GLOBAL 400
 
 #define GRAD_IS_ZERO 1E-8
 #define GRAD_IS_ZERO_GLOBAL 1E-10
@@ -51,6 +51,9 @@
 #define PAR_DEFAULT_NWARPS_LOCAL  1  //5
 #define PAR_DEFAULT_NWARPS_GLOBAL  5  //5
 
+
+#define GLOBAL_STEP 1
+#define LOCAL_STEP 0
 //Specific stuff for NLTV
 
 #define NL_SPATIAL 2
@@ -61,7 +64,6 @@
 //Specific Stuff for the CSAD
 #define DT_R  3//Neighboor 7x7
 #define DT_NEI (2*DT_R + 1)*(2*DT_R + 1) - 1 // 7x7
-
 
 
 

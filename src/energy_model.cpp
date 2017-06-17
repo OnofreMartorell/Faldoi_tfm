@@ -93,6 +93,47 @@ void rgb_to_lab(const float *in, int size, float *out){
 
 ///////////////////////////////////////////////////////////
 
+
+//Initialize optical flow data
+OpticalFlowData init_Optical_Flow_Data(
+        const Parameters& params
+        ) {
+    int w = params.w;
+    int h = params.h;
+    OpticalFlowData of;
+    of.u1  = new float[w*h*2];
+    of.u2  = of.u1 + w*h;
+    of.u1_ba  = new float[w*h*2];
+    of.u2_ba  = of.u1_ba + w*h;
+    of.chi = new float[w*h];
+    of.params = params;
+    return of;
+}
+
+
+OpticalFlowData init_Optical_Flow_Data(
+        float *saliency,
+        const Parameters& params
+        ) {
+    int w = params.w;
+    int h = params.h;
+    OpticalFlowData of;
+    of.u1  = new float[w*h*2];
+    of.u2  = of.u1 + w*h;
+    of.u1_ba  = new float[w*h*2];
+    of.u2_ba  = of.u1_ba + w*h;
+    of.chi = new float[w*h];
+    of.fixed_points = new int[w*h];
+    of.trust_points = new int[w*h];
+    of.saliency = saliency;
+    //TODO: Only to keep if it presents better performance.
+    of.weight = new BilateralWeight[w*h]; // weight of non local
+    of.u1_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
+    of.u2_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
+    of.params = params;
+    return of;
+}
+
 void initialize_auxiliar_stuff(
         SpecificOFStuff& ofStuff,
         OpticalFlowData& ofCore){
@@ -672,13 +713,13 @@ void of_estimation(
         break;
     case M_TVL1_OCC:
     {
-        lambda = ofCore->params.lambda;
-        theta = ofCore->params.theta;
-        const float beta = ofCore->params.beta;
-        const float alpha = ofCore->params.alpha;
-        const float tau_u = ofCore->params.tau_u;
-        const float tau_eta = ofCore->params.tau_eta;
-        const float tau_chi = ofCore->params.tau_chi;
+//        lambda = ofCore->params.lambda;
+//        theta = ofCore->params.theta;
+//        const float beta = ofCore->params.beta;
+//        const float alpha = ofCore->params.alpha;
+//        const float tau_u = ofCore->params.tau_u;
+//        const float tau_eta = ofCore->params.tau_eta;
+//        const float tau_chi = ofCore->params.tau_chi;
         //estimate_tvl2 with occlusions
         guided_tvl2coupled_occ(i0, i1, i_1, ofCore, &(ofStuff->tvl2_occ), ener_N, index);
     }
@@ -788,39 +829,5 @@ void eval_functional(SpecificOFStuff *ofStuff,
 }
 
 
-/////////////////////////////////////////////////////////////////////////
-///////////////////////////OCCLUSION ESTIMATION/////////////////////////
-///////////////////////////////////////////////////////////////////////
-
-
-
-void eval_functional_occ(
-        SpecificOFStuff *ofStuff,
-        OpticalFlowData *ofCore,
-        float *ener_N,
-        float *a,  //first frame
-        float *b,  //second frame
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej // end row,
-        ) {
-    //TODO: Each method should have its own set of parameters
-
-    float lambda  = PAR_DEFAULT_LAMBDA;
-    float theta   = PAR_DEFAULT_THETA;
-
-    switch(ofCore->params.val_method){
-
-    case M_TVL1_OCC:
-    {
-        eval_tvl2coupled(a, b, ofCore, &(ofStuff->tvl2), ener_N,
-                         ii, ij, ei, ej, lambda, theta);
-    }
-        break;
-    default:
-        break;
-    }
-}
 
 #endif //ENERGY_MODEL

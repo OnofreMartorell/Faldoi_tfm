@@ -9,6 +9,10 @@
 #define ENERGY_MODEL_H
 
 ////INITIALIZATION OF AUXILIAR STUFF
+///
+OpticalFlowData init_Optical_Flow_Data(const Parameters& params);
+OpticalFlowData init_Optical_Flow_Data(float *saliency, const Parameters& params);
+
 void initialize_auxiliar_stuff(
         SpecificOFStuff& ofStuff,
         OpticalFlowData& ofCore
