@@ -2,10 +2,8 @@
 #define TVL2_MODEL_OCC
 
 
-#define ITER_XI 5
-#define ITER_CHI 5
-#define THRESHOLD_DELTA 1
-#define MAX_ITERATIONS_OF_GLOBAL 400
+
+//#define MAX_ITERATIONS_OF_GLOBAL 400
 
 
 #include <cmath>
@@ -57,9 +55,12 @@ void  intialize_stuff_tvl2coupled_occ(
     ofStuff.tvl2_occ.grad_1 = new float[w*h];
     ofStuff.tvl2_occ.grad__1 = new float[w*h];
 
-    if (ofCore.params.step_algorithm){
+    if (ofCore.params.step_algorithm == GLOBAL_STEP){
         ofStuff.tvl2_occ.I0x = new float[w*h];
         ofStuff.tvl2_occ.I0y = new float[w*h];
+    }else{
+        ofStuff.tvl2_occ.I0x = nullptr;
+        ofStuff.tvl2_occ.I0y = nullptr;
     }
 
     ofStuff.tvl2_occ.I1x = new float[w*h];
@@ -147,6 +148,10 @@ void  free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff){
     delete [] ofStuff->tvl2_occ.I1w;
     delete [] ofStuff->tvl2_occ.I1wx;
     delete [] ofStuff->tvl2_occ.I1wy;
+    if (ofStuff->tvl2_occ.I0x){
+        delete [] ofStuff->tvl2_occ.I0x;
+        delete [] ofStuff->tvl2_occ.I0y;
+    }
 
     delete [] ofStuff->tvl2_occ.I_1x;
     delete [] ofStuff->tvl2_occ.I_1y;
@@ -162,13 +167,12 @@ void  free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff){
 
 
 
-void eval_tvl2coupled_occ(
+float eval_tvl2coupled_occ(
         const float *I0,           // source image
         const float *I1,           // forward image
         const float *I_1,           // backward image
         OpticalFlowData *ofD,
         Tvl2CoupledOFStuff_occ *tvl2_occ,
-        float *ener_N,
         const PatchIndexes index,
         Parameters params
         ){
@@ -202,9 +206,6 @@ void eval_tvl2coupled_occ(
     float *I_1w = tvl2_occ->I_1w;
     float *I1w = tvl2_occ->I1w;
 
-    const float *rho_c1 = tvl2_occ->rho_c1;
-    const float *rho_c_1 = tvl2_occ->rho_c_1;
-
     //Derivatives and warping of I2
     const float *I1x = tvl2_occ->I1x;
     const float *I1y = tvl2_occ->I1y;
@@ -219,7 +220,6 @@ void eval_tvl2coupled_occ(
 
 
     float ener = 0.0;
-
 
     forward_gradient_patch(u1, u1x, u1y, index.ii, index.ij, index.ei, index.ej, nx);
     forward_gradient_patch(u2, u2x, u2y, index.ii, index.ij, index.ei, index.ej, nx);
@@ -260,9 +260,9 @@ void eval_tvl2coupled_occ(
 
             const float div_u_term = params.beta*chi[i]*div_u[i];
 
-            const float rho_1 = fabs(rho_c1[i]
+            const float rho_1 = fabs(I1w[i] - I1wx[i] * u1[i] - I1wy[i] * u2[i] - I0[i]
                                      + I1wx[i] * v1[i] + I1wy[i] * v2[i]);
-            const float rho__1 = fabs(rho_c_1[i]
+            const float rho__1 = fabs(I_1w[i] - I_1wx[i] * u1[i] - I_1wy[i] * u2[i] - I0[i]
                                       + I_1wx[i] * v1[i] + I_1wy[i] * v2[i]);
 
             const float data_term = params.lambda * ((1 - chi[i])*rho_1 + chi[i]*rho__1);
@@ -282,20 +282,21 @@ void eval_tvl2coupled_occ(
             if (!std::isfinite(smooth_term)){
                 std::printf("Regularizacion corrupta\n");
             }
-//            assert(std::isfinite(data_term)); // std::printf("Datos corruptos\n");
-//            assert(std::isfinite(smooth_term)); // std::printf("Regularizacion corrupta\n");
+            //            assert(std::isfinite(data_term)); // std::printf("Datos corruptos\n");
+            //            assert(std::isfinite(smooth_term)); // std::printf("Regularizacion corrupta\n");
+            //            assert(std::isfinite(div_u_term));
+            //            assert(std::isfinite(norm_v_term));
             ener += data_term + smooth_term + div_u_term + norm_v_term + diff_uv_term;
             m++;
         }
     }
-    //std::cerr << "i: " << index.i << ", j: " << index.j << "\n";
+
     ener /= (m*1.0);
-    *ener_N = ener;
-    assert(ener >= 0.0);
+    return ener;
 }
 
 /////////////////////////////////////
-//////// Local minimization ////////
+//////////// Minimization ///////////
 /////////////////////////////////////
 
 
@@ -325,11 +326,11 @@ static void tvl2coupled_get_xi_patch(
         const PatchIndexes index,
         const Parameters params
         ){
+
     float tau_theta = params.tau_u/params.theta;
     int nx = params.w;
     for (int k = 1; k < ITER_XI; k++){
         //What goes inside gradient
-        //#pragma omp simd collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
@@ -340,6 +341,7 @@ static void tvl2coupled_get_xi_patch(
                 g_xi22[i] = g[i]*xi22[i];
             }
         }
+
         divergence_patch(g_xi11, g_xi12, div_g_xi1, index.ii, index.ij, index.ei, index.ej, nx);
         divergence_patch(g_xi21, g_xi22, div_g_xi2, index.ii, index.ij, index.ei, index.ej, nx);
 
@@ -413,7 +415,7 @@ static void tvl2coupled_get_chi_patch(
         float *g_eta1,
         float *g_eta2,
         float *div_g_eta,
-        const PatchIndexes index, // end row
+        const PatchIndexes index,
         Parameters params){
 
     int nx = params.w;
@@ -421,7 +423,6 @@ static void tvl2coupled_get_chi_patch(
 
         //Compute dual variable eta
         //#pragma omp simd collapse(2)
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int j = index.ii; j < index.ei; j++){
                 const int i = l*nx + j;
@@ -438,7 +439,6 @@ static void tvl2coupled_get_chi_patch(
                     eta1[i] = eta_new1/norm_eta;
                     eta2[i] = eta_new2/norm_eta;
                 }
-                //fprintf(stderr, "%f\n", eta1[i]);
 
                 //Compute values for the needed divergence
                 g_eta1[i] = g[i]*eta1[i];
@@ -457,7 +457,6 @@ static void tvl2coupled_get_chi_patch(
                 const int i = l*nx + j;
                 const float chi_new = chi[i] + params.tau_chi*(div_g_eta[i] - params.beta*div_u[i] - F[i] - G[i]);
                 chi[i] = max(min(chi_new, 1), 0);
-                //fprintf(stderr, "%f\n", chi[i]);
             }
         }
         forward_gradient_patch(chi, chix, chiy, index.ii, index.ij, index.ei, index.ej, nx);
@@ -468,7 +467,7 @@ static void tvl2coupled_get_chi_patch(
         for (int j = index.ii; j < index.ei; j++){
             const int i = l*nx + j;
             chi[i] = (chi[i] > THRESHOLD_DELTA) ? 1 : 0;
-            //fprintf(stderr, "%f\n", chi[i]);
+            //std::cout << chi[i] << '\n';
         }
     }
 }
@@ -577,7 +576,6 @@ void guided_tvl2coupled_occ(
 
     //Initialization of dual variables and updating backward flow
     //#pragma omp simd collapse(2)
-    //#pragma omp for schedule(dynamic, 1) collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
             const int  i = l*nx + k;
@@ -589,6 +587,7 @@ void guided_tvl2coupled_occ(
         }
     }
 
+    //Initialize gradients from images and weight for global step
     if (ofD->params.step_algorithm == GLOBAL_STEP){
 
         //Compute derivatives of all images
@@ -613,7 +612,6 @@ void guided_tvl2coupled_occ(
 
         //Compute values that will not change during the whole wraping
         //#pragma omp simd collapse(2)
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
         for (int l = index.ij; l < index.ej; l++){
             for (int k = index.ii; k < index.ei; k++){
 
@@ -644,7 +642,6 @@ void guided_tvl2coupled_occ(
             n++;
             // estimate the values of the variable (v1, v2)
             //#pragma omp simd collapse(2)
-            //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
                     const int i = l*nx + k;
@@ -711,7 +708,6 @@ void guided_tvl2coupled_occ(
 
             //Compute several stuff
             //#pragma omp simd collapse(2)
-            //#pragma omp for schedule(dynamic, 1) collapse(2)
             for (int l = index.ij; l < index.ej; l++){
                 for (int k = index.ii; k < index.ei; k++){
                     const int i = l*nx + k;
@@ -763,485 +759,485 @@ void guided_tvl2coupled_occ(
                         "Error: %f\n", warpings, n, err_D);
     }
     if (ofD->params.step_algorithm == LOCAL_STEP){
-        eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, ener_N, index, ofD->params);
+        *ener_N = eval_tvl2coupled_occ(I0, I1, I_1, ofD, tvl2_occ, index, ofD->params);
     }
 }
 
-/////////////////////////////////////
-//////// Global minimization ////////
-/////////////////////////////////////
-
-
-static void tvl2coupled_get_xi(
-        float *xi11, //Dual variable
-        float *xi12, //Dual variable
-        float *xi21, //Dual variable
-        float *xi22, //Dual variable
-        const float *g,
-        const float *v1,
-        const float *v2,
-        const float *chix,
-        const float *chiy,
-        float *vi_div1,
-        float *grad_x1,
-        float *grad_y1,
-        float *vi_div2,
-        float *grad_x2,
-        float *grad_y2,
-        float *g_xi11,
-        float *g_xi12,
-        float *g_xi21,
-        float *g_xi22,
-        float *div_g_xi1,
-        float *div_g_xi2,
-        const Parameters params
-        ){
-
-    const int nx = params.w;
-    const int ny = params.h;
-    const int size = nx*ny;
-    const float tau_theta = params.tau_u/params.theta;
-    for (int k = 1; k < ITER_XI; k++){
-        //What goes inside gradient
-        ////#pragma omp simd
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
-        for (int i = 0; i < size; i++){
-            g_xi11[i] = g[i]*xi11[i];
-            g_xi12[i] = g[i]*xi12[i];
-
-            g_xi21[i] = g[i]*xi21[i];
-            g_xi22[i] = g[i]*xi22[i];
-        }
-
-        divergence(g_xi11, g_xi12, div_g_xi1, nx, ny);
-        divergence(g_xi21, g_xi22, div_g_xi2, nx, ny);
-
-        ////#pragma omp simd
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
-        for (int i = 0; i < size; i++){
-            vi_div1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta*params.beta*chix[i];
-            vi_div2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta*params.beta*chiy[i];
-        }
-
-
-        forward_gradient(vi_div1, grad_x1, grad_y1, nx, ny);
-        forward_gradient(vi_div2, grad_x2, grad_y2, nx, ny);
-
-
-        ////#pragma omp simd
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
-        for (int i = 0; i < size; i++){
-
-            //Dual variables x11 and x12
-            const float vec11 = g[i]*grad_x1[i];
-            const float vec12 = g[i]*grad_y1[i];
-            const float norm_vec1 = sqrt(vec11 * vec11 + vec12 * vec12);
-            xi11[i] = (xi11[i] + tau_theta*vec11)/(1 + tau_theta*norm_vec1);
-            xi12[i] = (xi12[i] + tau_theta*vec12)/(1 + tau_theta*norm_vec1);
-
-
-            //Dual variables x21 and x22
-            const float vec21 = g[i]*grad_x2[i];
-            const float vec22 = g[i]*grad_y2[i];
-            const float norm_vec2 = sqrt(vec21 * vec21 + vec22 * vec22);
-            xi21[i] = (xi21[i] + tau_theta*vec21)/(1 + tau_theta*norm_vec2);
-            xi22[i] = (xi22[i] + tau_theta*vec22)/(1 + tau_theta*norm_vec2);
-        }
-    }
-
-    //Compute divergence for last time
-    ////#pragma omp simd
-    //#pragma omp for schedule(dynamic, 1) collapse(2)
-    for (int i = 0; i < size; i++){
-        g_xi11[i] = g[i]*xi11[i];
-        g_xi12[i] = g[i]*xi12[i];
-
-        g_xi21[i] = g[i]*xi21[i];
-        g_xi22[i] = g[i]*xi22[i];
-    }
-
-
-    divergence(g_xi11, g_xi12, div_g_xi1, nx, ny);
-    divergence(g_xi21, g_xi22, div_g_xi2, nx, ny);
-}
-
-
-
-static void tvl2coupled_get_chi(
-        float *chi,
-        float *chix,
-        float *chiy,
-        const float *F,
-        const float *G,
-        const float *g,
-        float *eta1,
-        float *eta2,
-        const float *div_u,
-        float *g_eta1,
-        float *g_eta2,
-        float *div_g_eta,
-        const Parameters params
-        ){
-
-    const int nx = params.w;
-    const int ny = params.h;
-    const int size = nx*ny;
-
-    for (int k = 1; k < ITER_CHI; k++){
-
-        //Compute dual variable eta
-        ////#pragma omp simd
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
-        for (int i = 0; i < size; i++){
-
-            //Compute new values of eta
-            const float eta_new1 = eta1[i] + params.tau_eta * g[i] * chix[i];
-            const float eta_new2 = eta2[i] + params.tau_eta * g[i] * chiy[i];
-            const float norm_eta = sqrt(eta_new1*eta_new1 + eta_new2*eta_new2);
-            //Put eta in the unit interval, [0, 1]
-            if (norm_eta <= 1){
-                eta1[i] = eta_new1;
-                eta2[i] = eta_new2;
-            }else{
-                eta1[i] = eta_new1/norm_eta;
-                eta2[i] = eta_new2/norm_eta;
-            }
-
-            //Compute values for the needed divergence
-            g_eta1[i] = g[i]*eta1[i];
-            g_eta2[i] = g[i]*eta2[i];
-        }
-
-
-
-        divergence(g_eta1, g_eta2, div_g_eta, nx, ny);
-
-        //Compute chi
-        ////#pragma omp simd
-        //#pragma omp for schedule(dynamic, 1) collapse(2)
-        for (int i = 0; i < size; i++){
-
-            const float chi_new = chi[i] + params.tau_chi*(div_g_eta[i] - params.beta*div_u[i] - F[i] - G[i]);
-            chi[i] = max(min(chi_new, 1), 0);
-        }
-
-        forward_gradient(chi, chix, chiy, nx, ny);
-    }
-    //Make thresholding in chi
-    //#pragma omp for schedule(dynamic,1) collapse(2)
-    for (int i = 0; i < size; i++){
-        chi[i] = (chi[i] > THRESHOLD_DELTA) ? 1 : 0;
-    }
-
-}
-
-void tvl2OF_occ(
-        const float *I0,           // source image
-        const float *I1,           // target image
-        const float *I_1,
-        float *u1,           // x component of the optical flow
-        float *u2,           // y component of the optical flow
-        float *xi11,
-        float *xi12,
-        float *xi21,
-        float *xi22,
-        float *chi,
-        const Parameters params
-        ) {
-
-    const float l_t = params.lambda * params.theta;
-    int w = params.w;
-    int h = params.h;
-    const int   size = w * h;
-
-    float *u1_ba = new float[w*h];
-    float *u2_ba = new float[w*h];
-
-    //Columns and Rows
-    const int nx = w;
-    const int ny = h;
-
-    //Occlusion variables
-    float *chix = new float[w*h];
-    float *chiy = new float[w*h];
-
-    //Weigth
-    float *g = new float[w*h];
-
-    //Dual variables of chi
-    float *eta1 = new float[w*h];
-    float *eta2 = new float[w*h];
-
-    float *v1 = new float[w*h];
-    float *v2 = new float[w*h];
-
-    float *rho_c1 = new float[w*h];
-    float *rho_c_1 = new float[w*h];
-    float *grad_1 = new float[w*h];
-    float *grad__1 = new float[w*h];
-
-    float *diff_u_N = new float[w*h];
-    float *I0x = new float[w*h];
-    float *I0y = new float[w*h];
-
-    //Derivatives and warping of I1
-    float *I1x = new float[w*h];
-    float *I1y = new float[w*h];
-    float *I1w = new float[w*h];
-    float *I1wx = new float[w*h];
-    float *I1wy = new float[w*h];
-
-    //Derivatives and warping of I-1
-    float *I_1x = new float[w*h];
-    float *I_1y = new float[w*h];
-    float *I_1w = new float[w*h];
-    float *I_1wx = new float[w*h];
-    float *I_1wy = new float[w*h];
-
-
-    float *vi_div1 = new float[w*h];
-    float *grad_x1 = new float[w*h];
-    float *grad_y1 = new float[w*h];
-    float *vi_div2 = new float[w*h];
-    float *grad_x2 = new float[w*h];
-    float *grad_y2 = new float[w*h];
-    float *g_xi11 = new float[w*h];
-    float *g_xi12 = new float[w*h];
-    float *g_xi21 = new float[w*h];
-    float *g_xi22 = new float[w*h];
-    float *div_g_xi1 = new float[w*h];
-    float *div_g_xi2 = new float[w*h];
-
-    float *F = new float[w*h];
-    float *G = new float[w*h];
-
-    float *div_u = new float[w*h];
-    float *g_eta1 = new float[w*h];
-    float *g_eta2 = new float[w*h];
-    float *div_g_eta = new float[w*h];
-
-
-    //Initialization of backward flow
-    ////#pragma omp simd
-    for (int i = 0; i < size; i++){
-
-        u1_ba[i] = -u1[i];
-        u2_ba[i] = -u2[i];
-    }
-
-    //Compute derivatives of all images
-    centered_gradient(I1, I1x, I1y, nx, ny);
-    centered_gradient(I_1, I_1x, I_1y, nx, ny);
-    centered_gradient(I0, I0x, I0y, nx, ny);
-
-    //Initialize weight
-    init_weight(g, I0x, I0y, size);
-
-    for (int warpings = 0; warpings < params.warps; warpings++){
-        //printf("warpings: %d\n", warpings);
-        // Compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
-        bicubic_interpolation_warp(I1,  u1, u2, I1w,  nx, ny, true);
-        bicubic_interpolation_warp(I1x, u1, u2, I1wx, nx, ny, true);
-        bicubic_interpolation_warp(I1y, u1, u2, I1wy, nx, ny, true);
-
-        bicubic_interpolation_warp(I_1,  u1_ba, u2_ba, I_1w,  nx, ny, true);
-        bicubic_interpolation_warp(I_1x, u1_ba, u2_ba, I_1wx, nx, ny, true);
-        bicubic_interpolation_warp(I_1y, u1_ba, u2_ba, I_1wy, nx, ny, true);
-
-        ////#pragma omp simd
-        for (int i = 0; i < size; i++){
-            const float I1_x2 = I1wx[i] * I1wx[i];
-            const float I1_y2 = I1wy[i] * I1wy[i];
-            const float I_1_x2 = I_1wx[i] * I_1wx[i];
-            const float I_1_y2 = I_1wy[i] * I_1wy[i];
-
-            // store the |Grad(I2)|^2
-            grad_1[i] = (I1_x2 + I1_y2);
-            grad__1[i] = (I_1_x2 + I_1_y2);
-
-            // Compute the constant part of the rho function
-            rho_c1[i] = I1w[i] - I1wx[i] * u1[i]
-                    - I1wy[i] * u2[i] - I0[i];
-            rho_c_1[i] = I_1w[i] - I_1wx[i] * u1[i]
-                    - I_1wy[i] * u2[i] - I0[i];
-        }
-
-        int n = 0;
-        float err_D = INFINITY;
-        while (err_D > params.tol_OF*params.tol_OF && n < MAX_ITERATIONS_OF_GLOBAL){
-
-            n++;
-            // estimate the values of the variable (v1, v2)
-            // (thresholding opterator TH)
-            ////#pragma omp simd
-            for (int i = 0; i < size; i++){
-                // rho function forward and backward
-                const float rho_1 = rho_c1[i]
-                        + I1wx[i] * u1[i] + I1wy[i] * u2[i];
-                const float rho__1 = rho_c_1[i]
-                        + I_1wx[i] * u1[i] + I_1wy[i] * u2[i];
-
-                //Stuff depending if pixel is occluded or not
-                int eps;
-                float alpha_i, mu, Lambda, grad, Iwx, Iwy, rho;
-                if (chi[i] == 0){
-                    eps = 1;
-                    alpha_i = 1;
-                    mu = l_t;
-                    Lambda = rho_1;
-                    grad = grad_1[i];
-                    Iwx = I1wx[i];
-                    Iwy = I1wy[i];
-                    rho = rho_1;
-                }else{
-                    eps = -1;
-                    alpha_i = 1/(1 + params.alpha*params.theta);
-                    mu = l_t/(1 + params.alpha*params.theta);
-                    Lambda = rho__1 +
-                            params.alpha*params.theta/(1 + params.alpha*params.theta) * (u1[i]*I_1wx[i] + u2[i]*I_1wy[i]);
-                    grad = grad__1[i];
-                    Iwx = I_1wx[i];
-                    Iwy = I_1wy[i];
-                    rho = rho__1;
-                }
-                //Decide what to assign to v
-                if (Lambda > mu * grad){
-                    v1[i] = alpha_i * u1[i] - mu * eps * Iwx;
-                    v2[i] = alpha_i * u2[i] - mu * eps * Iwy;
-                }else{
-                    if (Lambda < - mu * grad){
-                        v1[i] = alpha_i * u1[i] + mu * eps * Iwx;
-                        v2[i] = alpha_i * u2[i] + mu * eps * Iwy;
-                    }else{
-                        // if gradient is too small, we treat it as zero
-                        if (grad < GRAD_IS_ZERO){
-                            v1[i] = u1[i];
-                            v2[i] = u2[i];
-                        }else{
-
-                            v1[i] = u1[i] - eps * rho * Iwx/grad;
-                            v2[i] = u2[i] - eps * rho * Iwy/grad;
-                        }
-                    }
-                }
-            }
-
-            //Estimate the values of the variable (u1, u2)
-            //Compute derivatives of chi
-            forward_gradient(chi, chix, chiy, nx, ny);
-
-            //Compute dual variables
-            tvl2coupled_get_xi(xi11, xi12, xi21, xi22, g, v1, v2,
-                               chix, chiy, vi_div1, grad_x1, grad_y1, vi_div2, grad_x2, grad_y2,
-                               g_xi11, g_xi12, g_xi21, g_xi22, div_g_xi1, div_g_xi2,
-                               params);
-
-
-            //Compute primal variables, u1, u2
-
-            ////#pragma omp simd
-            //#pragma omp for schedule(dynamic, 1) collapse(2)
-            for (int i = 0; i < size; i++){
-
-                //Previous value for u
-                const float u1k = u1[i];
-                const float u2k = u2[i];
-
-                //New value for (u1, u2)
-                u1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta * params.beta * chix[i];
-                u2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta * params.beta * chiy[i];
-
-                //Difference between previous and new value of u
-                diff_u_N[i] = (u1[i] - u1k) * (u1[i] - u1k) +
-                        (u2[i] - u2k) * (u2[i] - u2k);
-
-                const float rho__1 = rho_c_1[i]
-                        + I_1wx[i] * v1[i] + I_1wy[i] * v2[i];
-
-                const float rho_1 = rho_c1[i]
-                        + I1wx[i] * v1[i] + I1wy[i] * v2[i];
-
-                F[i] = params.lambda*(std::abs(rho__1) - std::abs(rho_1));
-                G[i] = params.alpha/2*(v1[i]*v1[i] + v2[i]*v2[i]);
-            }
-
-
-            //Compute chi
-
-            tvl2coupled_get_chi(chi, chix, chiy, F, G,
-                                g, eta1, eta2, div_u, g_eta1, g_eta2,
-                                div_g_eta, params);
-            //Get the max val
-            float err_u = 0;
-            for (int i = 0; i < size; i++){
-                if (err_u < diff_u_N[i]){
-                    err_u = diff_u_N[i];
-                }
-            }
-            err_D = err_u;
-        }
-
-        if (params.verbose)
-            fprintf(stderr, "Warping: %d, Iter: %d, "
-                            "Error: %f\n", warpings, n, err_D);
-    }
-
-
-    free(u1_ba);
-    free(u2_ba);
-
-    free(chix);
-    free(chiy);
-
-    free(g);
-
-    free(eta1);
-    free(eta2);
-
-    free(v1);
-    free(v2);
-
-    free(rho_c1);
-    free(rho_c_1);
-    free(grad_1);
-    free(grad__1);
-
-    free(I1x);
-    free(I1y);
-    free(I1w);
-    free(I1wx);
-    free(I1wy);
-
-
-    free(I_1x);
-    free(I_1y);
-    free(I_1w);
-    free(I_1wx);
-    free(I_1wy);
-
-
-    free(vi_div1);
-    free(grad_x1);
-    free(grad_y1);
-    free(vi_div2);
-    free(grad_x2);
-    free(grad_y2);
-    free(g_xi11);
-    free(g_xi12);
-    free(g_xi21);
-    free(g_xi22);
-    free(div_g_xi1);
-    free(div_g_xi2);
-
-    free(F);
-    free(G);
-
-    free(div_u);
-    free(g_eta1);
-    free(g_eta2);
-    free(div_g_eta);
-
-}
+///////////////////////////////////////
+////////// Global minimization ////////
+///////////////////////////////////////
+
+
+//static void tvl2coupled_get_xi(
+//        float *xi11, //Dual variable
+//        float *xi12, //Dual variable
+//        float *xi21, //Dual variable
+//        float *xi22, //Dual variable
+//        const float *g,
+//        const float *v1,
+//        const float *v2,
+//        const float *chix,
+//        const float *chiy,
+//        float *vi_div1,
+//        float *grad_x1,
+//        float *grad_y1,
+//        float *vi_div2,
+//        float *grad_x2,
+//        float *grad_y2,
+//        float *g_xi11,
+//        float *g_xi12,
+//        float *g_xi21,
+//        float *g_xi22,
+//        float *div_g_xi1,
+//        float *div_g_xi2,
+//        const Parameters params
+//        ){
+
+//    const int nx = params.w;
+//    const int ny = params.h;
+//    const int size = nx*ny;
+//    const float tau_theta = params.tau_u/params.theta;
+//    for (int k = 1; k < ITER_XI; k++){
+//        //What goes inside gradient
+//        ////#pragma omp simd
+//        //#pragma omp for schedule(dynamic, 1) collapse(2)
+//        for (int i = 0; i < size; i++){
+//            g_xi11[i] = g[i]*xi11[i];
+//            g_xi12[i] = g[i]*xi12[i];
+
+//            g_xi21[i] = g[i]*xi21[i];
+//            g_xi22[i] = g[i]*xi22[i];
+//        }
+
+//        divergence(g_xi11, g_xi12, div_g_xi1, nx, ny);
+//        divergence(g_xi21, g_xi22, div_g_xi2, nx, ny);
+
+//        ////#pragma omp simd
+//        //#pragma omp for schedule(dynamic, 1) collapse(2)
+//        for (int i = 0; i < size; i++){
+//            vi_div1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta*params.beta*chix[i];
+//            vi_div2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta*params.beta*chiy[i];
+//        }
+
+
+//        forward_gradient(vi_div1, grad_x1, grad_y1, nx, ny);
+//        forward_gradient(vi_div2, grad_x2, grad_y2, nx, ny);
+
+
+//        ////#pragma omp simd
+//        //#pragma omp for schedule(dynamic, 1) collapse(2)
+//        for (int i = 0; i < size; i++){
+
+//            //Dual variables x11 and x12
+//            const float vec11 = g[i]*grad_x1[i];
+//            const float vec12 = g[i]*grad_y1[i];
+//            const float norm_vec1 = sqrt(vec11 * vec11 + vec12 * vec12);
+//            xi11[i] = (xi11[i] + tau_theta*vec11)/(1 + tau_theta*norm_vec1);
+//            xi12[i] = (xi12[i] + tau_theta*vec12)/(1 + tau_theta*norm_vec1);
+
+
+//            //Dual variables x21 and x22
+//            const float vec21 = g[i]*grad_x2[i];
+//            const float vec22 = g[i]*grad_y2[i];
+//            const float norm_vec2 = sqrt(vec21 * vec21 + vec22 * vec22);
+//            xi21[i] = (xi21[i] + tau_theta*vec21)/(1 + tau_theta*norm_vec2);
+//            xi22[i] = (xi22[i] + tau_theta*vec22)/(1 + tau_theta*norm_vec2);
+//        }
+//    }
+
+//    //Compute divergence for last time
+//    ////#pragma omp simd
+//    //#pragma omp for schedule(dynamic, 1) collapse(2)
+//    for (int i = 0; i < size; i++){
+//        g_xi11[i] = g[i]*xi11[i];
+//        g_xi12[i] = g[i]*xi12[i];
+
+//        g_xi21[i] = g[i]*xi21[i];
+//        g_xi22[i] = g[i]*xi22[i];
+//    }
+
+
+//    divergence(g_xi11, g_xi12, div_g_xi1, nx, ny);
+//    divergence(g_xi21, g_xi22, div_g_xi2, nx, ny);
+//}
+
+
+
+//static void tvl2coupled_get_chi(
+//        float *chi,
+//        float *chix,
+//        float *chiy,
+//        const float *F,
+//        const float *G,
+//        const float *g,
+//        float *eta1,
+//        float *eta2,
+//        const float *div_u,
+//        float *g_eta1,
+//        float *g_eta2,
+//        float *div_g_eta,
+//        const Parameters params
+//        ){
+
+//    const int nx = params.w;
+//    const int ny = params.h;
+//    const int size = nx*ny;
+
+//    for (int k = 1; k < ITER_CHI; k++){
+
+//        //Compute dual variable eta
+//        ////#pragma omp simd
+//        //#pragma omp for schedule(dynamic, 1) collapse(2)
+//        for (int i = 0; i < size; i++){
+
+//            //Compute new values of eta
+//            const float eta_new1 = eta1[i] + params.tau_eta * g[i] * chix[i];
+//            const float eta_new2 = eta2[i] + params.tau_eta * g[i] * chiy[i];
+//            const float norm_eta = sqrt(eta_new1*eta_new1 + eta_new2*eta_new2);
+//            //Put eta in the unit interval, [0, 1]
+//            if (norm_eta <= 1){
+//                eta1[i] = eta_new1;
+//                eta2[i] = eta_new2;
+//            }else{
+//                eta1[i] = eta_new1/norm_eta;
+//                eta2[i] = eta_new2/norm_eta;
+//            }
+
+//            //Compute values for the needed divergence
+//            g_eta1[i] = g[i]*eta1[i];
+//            g_eta2[i] = g[i]*eta2[i];
+//        }
+
+
+
+//        divergence(g_eta1, g_eta2, div_g_eta, nx, ny);
+
+//        //Compute chi
+//        ////#pragma omp simd
+//        //#pragma omp for schedule(dynamic, 1) collapse(2)
+//        for (int i = 0; i < size; i++){
+
+//            const float chi_new = chi[i] + params.tau_chi*(div_g_eta[i] - params.beta*div_u[i] - F[i] - G[i]);
+//            chi[i] = max(min(chi_new, 1), 0);
+//        }
+
+//        forward_gradient(chi, chix, chiy, nx, ny);
+//    }
+//    //Make thresholding in chi
+//    //#pragma omp for schedule(dynamic,1) collapse(2)
+//    for (int i = 0; i < size; i++){
+//        chi[i] = (chi[i] > THRESHOLD_DELTA) ? 1 : 0;
+//    }
+
+//}
+
+//void tvl2OF_occ(
+//        const float *I0,           // source image
+//        const float *I1,           // target image
+//        const float *I_1,
+//        float *u1,           // x component of the optical flow
+//        float *u2,           // y component of the optical flow
+//        float *xi11,
+//        float *xi12,
+//        float *xi21,
+//        float *xi22,
+//        float *chi,
+//        const Parameters params
+//        ) {
+
+//    const float l_t = params.lambda * params.theta;
+//    int w = params.w;
+//    int h = params.h;
+//    const int   size = w * h;
+
+//    float *u1_ba = new float[w*h];
+//    float *u2_ba = new float[w*h];
+
+//    //Columns and Rows
+//    const int nx = w;
+//    const int ny = h;
+
+//    //Occlusion variables
+//    float *chix = new float[w*h];
+//    float *chiy = new float[w*h];
+
+//    //Weigth
+//    float *g = new float[w*h];
+
+//    //Dual variables of chi
+//    float *eta1 = new float[w*h];
+//    float *eta2 = new float[w*h];
+
+//    float *v1 = new float[w*h];
+//    float *v2 = new float[w*h];
+
+//    float *rho_c1 = new float[w*h];
+//    float *rho_c_1 = new float[w*h];
+//    float *grad_1 = new float[w*h];
+//    float *grad__1 = new float[w*h];
+
+//    float *diff_u_N = new float[w*h];
+//    float *I0x = new float[w*h];
+//    float *I0y = new float[w*h];
+
+//    //Derivatives and warping of I1
+//    float *I1x = new float[w*h];
+//    float *I1y = new float[w*h];
+//    float *I1w = new float[w*h];
+//    float *I1wx = new float[w*h];
+//    float *I1wy = new float[w*h];
+
+//    //Derivatives and warping of I-1
+//    float *I_1x = new float[w*h];
+//    float *I_1y = new float[w*h];
+//    float *I_1w = new float[w*h];
+//    float *I_1wx = new float[w*h];
+//    float *I_1wy = new float[w*h];
+
+
+//    float *vi_div1 = new float[w*h];
+//    float *grad_x1 = new float[w*h];
+//    float *grad_y1 = new float[w*h];
+//    float *vi_div2 = new float[w*h];
+//    float *grad_x2 = new float[w*h];
+//    float *grad_y2 = new float[w*h];
+//    float *g_xi11 = new float[w*h];
+//    float *g_xi12 = new float[w*h];
+//    float *g_xi21 = new float[w*h];
+//    float *g_xi22 = new float[w*h];
+//    float *div_g_xi1 = new float[w*h];
+//    float *div_g_xi2 = new float[w*h];
+
+//    float *F = new float[w*h];
+//    float *G = new float[w*h];
+
+//    float *div_u = new float[w*h];
+//    float *g_eta1 = new float[w*h];
+//    float *g_eta2 = new float[w*h];
+//    float *div_g_eta = new float[w*h];
+
+
+//    //Initialization of backward flow
+//    ////#pragma omp simd
+//    for (int i = 0; i < size; i++){
+
+//        u1_ba[i] = -u1[i];
+//        u2_ba[i] = -u2[i];
+//    }
+
+//    //Compute derivatives of all images
+//    centered_gradient(I1, I1x, I1y, nx, ny);
+//    centered_gradient(I_1, I_1x, I_1y, nx, ny);
+//    centered_gradient(I0, I0x, I0y, nx, ny);
+
+//    //Initialize weight
+//    init_weight(g, I0x, I0y, size);
+
+//    for (int warpings = 0; warpings < params.warps; warpings++){
+//        //printf("warpings: %d\n", warpings);
+//        // Compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
+//        bicubic_interpolation_warp(I1,  u1, u2, I1w,  nx, ny, true);
+//        bicubic_interpolation_warp(I1x, u1, u2, I1wx, nx, ny, true);
+//        bicubic_interpolation_warp(I1y, u1, u2, I1wy, nx, ny, true);
+
+//        bicubic_interpolation_warp(I_1,  u1_ba, u2_ba, I_1w,  nx, ny, true);
+//        bicubic_interpolation_warp(I_1x, u1_ba, u2_ba, I_1wx, nx, ny, true);
+//        bicubic_interpolation_warp(I_1y, u1_ba, u2_ba, I_1wy, nx, ny, true);
+
+//        ////#pragma omp simd
+//        for (int i = 0; i < size; i++){
+//            const float I1_x2 = I1wx[i] * I1wx[i];
+//            const float I1_y2 = I1wy[i] * I1wy[i];
+//            const float I_1_x2 = I_1wx[i] * I_1wx[i];
+//            const float I_1_y2 = I_1wy[i] * I_1wy[i];
+
+//            // store the |Grad(I2)|^2
+//            grad_1[i] = (I1_x2 + I1_y2);
+//            grad__1[i] = (I_1_x2 + I_1_y2);
+
+//            // Compute the constant part of the rho function
+//            rho_c1[i] = I1w[i] - I1wx[i] * u1[i]
+//                    - I1wy[i] * u2[i] - I0[i];
+//            rho_c_1[i] = I_1w[i] - I_1wx[i] * u1[i]
+//                    - I_1wy[i] * u2[i] - I0[i];
+//        }
+
+//        int n = 0;
+//        float err_D = INFINITY;
+//        while (err_D > params.tol_OF*params.tol_OF && n < MAX_ITERATIONS_OF_GLOBAL){
+
+//            n++;
+//            // estimate the values of the variable (v1, v2)
+//            // (thresholding opterator TH)
+//            ////#pragma omp simd
+//            for (int i = 0; i < size; i++){
+//                // rho function forward and backward
+//                const float rho_1 = rho_c1[i]
+//                        + I1wx[i] * u1[i] + I1wy[i] * u2[i];
+//                const float rho__1 = rho_c_1[i]
+//                        + I_1wx[i] * u1[i] + I_1wy[i] * u2[i];
+
+//                //Stuff depending if pixel is occluded or not
+//                int eps;
+//                float alpha_i, mu, Lambda, grad, Iwx, Iwy, rho;
+//                if (chi[i] == 0){
+//                    eps = 1;
+//                    alpha_i = 1;
+//                    mu = l_t;
+//                    Lambda = rho_1;
+//                    grad = grad_1[i];
+//                    Iwx = I1wx[i];
+//                    Iwy = I1wy[i];
+//                    rho = rho_1;
+//                }else{
+//                    eps = -1;
+//                    alpha_i = 1/(1 + params.alpha*params.theta);
+//                    mu = l_t/(1 + params.alpha*params.theta);
+//                    Lambda = rho__1 +
+//                            params.alpha*params.theta/(1 + params.alpha*params.theta) * (u1[i]*I_1wx[i] + u2[i]*I_1wy[i]);
+//                    grad = grad__1[i];
+//                    Iwx = I_1wx[i];
+//                    Iwy = I_1wy[i];
+//                    rho = rho__1;
+//                }
+//                //Decide what to assign to v
+//                if (Lambda > mu * grad){
+//                    v1[i] = alpha_i * u1[i] - mu * eps * Iwx;
+//                    v2[i] = alpha_i * u2[i] - mu * eps * Iwy;
+//                }else{
+//                    if (Lambda < - mu * grad){
+//                        v1[i] = alpha_i * u1[i] + mu * eps * Iwx;
+//                        v2[i] = alpha_i * u2[i] + mu * eps * Iwy;
+//                    }else{
+//                        // if gradient is too small, we treat it as zero
+//                        if (grad < GRAD_IS_ZERO){
+//                            v1[i] = u1[i];
+//                            v2[i] = u2[i];
+//                        }else{
+
+//                            v1[i] = u1[i] - eps * rho * Iwx/grad;
+//                            v2[i] = u2[i] - eps * rho * Iwy/grad;
+//                        }
+//                    }
+//                }
+//            }
+
+//            //Estimate the values of the variable (u1, u2)
+//            //Compute derivatives of chi
+//            forward_gradient(chi, chix, chiy, nx, ny);
+
+//            //Compute dual variables
+//            tvl2coupled_get_xi(xi11, xi12, xi21, xi22, g, v1, v2,
+//                               chix, chiy, vi_div1, grad_x1, grad_y1, vi_div2, grad_x2, grad_y2,
+//                               g_xi11, g_xi12, g_xi21, g_xi22, div_g_xi1, div_g_xi2,
+//                               params);
+
+
+//            //Compute primal variables, u1, u2
+
+//            ////#pragma omp simd
+//            //#pragma omp for schedule(dynamic, 1) collapse(2)
+//            for (int i = 0; i < size; i++){
+
+//                //Previous value for u
+//                const float u1k = u1[i];
+//                const float u2k = u2[i];
+
+//                //New value for (u1, u2)
+//                u1[i] = v1[i] + params.theta*div_g_xi1[i] + params.theta * params.beta * chix[i];
+//                u2[i] = v2[i] + params.theta*div_g_xi2[i] + params.theta * params.beta * chiy[i];
+
+//                //Difference between previous and new value of u
+//                diff_u_N[i] = (u1[i] - u1k) * (u1[i] - u1k) +
+//                        (u2[i] - u2k) * (u2[i] - u2k);
+
+//                const float rho__1 = rho_c_1[i]
+//                        + I_1wx[i] * v1[i] + I_1wy[i] * v2[i];
+
+//                const float rho_1 = rho_c1[i]
+//                        + I1wx[i] * v1[i] + I1wy[i] * v2[i];
+
+//                F[i] = params.lambda*(std::abs(rho__1) - std::abs(rho_1));
+//                G[i] = params.alpha/2*(v1[i]*v1[i] + v2[i]*v2[i]);
+//            }
+
+
+//            //Compute chi
+
+//            tvl2coupled_get_chi(chi, chix, chiy, F, G,
+//                                g, eta1, eta2, div_u, g_eta1, g_eta2,
+//                                div_g_eta, params);
+//            //Get the max val
+//            float err_u = 0;
+//            for (int i = 0; i < size; i++){
+//                if (err_u < diff_u_N[i]){
+//                    err_u = diff_u_N[i];
+//                }
+//            }
+//            err_D = err_u;
+//        }
+
+//        if (params.verbose)
+//            fprintf(stderr, "Warping: %d, Iter: %d, "
+//                            "Error: %f\n", warpings, n, err_D);
+//    }
+
+
+//    free(u1_ba);
+//    free(u2_ba);
+
+//    free(chix);
+//    free(chiy);
+
+//    free(g);
+
+//    free(eta1);
+//    free(eta2);
+
+//    free(v1);
+//    free(v2);
+
+//    free(rho_c1);
+//    free(rho_c_1);
+//    free(grad_1);
+//    free(grad__1);
+
+//    free(I1x);
+//    free(I1y);
+//    free(I1w);
+//    free(I1wx);
+//    free(I1wy);
+
+
+//    free(I_1x);
+//    free(I_1y);
+//    free(I_1w);
+//    free(I_1wx);
+//    free(I_1wy);
+
+
+//    free(vi_div1);
+//    free(grad_x1);
+//    free(grad_y1);
+//    free(vi_div2);
+//    free(grad_x2);
+//    free(grad_y2);
+//    free(g_xi11);
+//    free(g_xi12);
+//    free(g_xi21);
+//    free(g_xi22);
+//    free(div_g_xi1);
+//    free(div_g_xi2);
+
+//    free(F);
+//    free(G);
+
+//    free(div_u);
+//    free(g_eta1);
+//    free(g_eta2);
+//    free(div_g_eta);
+
+//}
 
 
 #endif //TVL2-L1 functional

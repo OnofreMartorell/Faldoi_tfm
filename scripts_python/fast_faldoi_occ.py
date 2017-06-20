@@ -58,6 +58,13 @@ parser.add_argument("-warps", default = '5',
 parser.add_argument("-th", default = '0.45',
                     help = "Threshold to discard outliers from DeepFlow")
 
+#Ground truth for evaluation
+parser.add_argument("-ev", default = '',
+                    help = "File with ground truth optical")
+#Ground truth for evaluation
+parser.add_argument("-p", default = '',
+                    help = "File with parameters")
+
 
 args = parser.parse_args()
 with open(args.file_images, 'r') as file:
@@ -79,6 +86,7 @@ match_comparison = "../build/deepmatching"
 sparse_flow = "../build/sparse_flow"
 match_propagation = "../build/local_faldoi"
 of_var = "../build/global_faldoi"
+evaluation = "../build/evaluation"
 
 
 #Set the main directory that contains all the stuff
@@ -89,6 +97,13 @@ binary_path = '../build/'
 f_path = '../Results/' + sequence + '/'
 if not os.path.exists(f_path):
     os.makedirs(f_path)
+filename_gt = args.ev
+filename_params = args.p
+if not filename_params == '':
+	iteration_params = '_' + str(filename_params.split('/')[-1].split('.')[0].split('_')[1]).zfill(2)
+else:
+	iteration_params = ''
+
 
 #Set the images input.
 im_name0 = os.path.abspath(data[0])
@@ -108,15 +123,16 @@ sparse_name_1 = '%s%s_exp_mt_1.flo'%(f_path, core_name1)
 match_name_2 = '%s%s_exp_mt_2.txt'%(f_path, core_name2)
 sparse_name_2 = '%s%s_exp_mt_2.flo'%(f_path, core_name2)
 
-region_growing = '%s%s_rg_%s.flo'%(f_path, core_name1, method_extension)
-sim_value = '%s%s_exp_sim_%s.tiff'%(f_path, core_name1, method_extension)
-var_flow = '%s%s_exp_var_%s.flo'%(f_path, core_name1, method_extension)
+region_growing = '%s%s_rg_%s%s.flo'%(f_path, core_name1, method_extension, iteration_params)
+sim_value = '%s%s_exp_sim_%s%s.tiff'%(f_path, core_name1, method_extension, iteration_params)
+var_flow = '%s%s_exp_var_%s%s.flo'%(f_path, core_name1, method_extension, iteration_params)
 
-occlusions_rg = '%s%s_rg_occ_%s.png'%(f_path, core_name1, method_extension)
-occlusions_var = '%s%s_var_occ%s.png'%(f_path, core_name1, method_extension)
+occlusions_rg = '%s%s_rg_occ_%s%s.png'%(f_path, core_name1, method_extension, iteration_params)
+occlusions_var = '%s%s_var_occ_%s%s.png'%(f_path, core_name1, method_extension, iteration_params)
 
 #Obtain the matches' list for both (I0-I1 and I1-I0)
-print('Obtaining list of matches from DeepMatching')
+if matchings:
+	print('Obtaining list of matches from DeepMatching')
 max_scale = math.sqrt(2)
 
 #I0-I1
@@ -145,14 +161,16 @@ os.system(command_line)
 
 
 #Create a dense flow from a sparse set of initial seeds
-
-options = '-m %s -wr %s'%(var_m, windows_radio)
+if not filename_params == '':
+	options = '-m %s -wr %s -p %s'%(var_m, windows_radio, filename_params)
+else:
+	options = '-m %s -wr %s'%(var_m, windows_radio)
 param = '%s %s %s %s %s %s %s\n'%(args.file_images, sparse_name_1, sparse_name_2, 
                             region_growing, sim_value, occlusions_rg, options)
 #print param
 command_line = '%s %s\n'%(match_propagation, param)
 
-print(command_line)
+#print(command_line)
 if local_of:
 	print('Computing local faldoi')
 	os.system(command_line)
@@ -161,11 +179,21 @@ if local_of:
 #Put the dense flow as input for a variational method
 
 # Tv-l2 coupled 0 Du 1
-options = '-m %s -w %s'%(var_m, warps)
+if not filename_params == '':
+	options = '-m %s -w %s -p %s'%(var_m, warps, filename_params)
+else:
+	options = '-m %s -w %s'%(var_m, warps)
 param = '%s %s %s %s %s %s\n'%(args.file_images,
                             region_growing, var_flow, occlusions_rg, occlusions_var, options)
 command_line = '%s %s\n'%(of_var, param)
 print(command_line)
 if global_of:
 	print('Computing global faldoi')
+	os.system(command_line)
+
+
+#Evaluate results of method
+if  not filename_gt == '':
+	command_line = evaluation + ' ' + var_flow + ' ' + filename_gt
+	#print(command_line)
 	os.system(command_line)

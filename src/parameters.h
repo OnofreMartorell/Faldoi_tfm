@@ -16,20 +16,11 @@
 #define PRESMOOTHING_SIGMA  0.90
 
 
-//lambda = 0.25;
-//theta = 0.3;
-//const float beta = 1;
-//const float alpha = 0.01;
-//const float tau_u = 0.125;
-//const float tau_eta = 0.125;
-//const float tau_chi = 0.125;
-
-
 //OPTICAL FLOW PARAMETERS
 #define PAR_DEFAULT_LAMBDA  40//40
 #define PAR_DEFAULT_THETA   0.3
 #define PAR_DEFAULT_TAU     0.125 //0.25
-#define PAR_DEFAULT_BETA    1
+#define PAR_DEFAULT_BETA    0.5 //1
 #define PAR_DEFAULT_ALPHA   0.01
 #define PAR_DEFAULT_TAU_U   0.125
 #define PAR_DEFAULT_TAU_ETA 0.125
@@ -39,7 +30,7 @@
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
-#define MAX_ITERATIONS_LOCAL 4
+#define MAX_ITERATIONS_LOCAL 4 //4
 #define MAX_ITERATIONS_GLOBAL 400
 
 #define GRAD_IS_ZERO 1E-8
@@ -51,9 +42,17 @@
 #define PAR_DEFAULT_NWARPS_LOCAL  1  //5
 #define PAR_DEFAULT_NWARPS_GLOBAL  5  //5
 
+#define ITER_XI 5
+#define ITER_CHI 5
+#define THRESHOLD_DELTA 0.6
 
 #define GLOBAL_STEP 1
 #define LOCAL_STEP 0
+
+//Parameters for faldoi and prunning
+#define LOCAL_ITER 3 //3
+#define TU_TOL 0.01
+#define FB_TOL 2
 //Specific stuff for NLTV
 
 #define NL_SPATIAL 2

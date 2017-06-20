@@ -15,8 +15,8 @@ void  of_errors(float *flow1, float *flow2, int w, int h, int pd){
     float ae = 0;
     float ee = 0;
     int nPix = 0;
-    for (int j = 1; j <= h; j++){
-        for (int i = 1; i <= w; i++){
+    for (int j = 0; j < h; j++){
+        for (int i = 0; i < w; i++){
 
             //Exactly as in C code
             int p = i*h + j;
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
 
     std::vector<std::string> args(argv, argv + argc);
     if (args.size() != 3) {
-        fprintf(stderr, "usage %d :\n\t%s out.flo gt.flo", args.size(), args[0].c_str());
+        fprintf(stderr, "usage %lu :\n\t%s out.flo gt.flo", args.size(), args[0].c_str());
 
         return 1;
     }

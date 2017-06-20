@@ -37,7 +37,7 @@ Parameters init_params(const std::string& file_params, int step_alg){
         params.alpha = std::stof(line, &sz); getline(infile, line);
         params.tau_u = std::stof(line, &sz); getline(infile, line);
         params.tau_eta = std::stof(line, &sz); getline(infile, line);
-        params.tau_chi = std::stof(line, &sz); getline(infile, line);
+        params.tau_chi = std::stof(line, &sz);
 
         infile.close();
     }

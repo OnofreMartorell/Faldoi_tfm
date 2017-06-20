@@ -1823,7 +1823,7 @@ int main(int argc, char *argv[]) {
                         "  [-m] val [-w] val"
                 //                       0   1  2   3     4    5   6
                 "\n", args.size());
-        // 4
+
         return EXIT_FAILURE;
     }
     // O TV-l2 coupled 1 - ||Du + Du'||_{F}
@@ -1842,7 +1842,7 @@ int main(int argc, char *argv[]) {
     const std::string& occ_output = argv[5];
 
     //filename of images
-    std::string filename_i_1, filename_i0, filename_i1, filename_i2;
+    std::string filename_i_1, filename_i0, filename_i1;
 
     //Read txt file of images
 
@@ -1860,10 +1860,6 @@ int main(int argc, char *argv[]) {
             }else{
                 if (num_files == 2){
                     filename_i1  = line;
-                }else{
-                    if (num_files == 4){
-                        filename_i2  = line;
-                    }
                 }
             }
         }
@@ -1910,15 +1906,12 @@ int main(int argc, char *argv[]) {
 
 
     // open input images
-    int w[6], h[6], pd[6];
+    int w[5], h[5], pd[5];
     float *i_1;
-    float *i2;
     if (num_files == 4){
         i_1 = iio_read_image_float_split(filename_i_1.c_str(), w + 3, h + 3, pd + 3);
-        i2 = iio_read_image_float_split(filename_i2.c_str(), w + 5, h + 5, pd + 5);
     }else{
         i_1 = iio_read_image_float_split(filename_i1.c_str(), w + 3, h + 3, pd + 3);
-        i2 = iio_read_image_float_split(filename_i2.c_str(), w + 5, h + 5, pd + 5);
     }
 
     float *i0   = iio_read_image_float_split(filename_i0.c_str(), w + 0, h + 0, pd + 0);
@@ -1979,7 +1972,6 @@ int main(int argc, char *argv[]) {
         rgb2gray(i0, w[0], h[0], i0n);
         rgb2gray(i1, w[0], h[0], i1n);
         rgb2gray(i_1, w[0], h[0], i_1n);
-        rgb2gray(i2, w[0], h[0], i2n);
 
     }else{
 
@@ -1987,7 +1979,7 @@ int main(int argc, char *argv[]) {
         memcpy(i1n, i1, size*sizeof(float));
         memcpy(i_1n, i_1, size*sizeof(float));
     }
-    image_normalization_4(i0n, i1n, i_1n, i2n, i0n, i1n, i_1n, i2n, size);
+    image_normalization_3(i0n, i1n, i_1n, i0n, i1n, i_1n, size);
     gaussian(i0n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i1n, w[0], h[0], PRESMOOTHING_SIGMA);
     gaussian(i_1n, w[0], h[0], PRESMOOTHING_SIGMA);
@@ -2073,15 +2065,6 @@ int main(int argc, char *argv[]) {
     }else if (val_method == M_TVL1_OCC){
         fprintf(stderr, "TV-l2 occlusions\n");
         float ener_N;
-
-        //        lambda = 0.25;
-        //        theta = 0.3;
-        //        const float beta = 1;
-        //        const float alpha = 0.01;
-        //        const float tau_u = 0.125;
-        //        const float tau_eta = 0.125;
-        //        const float tau_chi = 0.125;
-
 
         guided_tvl2coupled_occ(i0n, i1n, i_1n, &ofD, &(stuffOF.tvl2_occ), &ener_N, index);
         //tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi, params);

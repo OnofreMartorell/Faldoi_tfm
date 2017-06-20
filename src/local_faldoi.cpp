@@ -36,15 +36,13 @@ extern "C" {
 #include <string>
 
 #include "utils.h"
-
+#include "parameters.h"
 using namespace std;
 
 //GLOBAL VARIABLES
 // char GLOBAL_TMP_FILE[] = "/tmp/faldoy_XXXXXX"; // template for our file.
 
-#define LOCAL_ITER 3
-#define TU_TOL 0.01
-#define FB_TOL 2
+
 
 #define MAX_PATCH 50
 
@@ -347,7 +345,7 @@ void interpolate_poisson(
     int w = patch.ei - patch.ii;
     int h = patch.ej - patch.ij;
     int *mask = ofD->fixed_points;
-    int wR = ofD->params.bounds.w;
+    int wR = ofD->params.w;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float buf_in[2*MAX_PATCH*MAX_PATCH];
@@ -471,7 +469,7 @@ void bilateral_filter_regularization(
     int n_d = NL_DUAL_VAR;
 
     //Columns and Rows
-    const int w = ofD->params.bounds.w;
+    const int w = ofD->params.w;
 
 
 
@@ -705,10 +703,11 @@ inline void copy_fixed_coordinates(
         int ij, // initial row
         int ei, // end column
         int ej  // end row
-        const PatchIndexes& patch
         ) {
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
+    int w = ofD->params.w;
+    int h = ofD->params.h;
     int *fixed = ofD->fixed_points;
 
     for (int l = ij; l < ej; l++)
@@ -879,12 +878,12 @@ static void add_neighbors(
     //Poisson Interpolation (4wr x 4wr + 1)
     if (mode == 0) {
         //it > 0. Interpolate over the survivors of the pruning.
-        copy_fixed_coordinates(ofD, out, index);
+        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
         interpolate_poisson(ofD, index);
 
     }else if (check_trustable_patch(ofD, index.ii, index.ij, index.ei, index.ej) == 0) {
 
-        copy_fixed_coordinates(ofD, out, index);
+        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
         interpolate_poisson(ofD, index);
     }
 
@@ -971,14 +970,14 @@ void insert_potential_candidates(
         const float *in,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
-        pq_cand *queue,
         pq_cand& queue,
         float *ene_val,
         float *out,
         float *out_occ
         ){
     //Note: in and out are the same pointer
-
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
     //Fixed the initial seeds.
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++) {
@@ -994,7 +993,7 @@ void insert_potential_candidates(
                 element.sim_node = ene_val[j*w + i];
                 element.occluded = out_occ[j*w + i];
                 assert(std::isfinite(ene_val[j*w + i]));
-                queue->push(element);
+                queue.push(element);
             }
         }
 
@@ -1101,7 +1100,7 @@ void local_growing(
             float u = element.u;
             float v = element.v;
             float energy = element.sim_node;
-
+            float occlusion  = element.occluded;
             if (!std::isfinite(u)){
                 std::printf("U1 = %f\n", u);
             }
@@ -1115,14 +1114,16 @@ void local_growing(
             out[j*w + i] = u;
             out[w*h + j*w + i] = v;
             ene_val[j*w + i] = energy;
-            out_occ[j*w + i] = u;
+            out_occ[j*w + i] = occlusion;
             // //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
             // //MIRAR
             // ofD->u1[j*w + i] = u;
             // ofD->u2[j*w + i] = v;
 
             //tm stores if we made interpolation or not.
+
             add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out, out_occ);
+
         }
     }
 }
@@ -1190,19 +1191,13 @@ void match_growing_variational(
     ////FIXED POINTS////
     //Insert initial seeds to queues
     std::printf("Inserting initial seeds\n");
-    //#pragma omp parallel num_threads(2)
-    {
-        //#pragma omp sections
-        {
-            //#pragma omp section
-            //            nfixed_go =  insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go);
-            auto future_nfixed_go = std::async(std::launch::async,
-                                               [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
-            //#pragma omp section
-            nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
-            nfixed_go = future_nfixed_go.get();
-        } /// End of sections
-    } /// End of parallel section
+
+    auto future_nfixed_go = std::async(std::launch::async,
+                                       [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
+
+    nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
+    nfixed_go = future_nfixed_go.get();
+
 
     std::printf("Finished inserting initial seeds\n");
 
@@ -1215,20 +1210,14 @@ void match_growing_variational(
     for (int i = 0; i < iter; i++){
         std::printf("Iteration: %d\n", i);
 
-        //#pragma omp parallel num_threads(2)
-        {
-            //#pragma omp sections
-            {
-                //#pragma omp section
-                //Estimate local minimization I0-I1
-                auto growing_fwd = std::async(std::launch::async,
-                                              [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go); });
-                //#pragma omp section
-                //Estimate local minimzation I1-I0
-                local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed_ba, ene_Ba, oft1, occ_Ba);
-                growing_fwd.get();
-            } /// End of sections
-        } /// End of parallel section
+
+        //Estimate local minimization I0-I1
+        auto growing_fwd = std::async(std::launch::async,
+                                      [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go); });
+
+        //Estimate local minimzation I1-I0
+        local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed_ba, ene_Ba, oft1, occ_Ba);
+        growing_fwd.get();
 
         //Pruning method
         pruning_method(&ofGo, &ofBa, i0n, i1n, w, h, tol, p,
@@ -1249,6 +1238,7 @@ void match_growing_variational(
     std::printf("Last growing\n");
     local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, 10, nfixed_go, ene_Go, oft0, occ_Go);
 
+
     //Copy the result t, t+1 as output.
     memcpy(out_flow, oft0, sizeof(float)*w*h*2);
     memcpy(ene_val, ene_Go, sizeof(float)*w*h);
@@ -1257,6 +1247,7 @@ void match_growing_variational(
 
     free_auxiliar_stuff(&stuffGo, &ofGo);
     free_auxiliar_stuff(&stuffBa, &ofBa);
+
 
     delete [] i1n;
     delete [] i2n;
@@ -1279,7 +1270,6 @@ void match_growing_variational(
     delete [] ofGo.u2_ini;
     delete [] ofBa.u1_ini;
     delete [] ofBa.u2_ini;
-
 
     delete [] oft0;
     delete [] oft1;
@@ -1642,15 +1632,28 @@ int main(int argc, char* argv[]){
     params.val_method = val_method;
     cerr << params;
 
+
     //Match growing algorithm
     match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, params, ene_val, out_flow, out_occ);
 
 
     // Save results
-    iio_save_image_float_split(filename_out.c_str(), out_flow, w[0], h[0], 2);
-    iio_save_image_float(filenme_sim.c_str(), ene_val, w[0], h[0]);
-    iio_save_image_float(filename_occ.c_str(), out_occ, w[0], h[0]);
 
+    iio_save_image_float_split(filename_out.c_str(), out_flow, w[0], h[0], 2);
+
+    iio_save_image_float(filenme_sim.c_str(), ene_val, w[0], h[0]);
+
+    //iio_save_image_float(filename_occ.c_str(), out_occ, w[0], h[0]);
+    int *out_occ_int = new int [w[0]*h[0]];
+
+    for (int i = 0; i < w[0]*h[0]; i++){
+
+        out_occ_int[i] = out_occ[i];
+        //cout << out_occ[i] << ", int:" << out_occ_int[i] << "\n";
+    }
+    if (val_method == M_TVL1_OCC){
+        iio_save_image_int(filename_occ.c_str(), out_occ_int, w[0], h[0]);
+    }
     // cleanup and exit
     free(i_1);
     free(i0);
@@ -1671,6 +1674,8 @@ int main(int argc, char* argv[]){
     delete [] out_flow;
     delete [] ene_val;
     delete [] out_occ;
+
+    delete [] out_occ_int;
 
     today = system_clock::now();
 
