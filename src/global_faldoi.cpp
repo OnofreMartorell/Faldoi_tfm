@@ -1057,15 +1057,13 @@ void nltvl1_PD(
         const float lambda,  // weight of the data term
         const float theta,   // weight of the data term
         const float tau,     // time step
-        const float tol_OF,  // tol max allowed
         const int   w,      // image width
         const int   h,      // image height
         const int   warps,   // number of warpings per scale
         const bool  verbose, // enable/disable the verbose mode
         float *u1,       // x component of the optical flow
         float *u2      // y component of the optical flow
-        )
-{
+        ){
     const int   size = w * h;
     const float l_t = lambda * theta;
 
@@ -1284,7 +1282,6 @@ void tvcsad_getP(float *u1,
                  float *v2,
                  float *div_xi1,
                  float *div_xi2,
-                 float *u_N,
                  float theta,
                  float tau,
                  int size,
@@ -1438,8 +1435,7 @@ void tvcsad_PD(
 
         int n = 0;
         float err_D = INFINITY;
-        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_GLOBAL)
-        {
+        while (err_D > tol_OF*tol_OF && n < MAX_ITERATIONS_GLOBAL){
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding opterator TH)
@@ -1486,7 +1482,7 @@ void tvcsad_PD(
                 u2_tmp[i] = u2[i];
             }
 
-            tvcsad_getP(u1,u2,v1,v2,div_xi1,div_xi2,u_N,theta,tau,size,&err_D);
+            tvcsad_getP(u1,u2,v1,v2,div_xi1,div_xi2, theta,tau,size,&err_D);
 
             //(aceleration = 1);
             for (int i = 0; i < size; i++){
@@ -1548,7 +1544,6 @@ void nltvcsad_PD(
         const float lambda,  // weight of the data term
         const float theta,   // weight of the data term
         const float tau,     // time step
-        const float tol_OF,  // tol max allowed
         const int   w,      // image width
         const int   h,      // image height
         const int   warps,   // number of warpings per scale
@@ -1730,20 +1725,6 @@ void nltvcsad_PD(
 /////////////////////////MAIN/////////////////////
 
 
-/**
- *
- *  Function to read images using the iio library
- *  It always returns an allocated the image.
- *
- */
-static float *read_image(const char *filename, int *w, int *h) {
-    float *f = iio_read_image_float(filename, w, h);
-    if (!f)
-        fprintf(stderr, "ERROR: could not read image from file "
-                        "\"%s\"\n", filename);
-    return f;
-}
-
 void rgb2gray(float *in, int w, int h, float *out) {
     int size = w*h;
     for (int i = 0; i < size; i++) {
@@ -1867,44 +1848,6 @@ int main(int argc, char *argv[]) {
     infile.close();
 
 
-
-    //    //check parameters
-    //    if (lambda <= 0) {
-    //        lambda = PAR_DEFAULT_LAMBDA;
-    //        if (verbose) fprintf(stderr, "warning: "
-    //                                     "lambda changed to %g\n", lambda);
-    //    }
-
-    //    if (theta <= 0) {
-    //        tau = PAR_DEFAULT_THETA;
-    //        if (verbose) fprintf(stderr, "warning: "
-    //                                     "theta changed to %g\n", theta);
-    //    }
-
-    //    if (tau <= 0 || tau > 0.25) {
-    //        tau = PAR_DEFAULT_TAU;
-    //        if (verbose) fprintf(stderr, "warning: "
-    //                                     "tau changed to %g\n", tau);
-    //    }
-
-    //    if (tol_D <= 0) {
-    //        tol_D = PAR_DEFAULT_TOL_D;
-    //        if (verbose) fprintf(stderr, "warning: "
-    //                                     "tol_D changed to %f\n", tol_D);
-    //    }
-
-    //    if (nproc < 0) {
-    //        nproc = PAR_DEFAULT_NPROC;
-    //        if (verbose) fprintf(stderr, "warning: "
-    //                                     "nproc changed to %d\n", nproc);
-    //    }
-
-
-
-    // read the input images
-    // nx es width y ny es height
-
-
     // open input images
     int w[5], h[5], pd[5];
     float *i_1;
@@ -1966,7 +1909,7 @@ int main(int argc, char *argv[]) {
     float *i0n = new float[size];
     float *i1n = new float[size];
     float *i_1n = new float[size];
-    float *i2n = new float[size];
+
     if (pd[0] != 1){
 
         rgb2gray(i0, w[0], h[0], i0n);
@@ -2045,14 +1988,14 @@ int main(int argc, char *argv[]) {
         params.theta  = 0.3;
         params.tau    = 0.1;
         printf("NLTV-CSAD\n");
-        nltvcsad_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau, params.tol_OF,
+        nltvcsad_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau,
                 w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_NLTVL1 || val_method == M_NLTVL1_W){
         params.lambda = 2.0;
         params.theta  = 0.3;
         params.tau    = 0.1;
         printf("NLTV-L1\n");
-        nltvl1_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau, params.tol_OF,
+        nltvl1_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau,
                 w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_TVCSAD || val_method == M_TVCSAD_W){
         params.lambda = 0.85;
@@ -2067,13 +2010,23 @@ int main(int argc, char *argv[]) {
         float ener_N;
 
         guided_tvl2coupled_occ(i0n, i1n, i_1n, &ofD, &(stuffOF.tvl2_occ), &ener_N, index);
-        //tvl2OF_occ(i0n, i1n, i_1n, u, v, xi11, xi12, xi21, xi22, chi, params);
 
     }
     iio_save_image_float_split(outfile.c_str(), u, w[0], h[0], 2);
-    iio_save_image_float(occ_output.c_str(), chi, w[0], h[0]);
+
+
+    if (val_method == M_TVL1_OCC){
+        int *out_occ_int = new int [w[0]*h[0]];
+        for (int i = 0; i < w[0]*h[0]; i++){
+
+            out_occ_int[i] = chi[i];
+        }
+        iio_save_image_int(occ_output.c_str(), out_occ_int, w[0], h[0]);
+        delete [] out_occ_int;
+    }
 
     //delete allocated memory
+    free_auxiliar_stuff(&stuffOF, &ofD);
     delete [] u;
     delete [] chi;
     if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W
@@ -2089,7 +2042,6 @@ int main(int argc, char *argv[]) {
     delete [] i0n;
     delete [] i1n;
     delete [] i_1n;
-    delete [] i2n;
     today = system_clock::now();
 
     tt = system_clock::to_time_t ( today );

@@ -123,8 +123,8 @@ void eval_nltvcsad(
       
       assert(ap1i == ap2i && ap1j == ap2j);
       //The position should be the same
-      const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-      const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+      const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+      const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
       assert(ap1 == ap2);
       if ((ap1==0) && (ap2==0))
       {
@@ -146,9 +146,8 @@ void eval_nltvcsad(
     {
       const int api = pnei[i].api[j];
       const int apj = pnei[i].apj[j];
-      const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
-      if (ap == 0)
-      {
+      const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
+      if (ap == 0) {
         // std::printf("I:%d Iter:%d Pos: %d J:%d I:%d \n",i, j, pnei[i].apj[j]*nx + pnei[i].api[j], pnei[i].apj[j], pnei[i].api[j]);
         assert(pnei[i].api[j] >= 0);
         assert(pnei[i].apj[j] >= 0);
@@ -184,7 +183,6 @@ void nltvcsad_getP(
             float *v2,
             float *div_p1, 
             float *div_p2,  
-            int *mask,
             float theta, 
             float tau, 
             const int ii, // initial column
@@ -260,8 +258,8 @@ void nltvcsad_getP(
       assert(ap1i == ap2i && ap1j == ap2j);
       assert(wp1 == wp2);
       //The position should be the same
-      const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-      const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+      const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+      const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
       assert(ap1 == ap2);
       if ((ap1==0) && (ap2==0))
       {
@@ -309,7 +307,7 @@ void guided_nltvcsad(
 {
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
-  int *mask = ofD->fixed_points;
+
   //Columns and Rows
   const int w = ofD->params.w;
   const int h = ofD->params.h;
@@ -370,7 +368,7 @@ void guided_nltvcsad(
       {
         const int api = pnei[i].api[j];
         const int apj = pnei[i].apj[j];
-        const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
+        const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
 
         // std::printf("I:%d Iter:%d J:%d I:%d \n",i, j,  pnei[i].apj[j], pnei[i].api[j]);
         if (ap == 0)
@@ -406,8 +404,8 @@ void guided_nltvcsad(
         
         assert(ap1i == ap2i && ap1j == ap2j);
         //The position should be the same
-        const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-        const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+        const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+        const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
         assert(ap1 == ap2);
         if ((ap1 == 0) && (ap2 == 0))
         {
@@ -451,7 +449,7 @@ void guided_nltvcsad(
         {
           const int api = pnei[i].api[j];
           const int apj = pnei[i].apj[j];
-          const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
+          const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
 
           if (ap == 0)
           {
@@ -489,7 +487,7 @@ void guided_nltvcsad(
       //Primal variables
       non_local_divergence(p, ii, ij, ei, ej, w, n_d, div_p);
       non_local_divergence(q, ii, ij, ei, ej, w, n_d, div_q);
-      nltvcsad_getP(v1, v2, div_p, div_q, mask, theta, tau,  
+      nltvcsad_getP(v1, v2, div_p, div_q, theta, tau,
                         ii, ij, ei, ej, w, u1, u2, &err_D);
 
       //aceleration = 1

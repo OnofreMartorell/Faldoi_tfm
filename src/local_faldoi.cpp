@@ -46,7 +46,6 @@ using namespace std;
 
 #define MAX_PATCH 50
 
-#define MAX(x,y) ((x)>(y)?(x):(y))
 
 
 // typedef  __gnu_pbds::priority_queue<SparseOF, CompareSparseOF,__gnu_pbds::pairing_heap_tag> pq_cand;
@@ -54,56 +53,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////OUTLIERS FUNCTIONS/////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-static void delete_random(
-        float tol,
-        int w,
-        int h,
-        float *en_in0,
-        float *en_in1
-        ) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0, 1);
 
-    int size = w*h;
-    int n = 0;
-
-    for (int i = 0; i < size; i++){
-        float val = dis(gen);
-        if (val > tol){
-            en_in0[i] = INFINITY;
-            en_in1[i] = INFINITY;
-        }else{
-            n++;
-        }
-    }
-    std::printf("Too-Chosen: %f\n", (n*1.0)/size);
-}
-
-static void rand_local_patch_ini(
-        float *u,
-        int radius
-        ) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(-300.0, 300.0);
-    int size = (2*radius + 1)*(2*radius + 1);
-    for (int i = 0; i < size; i++){
-        float val = dis(gen);
-        assert(std::isfinite(val));
-        u[i] = val;
-    }
-}
-
-static void zero_local_patch_ini(
-        float *u,
-        int radius
-        ) {
-    int size = (2*radius + 1)*(2*radius + 1);
-    for (int i = 0; i < size; i++){
-        u[i] = 0.0;
-    }
-}
 
 static float getsample_inf(float *x, int w, int h, int pd, int i, int j, int l) {
     if (i < 0 || i >= w || j < 0 || j >= h || l < 0 || l >= pd)
@@ -135,8 +85,6 @@ static int too_uniform(float *a, float tol, int i, int j, int w, int h, int pd){
         return 1;
     }
     return 0;
-
-    //return difference < (float) tol;
 }
 
 void too_uniform_areas(      
@@ -204,10 +152,8 @@ void fb_consistency_check(
 }
 
 void pruning_method(
-        OpticalFlowData *ofGo,
-        OpticalFlowData *ofBa,
-        float *a, //I0
-        float *b, //I1
+        float *i0, //I0
+        float *i1, //I1
         int w, //width image
         int h, //height image
         float *tol, //tolerance too_uniform and f-b
@@ -238,8 +184,8 @@ void pruning_method(
     //Too-uniform consistency check
     if (method[1] == 1){
         std::printf("Too Uniform -Consistency: %f\n", tol[1]);
-        too_uniform_areas(a, b, go, go_cons_check, w, h, tol[1]);
-        too_uniform_areas(b, a, ba, ba_cons_check, w, h, tol[1]);
+        too_uniform_areas(i0, i1, go, go_cons_check, w, h, tol[1]);
+        too_uniform_areas(i1, i0, ba, ba_cons_check, w, h, tol[1]);
     }
     for (int i = 0; i < w*h; i++){
         if (method[0] == 1) {
@@ -269,7 +215,6 @@ void pruning_method(
 }
 
 void delete_not_trustable_candidates(
-        SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         float *in,
         float *ene_val
@@ -277,6 +222,7 @@ void delete_not_trustable_candidates(
     int *mask = ofD->trust_points;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
+    float *chi = ofD->chi;
     int w = ofD->params.w;
     int h = ofD->params.h;
     int n = 0;
@@ -291,50 +237,18 @@ void delete_not_trustable_candidates(
             u1[i]       = NAN;
             u2[i]       = NAN;
             ene_val[i]  = INFINITY;
+            //If the flow is non trustable, is considered
+            //to be an occlusion
+            chi[i]      = 1;
         }
     }
     printf("Total_seeds: %d\n", n);
 }
 
 
-void compare_seeds(float *old_s, float *new_s, int w, int h) {
-    int size = w*h;
-    for (int i = 0; i < size; i++) {
-        //Dejamos las semillas iniciales que pasan el pruning
-        if (std::isfinite(old_s[i]) && std::isfinite(old_s[size + i]) &&
-                !std::isfinite(new_s[i]) && !std::isfinite(new_s[size + i])) {
-            old_s[i] = NAN;
-            old_s[size + i] = NAN;
-        }
-    }
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////LOCAL INITIALIZATION//////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-//Constant Interpolation
-inline void interpolate_constant(
-        OpticalFlowData *ofD,
-        const int ii, // initial column
-        const int ij, // initial row
-        const int ei, // end column
-        const int ej, // end row
-        float *v) {
-    const int nx = ofD->params.w;
-    int *mask = ofD->fixed_points;
-    for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++) {
-            const int i = l*nx + k;
-            //1 fixed - 0 not
-            //if (mask[i] == 0){
-            ofD->u1[i] = v[0];
-            ofD->u2[i] = v[1];
-            //}
-        }
-}
-
 
 
 //Poisson Interpolation
@@ -376,209 +290,6 @@ void interpolate_poisson(
         }
 }
 
-void nltv_regularization(
-        OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej, // end row
-        float tau, //timestep to regularize
-        int niter //Iteration number
-        ) {
-
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    int *mask = ofD->fixed_points;
-    int n_d = NL_DUAL_VAR;
-
-    //Columns and Rows
-    const int w = ofD->params.w;
-
-    BilateralWeight *p = ofD->weight;
-
-    //Get the correct wt to force than the sum will be 1
-    for (int l = ij; l < ej; l++){
-        for (int k = ii; k < ei; k++){
-            float wt_tmp = 0.0;
-            const int i = l*w + k;
-            for (int j = 0; j < n_d; j++) {
-                const int api = p[i].api[j];
-                const int apj = p[i].apj[j];
-                //The position should be the same
-                const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
-                if (ap == 0) {
-                    const float wp = p[i].wp[j];
-                    assert(wp >= 0);
-                    wt_tmp +=wp;
-                }
-            }
-            p[i].wt = wt_tmp;
-        }
-    }
-    //We perform the number of iterations
-    int n = 0;
-    while (n < niter) {
-        n++;
-        for (int l = ij; l < ej; l++){
-            for (int k = ii; k < ei; k++){
-                const int i = l*w + k;
-
-                float g1 = 0.0;
-                float g2 = 0.0;
-                for (int j = 0; j < n_d; j++) {
-                    const int api = p[i].api[j];
-                    const int apj = p[i].apj[j];
-                    //The position should be the same
-                    const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
-
-                    if (ap == 0) {
-                        const float wp = p[i].wp[j];
-                        assert(wp >= 0);
-                        g1 += (u1[i] - u1[apj*w + api])*wp;
-                        g2 += (u2[i] - u2[apj*w + api])*wp;
-                    }
-                }
-                g1 /= p[i].wt;
-                g2 /= p[i].wt;
-                //If the value is not fixed
-                if (mask[i] == 0){
-                    const float u1k = u1[i];
-                    const float u2k = u2[i];
-                    u1[i] = u1k  -tau*g1;
-                    u2[i] = u2k  -tau*g2;
-                }
-            }
-        }
-    }
-
-}
-
-
-void bilateral_filter_regularization(
-        OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej, // end row
-        int niter //Iteration number
-        ) {
-
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    int *mask = ofD->fixed_points;
-    int n_d = NL_DUAL_VAR;
-
-    //Columns and Rows
-    const int w = ofD->params.w;
-
-
-
-    BilateralWeight *p = ofD->weight;
-
-    //Get the correct wt to force than the sum will be 1
-    for (int l = ij; l < ej; l++){
-        for (int k = ii; k < ei; k++){
-            float wt_tmp = 0.0;
-            const int i = l*w + k;
-            for (int j = 0; j < n_d; j++) {
-                const int api = p[i].api[j];
-                const int apj = p[i].apj[j];
-                //The position should be the same
-                const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
-                if (ap == 0) {
-                    const float wp = p[i].wp[j];
-                    assert(wp >= 0);
-                    wt_tmp +=wp;
-                }
-            }
-            p[i].wt = wt_tmp;
-            assert(std::isfinite(wt_tmp));
-        }
-    }
-
-    //We perform the number of iterations
-    int n = 0;
-    while (n < niter) {
-        n++;
-        for (int l = ij; l < ej; l++){
-            for (int k = ii; k < ei; k++){
-                const int i = l*w + k;
-
-                float g1 = 0.0;
-                float g2 = 0.0;
-                for (int j = 0; j < n_d; j++) {
-                    const int api = p[i].api[j];
-                    const int apj = p[i].apj[j];
-                    //The position should be the same
-                    const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
-
-                    if (ap == 0) {
-                        const float wp = p[i].wp[j];
-                        assert(wp >= 0);
-                        assert(std::isfinite(g1));
-                        assert(std::isfinite(g2));
-                        g1 += u1[apj*w + api]*wp;
-                        g2 += u2[apj*w + api]*wp;
-                    }
-                }
-                g1 /= p[i].wt;
-                g2 /= p[i].wt;
-                //If the value is not fixed
-                if (mask[i]==0){
-                    u1[i] = g1;
-                    u2[i] = g2;
-                }
-            }
-        }
-    }
-
-}
-
-//Poisson Interpolation + nltv_regularization
-void interpolate_poisson_nltv(
-        OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej // end row
-        ) {
-    int w = ei - ii;
-    int h = ej - ij;
-    int *mask = ofD->fixed_points;
-    int wR = ofD->params.w;
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    float buf_in[2*MAX_PATCH*MAX_PATCH];
-    float buf_out[2*MAX_PATCH*MAX_PATCH];
-    assert(w * h < MAX_PATCH * MAX_PATCH);
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++) {
-            int x = i + ii;
-            int y = j + ij;
-            int xy = y * wR + x;
-            //1 fixed - 0 not
-            if (mask[xy] == 1) {
-                buf_in[ j*w + i       ] = u1[ xy ];
-                buf_in[ j*w + i + w*h ] = u2[ xy ];
-            } else  { //not fixed
-                buf_in[ j*w + i       ] = NAN;
-                buf_in[ j*w + i + w*h ] = NAN;
-            }
-        }
-    elap_recursive_separable(buf_out, buf_in, w, h, 2, 0.4, 3, 7);
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++) {
-            int x = i + ii;
-            int y = j + ij;
-            int xy = y * wR + x;
-            u1[ xy ] = buf_out[ j*w + i       ];
-            u2[ xy ] = buf_out[ j*w + i + w*h ];
-        }
-    //Here we use the inizialization of the previous poisson
-    float tau = 0.25;
-    int niter = 20;
-    nltv_regularization(ofD, ii, ij, ei, ej, tau, niter);
-}
 
 //Insert 8-connected candidates into the priority queue with their energies.
 void insert_candidates(
@@ -621,7 +332,6 @@ void insert_candidates(
             }
         }
     }
-
 }
 
 
@@ -699,10 +409,7 @@ static void get_index_weight(
 inline void copy_fixed_coordinates(
         OpticalFlowData *ofD,
         float *out,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej  // end row
+        const PatchIndexes& index
         ) {
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
@@ -710,8 +417,8 @@ inline void copy_fixed_coordinates(
     int h = ofD->params.h;
     int *fixed = ofD->fixed_points;
 
-    for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++){
+    for (int l = index.ij; l < index.ej; l++){
+        for (int k = index.ii; k < index.ei; k++){
             //Copy only fixed values from the patch
             const int i = l*w + k;
             if (fixed[i] == 1){
@@ -721,116 +428,23 @@ inline void copy_fixed_coordinates(
                 assert(std::isfinite(u2[i]));
             }
         }
+    }
 }
 
-static inline void update_fixed_coordinates(
-        float *out,
-        OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej  // end row
-        ) {
-    const int w = ofD->params.w;
-    const int h = ofD->params.h;
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    int *fixed = ofD->fixed_points;
-
-    for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++){
-            //Copy only fixed values from the patch
-            const int i = l*w + k;
-            if (fixed[i] == 1){
-                out[i]       = u1[i];
-                out[w*h + i] = u2[i];
-                assert(std::isfinite(out[i]));
-                assert(std::isfinite(out[w*h + i]));
-            }else{
-                out[i] = NAN;
-                out[w*h + i] = NAN;
-            }
-        }
-}
-
-
-//Poisson Interpolation
-void copy_ini_patch(
-        OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej // end row
-        ) {
-    int w = ei - ii;
-    int h = ej - ij;
-    int wR = ofD->params.w;
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    float *u1_ini = ofD->u1_ini;
-    float *u2_ini = ofD->u2_ini;
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++){
-            int x = i + ii;
-            int y = j + ij;
-            int xy = y * wR + x;
-            assert(std::isfinite(u1_ini[j*w + i]));
-            assert(std::isfinite(u2_ini[j*w + i]));
-            assert(xy >= 0);
-            assert(j*w + i >=0);
-            u1[ xy ] = u1_ini[ j*w + i];
-            u2[ xy ] = u2_ini[ j*w + i];
-        }
-}
-
-//Poisson Interpolation
-void copy_mix_patch(
-        OpticalFlowData *ofD,
-        float *out,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej // end row
-        ) {
-    int w = ei - ii;
-    int h = ej - ij;
-    int *fixed = ofD->fixed_points;
-    int *trust = ofD->trust_points;
-    int wR = ofD->params.w;
-    float *u1 = ofD->u1;
-    float *u2 = ofD->u2;
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++) {
-            int x = i + ii;
-            int y = j + ij;
-            int xy = y * wR + x;
-            assert(xy >= 0);
-            if (fixed[xy] == 1) {
-                u1[ xy ] = out[ xy ];
-                u2[ xy ] = out[ xy ];
-            }else if ((trust[xy] == 0 ) && (fixed[xy] == 0)){
-                u1[ xy ] = NAN;
-                u2[ xy ] = NAN;
-            }
-        }
-}
 
 
 //Check if there is at least one pixel that hasn't survived to the prunning. 
 int check_trustable_patch(
         OpticalFlowData *ofD,
-        int ii, // initial column
-        int ij, // initial row
-        int ei, // end column
-        int ej // end row
+        const PatchIndexes& index
         ) {
 
     const int w = ofD->params.w;
 
     int *fixed = ofD->trust_points;
 
-    for (int l = ij; l < ej; l++)
-        for (int k = ii; k < ei; k++){
+    for (int l = index.ij; l < index.ej; l++)
+        for (int k = index.ii; k < index.ei; k++){
             //Return 0 if it detects that at least one point it is not fixed
             const int i = l*w + k;
             if (fixed[i] == 0){
@@ -865,36 +479,33 @@ static void add_neighbors(
 
 
     const PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
-    //    fprintf()
     int method = ofD->params.val_method;
 
     //TODO: Arreglar los de los pesos
     get_index_weight(method, ofS, wr, i, j);
-    //////////////////////////////////////////
-    //
-    // FIRST STEP, ADD "POISSON" CANDIDATES
-    //
-    //////////////////////////////////////////
+
     //Poisson Interpolation (4wr x 4wr + 1)
     if (mode == 0) {
-        //it > 0. Interpolate over the survivors of the pruning.
-        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
+        //Interpolate by poisson on initialization
+        copy_fixed_coordinates(ofD, out, index);
         interpolate_poisson(ofD, index);
 
-    }else if (check_trustable_patch(ofD, index.ii, index.ij, index.ei, index.ej) == 0) {
-
-        copy_fixed_coordinates(ofD, out, index.ii, index.ij, index.ei, index.ej);
-        interpolate_poisson(ofD, index);
+    }else {
+        if (check_trustable_patch(ofD, index) == 0) {
+            //Interpolate by poisson if some points do not survive to prunning
+            copy_fixed_coordinates(ofD, out, index);
+            interpolate_poisson(ofD, index);
+        }
     }
 
     // Optical flow method on patch (2*wr x 2wr + 1)
     of_estimation(ofS, ofD, &ener_N, i0, i1, i_1, index);
 
-    // update_fixed_coordinates(out, ofD, ii, ij, ei, ej);
+    //Insert new candidates to the queue
     insert_candidates(*queue, ene_val, ofD, i, j, (float) ener_N);
 
     //TODO:It is a strange step, if the energy over the patch is lower thant the
-    //stored energy, we put the new one, if it's not, we put the old one.
+    //stored energy, we put the new one, if it's not, we leave the old one.
     if (ene_val[j*w + i] > ener_N) {
         out[      j*w + i] = ofD->u1[j*w + i];
         out[w*h + j*w + i] = ofD->u2[j*w + i];
@@ -906,30 +517,29 @@ static void add_neighbors(
 
 
 
-int insert_initial_seeds(
+void insert_initial_seeds(
         const float *i0,
         const float *i1,
         const float *i_1,
-        float *in,
+        float *in_flow,
         pq_cand *queue,
         OpticalFlowData *ofD,
         SpecificOFStuff *ofS,
-        int mode,
         float *ene_val,
-        float *out,
+        float *out_flow,
         float *out_occ
         ) {
     const int w = ofD->params.w;
     const int h = ofD->params.h;
     const int wr = ofD->params.w_radio;
-    int nfixed = 0;
+
 
     //Set to the initial conditions all the stuff
     for (int i = 0; i < w*h; i++){
         ofD->fixed_points[i] = 0;
         ene_val[i] = INFINITY;
-        out[i] = NAN;
-        out[w*h + i] = NAN;
+        out_flow[i] = NAN;
+        out_flow[w*h + i] = NAN;
         out_occ[i] = 0;
     }
 
@@ -939,36 +549,33 @@ int insert_initial_seeds(
         for (int i = 0; i < w; i++){
 
             //Indicates the initial seed in the similarity map
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[w*h + j*w + i])){
+            if (std::isfinite(in_flow[j*w +i]) && std::isfinite(in_flow[w*h + j*w + i])){
 
-                out[j*w + i] = in[j*w + i];
-                out[w*h + j*w + i] = in[w*h + j*w +i];
+                out_flow[j*w + i] = in_flow[j*w + i];
+                out_flow[w*h + j*w + i] = in_flow[w*h + j*w +i];
                 ofD->fixed_points[j*w + i] = 1;
 
                 // add_neigbors 0 means that during the propagation interpolates the patch
                 // based on the energy.
-                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out, out_occ);
+                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out_flow, out_occ);
 
                 //These values may have been modified in the previous function
-                out[j*w + i] = in[j*w + i];
-                out[w*h + j*w + i] = in[w*h + j*w +i];
+                out_flow[j*w + i] = in_flow[j*w + i];
+                out_flow[w*h + j*w + i] = in_flow[w*h + j*w +i];
                 ofD->fixed_points[j*w + i] = 1;
                 ene_val[j*w + i] = 0.0;
             }
         }
     ofD->params.w_radio = wr;
 
-    return nfixed;
+
 }
 
 
 //  Insert each pixel into the queue as possible candidate. Its related energy comes
 // from the energy store at the moment that the pixel was fixed.
 void insert_potential_candidates(
-        const float *i0,
-        const float *i1,
         const float *in,
-        SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         pq_cand& queue,
         float *ene_val,
@@ -1007,52 +614,11 @@ void insert_potential_candidates(
     }
 }
 
-static void update_energy_map(
-        const float *i0,
-        const float *i1,
-        const float *i_1,
-        float *ene_val,
-        SpecificOFStuff *ofS,
-        OpticalFlowData *ofD,
-        const float *out
-        ) {
-
-    const int w  = ofD->params.w;
-    const int h  = ofD->params.h;
-    const int wr = ofD->params.w_radio;
-    const float *sal = ofD->saliency;
-    float ener_N;
-
-    //Copy the last version of the optical flow
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++){
-            ofD->u1[j*w + i] = out[j*w + i];
-            ofD->u2[j*w + i] = out[w*h + j*w + i];
-        }
-
-    //Update the energy map measuring the energy for each pixel.
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++) {
-
-            //TODO:Arreglar los de los pesos
-            int method = ofD->params.val_method;
-            get_index_weight(method, ofS, wr, i, j);
-            //////////////////////////////////////////
-            //
-            // FIRST STEP, ADD "POISSON" CANDIDATES
-            //
-            //////////////////////////////////////////
-            PatchIndexes index = get_index_patch(wr, w, h, i, j, 1);
-            eval_functional(ofS, ofD, &ener_N, i0, i1, i_1, index);
-            ene_val[j*w + i] = ener_N * sal[j*w + i];
-        }
-}
 
 
 //Initialize the data to prepare everything for the region growing
 void prepare_data_for_growing(
         OpticalFlowData *ofD,
-        SpecificOFStuff *ofS,
         float *ene_val,
         float *out
         ) {
@@ -1078,14 +644,16 @@ void local_growing(
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
         int tm,
-        const int nfixed,
         float *ene_val,
-        float *out,
-        float *out_occ
+        float *out_flow,
+        float *out_occ,
+        bool fwd_or_bwd
         ) {
-
+    int fixed = 0;
+    vector <int> percent_print = {30, 70, 80, 95, 100};
     const int w = ofD->params.w;
     const int h = ofD->params.h;
+    const int size = w*h;
     std::printf("Queue size at start = %d\n", (int)queue->size());
     while (! queue->empty()) {
 
@@ -1096,6 +664,7 @@ void local_growing(
         queue->pop();
 
         if (!ofD->fixed_points[j*w + i]){
+            fixed++;
             assert(std::isfinite(element.sim_node));
             float u = element.u;
             float v = element.v;
@@ -1110,9 +679,8 @@ void local_growing(
 
             ofD->fixed_points[j*w + i] = 1;
 
-            //printf("%d\n", val);
-            out[j*w + i] = u;
-            out[w*h + j*w + i] = v;
+            out_flow[j*w + i] = u;
+            out_flow[w*h + j*w + i] = v;
             ene_val[j*w + i] = energy;
             out_occ[j*w + i] = occlusion;
             // //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
@@ -1121,9 +689,24 @@ void local_growing(
             // ofD->u2[j*w + i] = v;
 
             //tm stores if we made interpolation or not.
+            add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out_flow, out_occ);
 
-            add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out, out_occ);
+            float percent = 100*fixed*1.0/size*1.0;
+            //cout << percent << "\n";
+            for(int k = 0; k < 4; k++){
+                if (percent > percent_print[k] && percent < percent_print[k + 1]){
+                    cout << percent << "\n";
+                    string filename = " ";
+                    if (fwd_or_bwd){
+                        filename = "../Results/partial_results_fwd_" + to_string(percent_print[k]) + "_iter_" + to_string(tm) + ".flo";
+                    }else{
+                        filename = "../Results/partial_results_bwd_" + to_string(percent_print[k]) + "_iter_" + to_string(tm) + ".flo";
+                    }
+                    iio_save_image_float_split(filename.c_str(), out_flow, w, h, 2);
+                    percent_print[k] = 200;
 
+                }
+            }
         }
     }
 }
@@ -1164,8 +747,6 @@ void match_growing_variational(
     float *occ_Ba = new float[w*h];
 
     //Create queues
-    int nfixed_go = 0;
-    int nfixed_ba = 0;
     pq_cand queueGo;
     pq_cand queueBa;
 
@@ -1193,10 +774,10 @@ void match_growing_variational(
     std::printf("Inserting initial seeds\n");
 
     auto future_nfixed_go = std::async(std::launch::async,
-                                       [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, 0, ene_Go, oft0, occ_Go); });
+                                       [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, ene_Go, oft0, occ_Go); });
 
-    nfixed_ba = insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, 0, ene_Ba, oft1, occ_Ba);
-    nfixed_go = future_nfixed_go.get();
+    insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, ene_Ba, oft1, occ_Ba);
+    future_nfixed_go.get();
 
 
     std::printf("Finished inserting initial seeds\n");
@@ -1213,30 +794,30 @@ void match_growing_variational(
 
         //Estimate local minimization I0-I1
         auto growing_fwd = std::async(std::launch::async,
-                                      [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, nfixed_go, ene_Go, oft0, occ_Go); });
+                                      [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, ene_Go, oft0, occ_Go, true); });
 
         //Estimate local minimzation I1-I0
-        local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, nfixed_ba, ene_Ba, oft1, occ_Ba);
+        local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, ene_Ba, oft1, occ_Ba, false);
         growing_fwd.get();
 
         //Pruning method
-        pruning_method(&ofGo, &ofBa, i0n, i1n, w, h, tol, p,
+        pruning_method(i0n, i1n, w, h, tol, p,
                        ofGo.trust_points, oft0, ofBa.trust_points, oft1);
 
         //Delete not trustable candidates based on the previous pruning
-        delete_not_trustable_candidates(&stuffGo, &ofGo, oft0, ene_Go);
-        delete_not_trustable_candidates(&stuffBa, &ofBa, oft1, ene_Ba);
+        delete_not_trustable_candidates(&ofGo, oft0, ene_Go);
+        delete_not_trustable_candidates(&ofBa, oft1, ene_Ba);
 
         //Insert each pixel into the queue as possible candidate
-        insert_potential_candidates(i0n, i1n, oft0, &stuffGo, &ofGo, queueGo, ene_Go, oft0, occ_Go);
-        insert_potential_candidates(i1n, i0n, oft1, &stuffBa, &ofBa, queueBa, ene_Ba, oft1, occ_Ba);
+        insert_potential_candidates(oft0, &ofGo, queueGo, ene_Go, oft0, occ_Go);
+        insert_potential_candidates(oft1, &ofBa, queueBa, ene_Ba, oft1, occ_Ba);
 
-        prepare_data_for_growing(&ofGo, &stuffGo, ene_Go, oft0);
-        prepare_data_for_growing(&ofBa, &stuffBa, ene_Ba, oft1);
+        prepare_data_for_growing(&ofGo, ene_Go, oft0);
+        prepare_data_for_growing(&ofBa, ene_Ba, oft1);
 
     }
     std::printf("Last growing\n");
-    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, 10, nfixed_go, ene_Go, oft0, occ_Go);
+    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, 10, ene_Go, oft0, occ_Go, true);
 
 
     //Copy the result t, t+1 as output.
@@ -1284,91 +865,6 @@ void match_growing_variational(
 ///////////////////////////////MAIN/////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-static void copy_additional_seeds(float *out, float *in, int w, int h){
-
-    int size = w*h;
-
-    for (int j = 0; j < h; j++){
-        for (int i = 0; i < w; i++){
-            //Copy non-NaN values and if there is colision keep the old value.
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[size + j*w +i])
-                    && !std::isfinite(out[j*w +i]) && !std::isfinite(out[size + j*w +i]) ){
-                out[j*w + i] = in[j*w + i];
-                out[w*h + j*w + i] = in[w*h + j*w + i];
-            }
-        }
-    }
-}
-
-
-
-//
-//Create an artificial optical flow. 
-// Input: u(x)
-// Output: v(x) = -u(x + u(x)).
-static void reverse_optical_flow(float *in, int w, int h, float *out){
-    int size = w*h;
-
-    //Set the sparse output to NaN
-    for (int i = 0; i < w*h; i++)
-    {
-        out[i] = NAN;
-        out[w*h + i] = NAN;
-    }
-
-    for (int j = 0; j < h; j++)
-        for (int i = 0; i < w; i++)
-        {
-            //If a sparse optical flow.
-            // NaN - not flow
-            // Real valuables - flow.
-            if (std::isfinite(in[j*w +i]) && std::isfinite(in[size + j*w +i])){
-                int x = std::floor(i + in[j*w + i]);
-                int y = std::floor(j + in[size + j*w + i]);
-                //Check that is inside of the image domain.
-
-                if (x >= 0 && x < w && y >=0 && y < h){
-                    float val = 1;
-
-                    //We check if there are two different flow for the same position
-                    if (std::isfinite(out[y*w +x]) && std::isfinite(out[size + y*w +x])){
-                        float pre,now;
-                        pre = hypotf(out[y*w +x],out[size + y*w +x]);
-                        now = hypotf(-in[y*w +x],-in[size + y*w +x]);
-                        fprintf(stderr, "COLLISION: At least two flow for the same pixel\n");
-                        //If there is a colision, we put the optical flow with higher norm.
-                        if (now < pre){
-                            val = 0;
-                        }
-                    }
-
-                    if (val == 1){
-                        out[y*w + x] = -in[j*w + i];
-                        out[size + y*w + x] = -in[size + j*w + i];
-                    }
-                }else{
-                    fprintf(stderr, "OUT: Position outside of the image domain \n");
-                }
-            }
-        }
-
-}
-
-/**
- *
- *  Function to read images using the iio library
- *  It always returns an allocated the image.
- *
- */
-static float *read_image(const char *filename, int *w, int *h){
-
-    float *f = iio_read_image_float(filename, w, h);
-    if (!f)
-        fprintf(stderr, "ERROR: could not read image from file "
-                        "\"%s\"\n", filename);
-    return f;
-}
-
 
 static bool pick_option(std::vector<std::string>& args, const std::string& option){
 
@@ -1410,7 +906,7 @@ int main(int argc, char* argv[]){
     time_t tt;
 
     tt = system_clock::to_time_t ( today );
-    std::cerr << "today is: " << ctime(&tt);
+    std::cerr << "Starting  date: " << ctime(&tt);
 
 
     // process input
@@ -1663,7 +1159,7 @@ int main(int argc, char* argv[]){
     free(go);
     free(ba);
 
-    if (args.size() ==  8){ //c == 8
+    if (args.size() ==  9){
         free(sal0);
         free(sal1);
     }else{
@@ -1680,7 +1176,7 @@ int main(int argc, char* argv[]){
     today = system_clock::now();
 
     tt = system_clock::to_time_t ( today );
-    std::cerr << "today is: " << ctime(&tt);
+    std::cerr << "Finishing date: " << ctime(&tt);
     return 0;
 }
 #endif

@@ -141,7 +141,7 @@ void eval_tvcsad(
     {
       const int api = pnei[i].api[j];
       const int apj = pnei[i].apj[j];
-      const int ap = validate_ap_patch(ii, ij, ei, ej, nx, api, apj);
+      const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
       if (positive(ap))
       {
         // std::printf("I:%d Iter:%d Pos: %d J:%d I:%d \n",i, j, pnei[i].apj[j]*nx + pnei[i].api[j], pnei[i].apj[j], pnei[i].api[j]);
@@ -185,7 +185,6 @@ void tvcsad_getP(
       float *v2,
       float *div_xi1,
       float *div_xi2, 
-      int *mask,
       float theta,
       float tau,
       const int ii, // initial column
@@ -286,7 +285,7 @@ void guided_tvcsad(
 
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
-  int *mask = ofD->fixed_points;
+
   //Columns and Rows
   const int nx = ofD->params.w;
   const int ny = ofD->params.h;
@@ -359,7 +358,7 @@ void guided_tvcsad(
       {
         const int api = pnei[i].api[j];
         const int apj = pnei[i].apj[j];
-        const int ap = validate_ap_patch(ii, ij, ei, ej, nx, api, apj);
+        const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
 
         // std::printf("I:%d Iter:%d J:%d I:%d \n",i, j,  pnei[i].apj[j], pnei[i].api[j]);
         if (ap == 0)
@@ -407,7 +406,7 @@ void guided_tvcsad(
         {
           const int api = pnei[i].api[j];
           const int apj = pnei[i].apj[j];
-          const int ap = validate_ap_patch(ii, ij, ei, ej, nx, api, apj);
+          const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
 
           if (ap == 0)
           {
@@ -449,7 +448,7 @@ void guided_tvcsad(
         u2_tmp[i] = u2[i];   
       }
       }
-      tvcsad_getP(u1, u2, v1, v2, div_xi1, div_xi2, mask, theta, tau,
+      tvcsad_getP(u1, u2, v1, v2, div_xi1, div_xi2, theta, tau,
           ii, ij, ei, ej, nx, &err_D);
 
       //(aceleration = 1);

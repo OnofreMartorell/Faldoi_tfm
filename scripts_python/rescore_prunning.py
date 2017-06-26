@@ -66,6 +66,7 @@ def confidence_values(i0, i1, corres, dest_of):
   ty1, tx1 = img1.shape[:2]
   rint = lambda s:  int(0.5 + float(s))
   corres_name = match.split('.')[2].split('/')[-1]
+  
   retained_matches = []
   dest = dest_of  + corres_name + "_saliency.txt"
   print dest
@@ -73,11 +74,11 @@ def confidence_values(i0, i1, corres, dest_of):
   with open(match) as match, open(dest, 'w') as dest_w:
     for line in match:
       line = line.split()
-      if not line or len(line)!=6 or not line[0][0].isdigit():  continue
+      if not line or len(line) != 6 or not line[0][0].isdigit():  continue
       x0, y0, x1, y1, score, index = line
-      retained_matches.append(((min(tx0-1,rint(x0)),min(ty0-1,rint(y0))),
-                               (min(tx1-1,rint(x1)),min(ty1-1,rint(y1))),0))
+      retained_matches.append(((min(tx0 - 1, rint(x0)), min(ty0 - 1, rint(y0))),
+                               (min(tx1 - 1, rint(x1)), min(ty1 - 1, rint(y1))), 0))
     for p0, p1, score in score_from_autocorr(img0, img1, retained_matches):
-      reorder_line = '%s %s %s %s %f\n'%(p0[0],p0[1],p1[0],p1[1],score)
+      reorder_line = '%s %s %s %s %f\n'%(p0[0], p0[1], p1[0], p1[1], score)
       dest_w.write(reorder_line)
   return dest

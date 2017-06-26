@@ -42,12 +42,5 @@ void of_estimation(SpecificOFStuff *ofStuff,
                    const float *i_1,
                    const PatchIndexes index);
 
-void eval_functional(SpecificOFStuff *ofStuff,
-                     OpticalFlowData *ofCore,
-                     float *ener_N,
-                     const float *i0,  //first frame
-                     const float *i1,  //second frame
-                     const float *i_1,
-                     const PatchIndexes index);
 
 #endif //ENERGY_MODEL_H

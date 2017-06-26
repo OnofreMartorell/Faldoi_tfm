@@ -5,12 +5,12 @@
 //
 // Copyright 2012, Enric Meinhardt Llopis <enric.meinhardt@cmla.ens-cachan.fr>
 // All rights reserved.
+
 #include <stdio.h>
 #include <stdlib.h>
 
 // this function is like "malloc", but it returns always a valid pointer
-void *xmalloc(size_t size)
-{
+void *xmalloc(size_t size){
 	void *p = malloc(size);
 	if (!p)
 		exit(fprintf(stderr, "out of memory\n"));

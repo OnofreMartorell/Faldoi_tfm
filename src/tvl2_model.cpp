@@ -127,7 +127,6 @@ static void tvl2coupled_getP(
         float *div_xi1,
         float *div_xi2,
         float *u_N,
-        int *mask,
         float theta,
         float tau,
         const int ii, // initial column
@@ -265,7 +264,6 @@ void guided_tvl2coupled(
 
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
-    int *mask = ofD->fixed_points;
 
     //Columns and Rows
     const int nx = ofD->params.w;
@@ -415,7 +413,7 @@ void guided_tvl2coupled(
             }
 
             tvl2coupled_getP(u1, u2, v1, v2, div_xi1, div_xi2, u_N,
-                             mask, theta, tau, ii, ij, ei, ej, nx, &err_D);
+                             theta, tau, ii, ij, ei, ej, nx, &err_D);
 
             //(aceleration = 1);
 #pragma omp parallel for schedule(dynamic, 1) collapse(2)

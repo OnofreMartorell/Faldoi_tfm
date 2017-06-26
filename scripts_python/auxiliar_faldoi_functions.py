@@ -32,7 +32,8 @@ def cut_deep_list(input_file):
     """
       Recieve a file with matches and rescore to see what is an outlier.
     """
-    dest = input_file.split('.')[0] + '_cut.txt'
+    dest = input_file[:-4] + '_cut.txt'
+
     with open(input_file) as input_file, open(dest, 'w+') as dest_w:
         for line in input_file:
             new_l = line.split()
@@ -48,7 +49,9 @@ def delete_outliers(input_file, thres):
       a threshold
     """
     th = float(thres)
-    dest = input_file.split('.')[0] + '_out.txt'
+    
+    dest = input_file[:-4] + '_out.txt'
+
     with open(input_file) as input_file, open(dest, 'w+') as dest_w:
         for line in input_file:
             new_l = line.split()

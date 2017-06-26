@@ -68,7 +68,6 @@
                 const int ij,     // initial row
                 const int ei,     // end column
                 const int ej,     // end row
-                const int w,
                 int i, 
                 int j
   );

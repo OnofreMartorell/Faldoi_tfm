@@ -37,13 +37,11 @@ int validate_ap_patch(
         const int ij,     // initial row
         const int ei,     // end column
         const int ej,     // end row
-        const int w,
         int i,
         int j
         ) {
     //ei <= w and ej <=h by set up.
-    if ( i < ii || i >= ei || j < ij || j >= ej)
-    {
+    if ( i < ii || i >= ei || j < ij || j >= ej){
         return -1;
     }
     return 0;
@@ -198,7 +196,7 @@ void non_local_divergence(
                 const int apj  = p[i].apj[j];
                 const int rp   = p[i].rp[j];
                 const float wp = p[i].wp[j];
-                const int ap = validate_ap_patch(ii, ij, ei, ej, w, api, apj);
+                const int ap = validate_ap_patch(ii, ij, ei, ej, api, apj);
                 if (ap == 0) {
                     assert(ap>=0);
                     assert(rp>=0);

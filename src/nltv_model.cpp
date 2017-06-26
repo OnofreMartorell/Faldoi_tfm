@@ -114,8 +114,8 @@ void eval_nltvl1(
 
                 assert(ap1i == ap2i && ap1j == ap2j);
                 //The position should be the same
-                const int ap1 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, w, ap1i, ap1j);
-                const int ap2 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, w, ap2i, ap2j);
+                const int ap1 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, ap1i, ap1j);
+                const int ap2 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, ap2i, ap2j);
                 assert(ap1 == ap2);
                 if ((ap1 == 0) && (ap2 == 0))
                 {
@@ -160,7 +160,6 @@ inline void nltvl1_getP(
         float *v2,
         float *div_p1,
         float *div_p2,
-        int *mask,
         float theta,
         float tau,
         const int ii, // initial column
@@ -236,8 +235,8 @@ inline void nltvl1_getD(
                 assert(ap1i == ap2i && ap1j == ap2j);
                 assert(wp1 == wp2);
                 //The position should be the same
-                const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-                const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+                const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+                const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
                 assert(ap1 == ap2);
                 if ((ap1 == 0) && (ap2 == 0))
                 {
@@ -282,7 +281,6 @@ void guided_nltvl1(
 {
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
-    int *mask = ofD->fixed_points;
     //Columns and Rows
     const int w = ofD->params.w;
     const int h = ofD->params.h;
@@ -357,8 +355,8 @@ void guided_nltvl1(
 
                     assert(ap1i == ap2i && ap1j == ap2j);
                     //The position should be the same
-                    const int ap1 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, w, ap1i, ap1j);
-                    const int ap2 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, w, ap2i, ap2j);
+                    const int ap1 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, ap1i, ap1j);
+                    const int ap2 = validate_ap_patch(index.ii, index.ij, index.ei, index.ej, ap2i, ap2j);
                     assert(ap1 == ap2);
                     if ((ap1 == 0) && (ap2 == 0))
                     {
@@ -443,7 +441,7 @@ void guided_nltvl1(
             //Primal variables
             non_local_divergence(p, index.ii, index.ij, index.ei, index.ej, w, n_d, div_p);
             non_local_divergence(q, index.ii, index.ij, index.ei, index.ej, w, n_d, div_q);
-            nltvl1_getP(v1, v2, div_p, div_q, mask, theta, tau,
+            nltvl1_getP(v1, v2, div_p, div_q, theta, tau,
                         index.ii, index.ij, index.ei, index.ej, w, u1, u2, &err_D);
 
             //aceleration = 1

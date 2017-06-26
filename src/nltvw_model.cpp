@@ -123,8 +123,8 @@ void eval_nltvl1_w(
       
       assert(ap1i == ap2i && ap1j == ap2j);
       //The position should be the same
-      const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-      const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+      const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+      const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
       assert(ap1 == ap2);
       if (positive(ap1) && positive(ap2))
       {
@@ -169,7 +169,6 @@ void nltvl1_w_getP(
             float *v2,
             float *div_p1, 
             float *div_p2,  
-            int *mask,
             float theta, 
             float tau, 
             const int ii, // initial column
@@ -245,8 +244,8 @@ void nltvl1_w_getP(
       assert(ap1i == ap2i && ap1j == ap2j);
       assert(wp1 == wp2);
       //The position should be the same
-      const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-      const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+      const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+      const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
       assert(ap1 == ap2);
       if (positive(ap1) && positive(ap2))
       {
@@ -294,7 +293,7 @@ void guided_nltvl1_w(
 {
   float *u1 = ofD->u1;
   float *u2 = ofD->u2;
-  int *mask = ofD->fixed_points;
+
   //Columns and Rows
   const int w = ofD->params.w;
   const int h = ofD->params.h;
@@ -376,8 +375,8 @@ void guided_nltvl1_w(
         
         assert(ap1i == ap2i && ap1j == ap2j);
         //The position should be the same
-        const int ap1 = validate_ap_patch(ii, ij, ei, ej, w, ap1i, ap1j);
-        const int ap2 = validate_ap_patch(ii, ij, ei, ej, w, ap2i, ap2j);
+        const int ap1 = validate_ap_patch(ii, ij, ei, ej, ap1i, ap1j);
+        const int ap2 = validate_ap_patch(ii, ij, ei, ej, ap2i, ap2j);
         assert(ap1 == ap2);
         if ((ap1 == 0) && (ap2 == 0))
         {
@@ -463,7 +462,7 @@ void guided_nltvl1_w(
       //Primal variables
       non_local_divergence(p, ii, ij, ei, ej, w, n_d, div_p);
       non_local_divergence(q, ii, ij, ei, ej, w, n_d, div_q);
-      nltvl1_w_getP(v1, v2, div_p, div_q, mask, theta, tau,  
+      nltvl1_w_getP(v1, v2, div_p, div_q, theta, tau,
                         ii, ij, ei, ej, w, u1, u2, &err_D);
 
       //aceleration = 1

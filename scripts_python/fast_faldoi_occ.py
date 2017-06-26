@@ -20,8 +20,9 @@ parser.add_argument("file_images", help = "File with images")
 
 method = 8
 matchings = False
+sparse_flow = False
 local_of = True
-global_of = True
+global_of = False
 
 
 #Energy model
@@ -52,7 +53,7 @@ parser.add_argument("-wr", default = '5',
                     help = "Windows Radio Local patch"
                     "1 -  3x3, 2 - 5x5,...") #(2*r +1) x (2*r+1)
 #Global Mininization
-parser.add_argument("-warps", default = '5',
+parser.add_argument("-warps", default = '7',
                     help = "Number of warps finest scale")
 #Threshold for Deep Flow
 parser.add_argument("-th", default = '0.45',
@@ -138,12 +139,14 @@ max_scale = math.sqrt(2)
 #I0-I1
 param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name0, im_name1, max_scale, match_name_1)
 command_line = '%s %s\n'%(match_comparison, param)
+
 if matchings:
 	os.system(command_line)
 
 #I1-I0
 param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name1, im_name0, max_scale, match_name_2)
 command_line = '%s %s\n'%(match_comparison, param)
+
 if matchings:
 	os.system(command_line)
 
@@ -153,11 +156,14 @@ print('Creating sparse from matches')
 
 param = '%s %s %s %s\n'%(cut(delete(confi(im_name0, im_name1, match_name_1, f_path), threshold)), width_im, height_im, sparse_name_1)
 command_line = '%s %s\n'%(sparse_flow, param)
-os.system(command_line)
+if sparse_flow:
+	os.system(command_line)
 
 param = '%s %s %s %s\n'%(cut(delete(confi(im_name1, im_name0, match_name_2, f_path), threshold)), width_im, height_im, sparse_name_2)
 command_line = '%s %s\n'%(sparse_flow, param)
-os.system(command_line)
+
+if sparse_flow:
+	os.system(command_line)
 
 
 #Create a dense flow from a sparse set of initial seeds
@@ -186,7 +192,7 @@ else:
 param = '%s %s %s %s %s %s\n'%(args.file_images,
                             region_growing, var_flow, occlusions_rg, occlusions_var, options)
 command_line = '%s %s\n'%(of_var, param)
-print(command_line)
+#print(command_line)
 if global_of:
 	print('Computing global faldoi')
 	os.system(command_line)
