@@ -4,7 +4,10 @@
 // <http://www.opensource.org/licenses/bsd-license.html>.
 //
 // Copyright (C) 2014, Roberto P.Palomares <r.perezpalomares@gmail.com>
+// Copyright (C) 2017, Onofre Martorell <onofremartorelln@gmail.com>
 // All rights reserved.
+
+
 #ifndef LOCAL_FALDOI
 #define LOCAL_FALDOI
 
@@ -19,6 +22,7 @@
 #include <future>
 #include <algorithm>
 #include <vector>
+
 #include "energy_structures.h"
 #include "aux_energy_model.h"
 #include "energy_model.h"
@@ -55,6 +59,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 
 
+
 static float getsample_inf(float *x, int w, int h, int pd, int i, int j, int l) {
     if (i < 0 || i >= w || j < 0 || j >= h || l < 0 || l >= pd)
         return INFINITY;
@@ -71,9 +76,9 @@ static int too_uniform(float *a, float tol, int i, int j, int w, int h, int pd){
             int px = i + neighborhood[k][0];
             int py = j + neighborhood[k][1];
             float neighborhood = getsample_inf(a, w, h, pd, px, py , l);
-            if (std::isfinite(center) && std::isfinite(neighborhood)){
-                float tmp = std::abs(neighborhood-center);
-                //std::printf("Tmp: %f, Tol: %f neighborhood: %f Center: %f\n", tmp, difference, neighborhood, center);
+            if (isfinite(center) && isfinite(neighborhood)){
+                float tmp = abs(neighborhood-center);
+                //printf("Tmp: %f, Tol: %f neighborhood: %f Center: %f\n", tmp, difference, neighborhood, center);
                 if (difference < tmp){
                     difference = tmp;
                 }
@@ -112,7 +117,7 @@ void too_uniform_areas(
                 n++;
             }
         }
-    std::printf("Too-Chosen: %f\n", (n*1.0)/size);
+    printf("Too-Chosen: %f\n", (n*1.0)/size);
 
     delete [] bw;
 }
@@ -146,7 +151,7 @@ void fb_consistency_check(
             n++;
         }
     }
-    std::printf("FB-Chosen: %f\n", (n*1.0)/size);
+    printf("FB-Chosen: %f\n", (n*1.0)/size);
     delete [] u2w;
     delete [] u1w;
 }
@@ -177,13 +182,13 @@ void pruning_method(
 
     //FB - consistency check
     if (method[0] == 1) {
-        std::printf("FB-Consistency: %f\n", tol[0]);
+        printf("FB-Consistency: %f\n", tol[0]);
         fb_consistency_check(go, ba, go_fb_check, w, h, tol[0]);
         fb_consistency_check(ba, go, ba_fb_check, w, h, tol[0]);
     }
     //Too-uniform consistency check
     if (method[1] == 1){
-        std::printf("Too Uniform -Consistency: %f\n", tol[1]);
+        printf("Too Uniform -Consistency: %f\n", tol[1]);
         too_uniform_areas(i0, i1, go, go_cons_check, w, h, tol[1]);
         too_uniform_areas(i1, i0, ba, ba_cons_check, w, h, tol[1]);
     }
@@ -219,7 +224,8 @@ void delete_not_trustable_candidates(
         float *in,
         float *ene_val
         ) {
-    int *mask = ofD->trust_points;
+
+    int *trust_points = ofD->trust_points;
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
     float *chi = ofD->chi;
@@ -227,7 +233,7 @@ void delete_not_trustable_candidates(
     int h = ofD->params.h;
     int n = 0;
     for (int i = 0; i < w*h; i++) {
-        if (mask[i] == 0) {
+        if (trust_points[i] == 0) {
             //printf("%f\n", ene_val[i]);
             if (ene_val[i] == 0.0){
                 n++;
@@ -258,29 +264,36 @@ void interpolate_poisson(
         ) {
     int w = patch.ei - patch.ii;
     int h = patch.ej - patch.ij;
-    int *mask = ofD->fixed_points;
+
+    int *fixed_points = ofD->fixed_points;
     int wR = ofD->params.w;
+
     float *u1 = ofD->u1;
     float *u2 = ofD->u2;
+
     float buf_in[2*MAX_PATCH*MAX_PATCH];
     float buf_out[2*MAX_PATCH*MAX_PATCH];
     assert(w * h < MAX_PATCH * MAX_PATCH);
-    for (int j = 0; j < h; j++)
+
+    for (int j = 0; j < h; j++){
         for (int i = 0; i < w; i++) {
             int x = i + patch.ii;
             int y = j + patch.ij;
             int xy = y * wR + x;
             //1 fixed - 0 not
-            if (mask[xy] == 1) {
+            if (fixed_points[xy] == 1) {
                 buf_in[ j*w + i       ] = u1[ xy ];
                 buf_in[ j*w + i + w*h ] = u2[ xy ];
-            } else  { //not fixed
+            }else{ //not fixed
                 buf_in[ j*w + i       ] = NAN;
                 buf_in[ j*w + i + w*h ] = NAN;
             }
         }
+    }
+
     elap_recursive_separable(buf_out, buf_in, w, h, 2, 0.4, 3, 7);
-    for (int j = 0; j < h; j++)
+
+    for (int j = 0; j < h; j++){
         for (int i = 0; i < w; i++) {
             int x = i + patch.ii;
             int y = j + patch.ij;
@@ -288,8 +301,150 @@ void interpolate_poisson(
             u1[ xy ] = buf_out[ j*w + i       ];
             u2[ xy ] = buf_out[ j*w + i + w*h ];
         }
+    }
 }
 
+
+
+void bilateral_filter(
+        OpticalFlowData *ofD,
+        const PatchIndexes& patch){
+
+    int *trust_points = ofD->trust_points;
+
+    const int w = ofD->params.w;
+    const int h = ofD->params.h;
+
+    const int w_patch = patch.ei - patch.ii;
+    const int h_patch = patch.ej - patch.ij;
+
+    const int wr_patch = ofD->params.w_radio;
+    const int wr_filter = PATCH_BILATERAL_FILTER;
+    const int wr = wr_filter + wr_patch;
+
+    float *u1 = ofD->u1;
+    float *u2 = ofD->u2;
+
+    float *u1_filter = ofD->u1_filter;
+    float *u2_filter = ofD->u2_filter;
+
+    PatchIndexes area_interp = get_index_patch(wr, w, h, patch.i, patch.j, 1);
+
+    //Save indexes of all neighbor in patch
+    //PatchIndexes *indexes_interp = new PatchIndexes[w_patch*h_patch];
+
+    vector<PatchIndexes> indexes_interp(w_patch*h_patch);
+
+
+    //Copy all flow values to minimize and surroundings
+    for (int j = 0; j < area_interp.ej - area_interp.ij; j++){
+        for (int i = 0; i < area_interp.ei - area_interp.ii; i++){
+
+
+            //const int ij = j*w_patch + i;
+
+            //Coordinates of pixel over whole image
+            const int x = i + area_interp.ii;
+            const int y = j + area_interp.ij;
+            const int xy = y*w + x;
+
+
+            //Initialize flow in patch for filtering
+            if (trust_points[xy] == 1){
+                u1_filter[xy] = u1[xy];
+                u2_filter[xy] = u2[xy];
+            }else{
+                u1_filter[xy] = 0.0;
+                u2_filter[xy] = 0.0;
+
+            }
+        }
+    }
+
+
+    for (int j = 0; j < h_patch; j++){
+        for (int i = 0; i < w_patch; i++){
+            //Coordinates of pixel over whole image
+            const int x = i + patch.ii;
+            const int y = j + patch.ij;
+
+
+            const int ij = j*w_patch + i;
+            cout << ij << "\n";
+            indexes_interp.at(ij) = get_index_patch(wr_filter, w, h, x, y, 1);
+        }
+    }
+
+    /*
+     * For each pixel in the patch non trustable, do
+     * bilateral filtering
+     */
+    int iter = ITER_BILATERAL_FILTER;
+    for (int it = 0; it < iter; it++){
+
+        for (int j = 0; j < h_patch; j++){
+            for (int i = 0; i < w_patch; i++){
+
+                //Coordinates of pixel over whole image
+                int x = i + patch.ii;
+                int y = j + patch.ij;
+                int xy = y*w + x;
+
+                const int ij = j*w_patch + i;
+
+                if (trust_points[xy] == 0){
+                    //Index of points around ij
+                    const PatchIndexes index_interp = indexes_interp.at(ij);
+                    cout << ij << "\n";
+
+                    //Variable that contains the precalculated weights
+                    const float *weights = ofD->weights_filtering->weight;
+
+
+                    const int w_neighbor = index_interp.ei - index_interp.ii;
+                    const int h_neighbor = index_interp.ej - index_interp.ij;
+
+                    float numerator_u1 = 0.0;
+                    float numerator_u2 = 0.0;
+                    float denominator = 0.0;
+
+                    for (int idx_j = 0; idx_j < h_neighbor; idx_j++){
+                        for (int idx_i = 0; idx_i < w_neighbor; idx_i++){
+
+                            const int idx_x = idx_i + index_interp.ii;
+                            const int idx_y = idx_j + index_interp.ij;
+                            const int idx_xy = idx_y*w + idx_x;
+                            const int idx_ij = idx_j*w_neighbor + idx_i;
+
+
+                            numerator_u1 += u1_filter[idx_xy]*weights[idx_ij];
+                            numerator_u2 += u2_filter[idx_xy]*weights[idx_ij];
+                            denominator  += weights[idx_ij];
+                        }
+                    }
+                    const float new_flow_u1 = numerator_u1/denominator;
+                    const float new_flow_u2 = numerator_u2/denominator;
+                    u1_filter[i] = new_flow_u1;
+                    u2_filter[i] = new_flow_u2;
+                }
+            }
+        }
+    }
+
+    //Save filtering in flow variable
+    for (int j = 0; j < h_patch; j++){
+        for (int i = 0; i < w_patch; i++){
+            int x = i + patch.ii;
+            int y = j + patch.ij;
+            int xy = y * w + x;
+
+            if (trust_points[xy] == 0){
+                u1[xy] = u1_filter[xy];
+                u2[xy] = u2_filter[xy];
+            }
+        }
+    }
+}
 
 //Insert 8-connected candidates into the priority queue with their energies.
 void insert_candidates(
@@ -317,7 +472,7 @@ void insert_candidates(
         if (px >= 0 && px < w && py >=0 && py < h){
             float new_ener = ener_N * sal[py*w + px];
 
-            //std::printf("Ener_N: %f  Sim: %f \n", ener_N, ene_val[py*w + px]);
+            //printf("Ener_N: %f  Sim: %f \n", ener_N, ene_val[py*w + px]);
             if (!ofD->fixed_points[py*w + px] &&  new_ener < ene_val[py*w + px]){
 
                 ene_val[py*w + px] = ener_N;
@@ -335,25 +490,6 @@ void insert_candidates(
 }
 
 
-inline PatchIndexes get_index_patch(
-        const int wr,
-        const int w,
-        const int h,
-        const int i,
-        const int j,
-        const int factor
-        ) {
-    PatchIndexes index;
-    //Points to begin and end. End is the previous value
-    index.i = i;
-    index.j = j;
-    index.ii = ((i - factor * wr) < 0)? 0 : (i - factor * wr);
-    index.ij = ((j - factor * wr) < 0)? 0 : (j - factor * wr);
-    index.ei = ((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr);
-    index.ej = ((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr);
-    return index;
-
-}
 
 //TODO: Esto esta fatal. Si finalmenente funciona lo de los pesos arreglarlo para
 //que faldoi sea independiente y este dentro de energy_model.cpp
@@ -370,6 +506,7 @@ inline void get_relative_index_weight(
     assert(*iiw >= 0);
     assert(*ijw >= 0);
 }
+
 static void get_index_weight(
         int method,
         SpecificOFStuff *ofS,
@@ -424,8 +561,8 @@ inline void copy_fixed_coordinates(
             if (fixed[i] == 1){
                 u1[i] = (float) out[i];
                 u2[i] = (float) out[w*h + i];
-                assert(std::isfinite(u1[i]));
-                assert(std::isfinite(u2[i]));
+                assert(isfinite(u1[i]));
+                assert(isfinite(u2[i]));
             }
         }
     }
@@ -452,7 +589,6 @@ int check_trustable_patch(
                 return 0;
             }
         }
-
     return 1;
 }
 
@@ -467,7 +603,7 @@ static void add_neighbors(
         pq_cand *queue,
         const int i,
         const int j,
-        const int mode,
+        const int iteration,
         float *out,
         float *out_occ
         ) {
@@ -484,17 +620,22 @@ static void add_neighbors(
     //TODO: Arreglar los de los pesos
     get_index_weight(method, ofS, wr, i, j);
 
-    //Poisson Interpolation (4wr x 4wr + 1)
-    if (mode == 0) {
+
+
+    //In first iteration, Poisson interpolation
+    if (iteration == 0) {
         //Interpolate by poisson on initialization
         copy_fixed_coordinates(ofD, out, index);
+        //Poisson Interpolation (4wr x 4wr + 1)
         interpolate_poisson(ofD, index);
 
     }else {
+        //Interpolate by bilateral filtering if some points do not survive to prunning
         if (check_trustable_patch(ofD, index) == 0) {
-            //Interpolate by poisson if some points do not survive to prunning
+
             copy_fixed_coordinates(ofD, out, index);
-            interpolate_poisson(ofD, index);
+            bilateral_filter(ofD, index);
+            //interpolate_poisson(ofD, index);
         }
     }
 
@@ -514,8 +655,6 @@ static void add_neighbors(
 
     }
 }
-
-
 
 void insert_initial_seeds(
         const float *i0,
@@ -549,7 +688,7 @@ void insert_initial_seeds(
         for (int i = 0; i < w; i++){
 
             //Indicates the initial seed in the similarity map
-            if (std::isfinite(in_flow[j*w +i]) && std::isfinite(in_flow[w*h + j*w + i])){
+            if (isfinite(in_flow[j*w +i]) && isfinite(in_flow[w*h + j*w + i])){
 
                 out_flow[j*w + i] = in_flow[j*w + i];
                 out_flow[w*h + j*w + i] = in_flow[w*h + j*w +i];
@@ -579,7 +718,6 @@ void insert_potential_candidates(
         OpticalFlowData *ofD,
         pq_cand& queue,
         float *ene_val,
-        float *out,
         float *out_occ
         ){
     //Note: in and out are the same pointer
@@ -589,7 +727,7 @@ void insert_potential_candidates(
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++) {
             //Indicates the initial seed in the similarity map
-            if (std::isfinite(in[j*w + i]) && std::isfinite(in[w*h + j*w + i])) {
+            if (isfinite(in[j*w + i]) && isfinite(in[w*h + j*w + i])) {
 
                 SparseOF element;
                 element.i = i; // column
@@ -599,19 +737,19 @@ void insert_potential_candidates(
                 //Obs: Notice that ene_val contains (en)*saliency
                 element.sim_node = ene_val[j*w + i];
                 element.occluded = out_occ[j*w + i];
-                assert(std::isfinite(ene_val[j*w + i]));
+                assert(isfinite(ene_val[j*w + i]));
                 queue.push(element);
             }
         }
 
-    //Set to the initial conditions all the stuff
-    for (int i = 0; i < w*h; i++) {
-        ofD->fixed_points[i] = 0;
-        ene_val[i] = INFINITY;
-        out[i] = NAN;
-        out[w*h + i] = NAN;
-        out_occ[i] = 0;
-    }
+    //    //Set to the initial conditions all the stuff
+    //    for (int i = 0; i < w*h; i++) {
+    //        ofD->fixed_points[i] = 0;
+    //        ene_val[i] = INFINITY;
+    //        out[i] = NAN;
+    //        out[w*h + i] = NAN;
+    //        out_occ[i] = 0;
+    //    }
 }
 
 
@@ -620,7 +758,8 @@ void insert_potential_candidates(
 void prepare_data_for_growing(
         OpticalFlowData *ofD,
         float *ene_val,
-        float *out
+        float *out,
+        float *out_occ
         ) {
     int w = ofD->params.w;
     int h = ofD->params.h;
@@ -631,8 +770,8 @@ void prepare_data_for_growing(
         ene_val[i] = INFINITY;
         out[i] = NAN;
         out[w*h + i] = NAN;
+        out_occ[i] = 0;
     }
-
 }
 
 //static const auto MAIN_THREAD_ID = std::this_thread::get_id();
@@ -654,7 +793,7 @@ void local_growing(
     const int w = ofD->params.w;
     const int h = ofD->params.h;
     const int size = w*h;
-    std::printf("Queue size at start = %d\n", (int)queue->size());
+    printf("Queue size at start = %d\n", (int)queue->size());
     while (! queue->empty()) {
 
         SparseOF element = queue->top();
@@ -665,16 +804,16 @@ void local_growing(
 
         if (!ofD->fixed_points[j*w + i]){
             fixed++;
-            assert(std::isfinite(element.sim_node));
+            assert(isfinite(element.sim_node));
             float u = element.u;
             float v = element.v;
             float energy = element.sim_node;
             float occlusion  = element.occluded;
-            if (!std::isfinite(u)){
-                std::printf("U1 = %f\n", u);
+            if (!isfinite(u)){
+                printf("U1 = %f\n", u);
             }
-            if (!std::isfinite(v)){
-                std::printf("U2 = %f\n", v);
+            if (!isfinite(v)){
+                printf("U2 = %f\n", v);
             }
 
             ofD->fixed_points[j*w + i] = 1;
@@ -692,19 +831,15 @@ void local_growing(
             add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out_flow, out_occ);
 
             float percent = 100*fixed*1.0/size*1.0;
-            //cout << percent << "\n";
+
             for(int k = 0; k < 4; k++){
                 if (percent > percent_print[k] && percent < percent_print[k + 1]){
-                    cout << percent << "\n";
                     string filename = " ";
                     if (fwd_or_bwd){
                         filename = "../Results/partial_results_fwd_" + to_string(percent_print[k]) + "_iter_" + to_string(tm) + ".flo";
-                    }else{
-                        filename = "../Results/partial_results_bwd_" + to_string(percent_print[k]) + "_iter_" + to_string(tm) + ".flo";
+                        iio_save_image_float_split(filename.c_str(), out_flow, w, h, 2);
+                        percent_print[k] = 200;
                     }
-                    iio_save_image_float_split(filename.c_str(), out_flow, w, h, 2);
-                    percent_print[k] = 200;
-
                 }
             }
         }
@@ -730,7 +865,7 @@ void match_growing_variational(
         ){
     int w = params.w;
     int h = params.h;
-    std::printf("Initializing stuff\n");
+    printf("Initializing stuff\n");
 
     //Initialize all the stuff for optical flow computation
     //Optical flow t, t+1
@@ -766,21 +901,24 @@ void match_growing_variational(
 
     //Prepare data based on the functional chosen (energy_model.cpp)
     prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, params.pd, &i0n, &i1n, &i_1n, &i2n);
-    std::printf("Finished initializing stuff\n");
 
+    //Initialize weights for bilateral filtering
+    ofGo.weights_filtering = init_weights_bilateral(i0, w, h);
+    ofBa.weights_filtering = init_weights_bilateral(i1, w, h);
 
+    printf("Finished initializing stuff\n");
     ////FIXED POINTS////
     //Insert initial seeds to queues
-    std::printf("Inserting initial seeds\n");
+    printf("Inserting initial seeds\n");
 
-    auto future_nfixed_go = std::async(std::launch::async,
-                                       [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, ene_Go, oft0, occ_Go); });
+    auto future_nfixed_go = async(launch::async,
+                                  [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, ene_Go, oft0, occ_Go); });
 
     insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, ene_Ba, oft1, occ_Ba);
     future_nfixed_go.get();
 
 
-    std::printf("Finished inserting initial seeds\n");
+    printf("Finished inserting initial seeds\n");
 
     const int iter = LOCAL_ITER;
     //Variables for pruning
@@ -789,35 +927,33 @@ void match_growing_variational(
 
 
     for (int i = 0; i < iter; i++){
-        std::printf("Iteration: %d\n", i);
-
+        printf("Iteration: %d\n", i);
 
         //Estimate local minimization I0-I1
-        auto growing_fwd = std::async(std::launch::async,
-                                      [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, ene_Go, oft0, occ_Go, true); });
+        auto growing_fwd = async(launch::async,
+                                 [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, ene_Go, oft0, occ_Go, true); });
 
         //Estimate local minimzation I1-I0
         local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, ene_Ba, oft1, occ_Ba, false);
         growing_fwd.get();
 
         //Pruning method
-        pruning_method(i0n, i1n, w, h, tol, p,
-                       ofGo.trust_points, oft0, ofBa.trust_points, oft1);
+        pruning_method(i0n, i1n, w, h, tol, p, ofGo.trust_points, oft0, ofBa.trust_points, oft1);
 
         //Delete not trustable candidates based on the previous pruning
         delete_not_trustable_candidates(&ofGo, oft0, ene_Go);
         delete_not_trustable_candidates(&ofBa, oft1, ene_Ba);
 
         //Insert each pixel into the queue as possible candidate
-        insert_potential_candidates(oft0, &ofGo, queueGo, ene_Go, oft0, occ_Go);
-        insert_potential_candidates(oft1, &ofBa, queueBa, ene_Ba, oft1, occ_Ba);
+        insert_potential_candidates(oft0, &ofGo, queueGo, ene_Go, occ_Go);
+        insert_potential_candidates(oft1, &ofBa, queueBa, ene_Ba, occ_Ba);
 
-        prepare_data_for_growing(&ofGo, ene_Go, oft0);
-        prepare_data_for_growing(&ofBa, ene_Ba, oft1);
+        prepare_data_for_growing(&ofGo, ene_Go, oft0, occ_Go);
+        prepare_data_for_growing(&ofBa, ene_Ba, oft1, occ_Ba);
 
     }
-    std::printf("Last growing\n");
-    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, 10, ene_Go, oft0, occ_Go, true);
+    printf("Last growing\n");
+    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, iter, ene_Go, oft0, occ_Go, true);
 
 
     //Copy the result t, t+1 as output.
@@ -844,14 +980,6 @@ void match_growing_variational(
     delete [] ofGo.trust_points;
     delete [] ofBa.trust_points;
 
-    delete [] ofGo.weight;
-    delete [] ofBa.weight;
-
-    delete [] ofGo.u1_ini;
-    delete [] ofGo.u2_ini;
-    delete [] ofBa.u1_ini;
-    delete [] ofBa.u2_ini;
-
     delete [] oft0;
     delete [] oft1;
 
@@ -866,71 +994,39 @@ void match_growing_variational(
 ////////////////////////////////////////////////////////////////////////////////
 
 
-static bool pick_option(std::vector<std::string>& args, const std::string& option){
-
-    auto it = std::find(args.begin(), args.end(), "-" + option);
-
-    bool found = it != args.end();
-    if (found)
-        args.erase(it);
-
-    return found;
-}
-
-static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value) {
-    auto arg = "-" + option;
-
-    for (auto it = args.begin(); it != args.end(); it++) {
-        if (*it == arg) {
-            auto next = it + 1;
-            if (next == args.end())
-                continue;
-            auto result = *next;
-            args.erase(it, it + 2);
-            return result;
-        }
-    }
-    return default_value;
-}
-
-
-
-
 //Main function that expands sparse flow
 int main(int argc, char* argv[]){
 
 
-    using namespace std::chrono;
+    using namespace chrono;
 
     system_clock::time_point today = system_clock::now();
     time_t tt;
 
     tt = system_clock::to_time_t ( today );
-    std::cerr << "Starting  date: " << ctime(&tt);
+    cerr << "Starting  date: " << ctime(&tt);
 
 
     // process input
-    std::vector<std::string> args(argv, argv + argc);
-    auto windows_ratio = pick_option(args, "wr", "5"); // Warpings
+    vector<string> args(argv, argv + argc);
+    auto windows_ratio = pick_option(args, "wr", "5"); // Windows ratio
     auto var_reg       = pick_option(args, "m",  "8"); // Methods
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
     if (args.size() != 7 && args.size() != 9) {
         fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
-                //                          0        1     2       3       4       5         6
-                " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
+                        " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
         fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
-                //                          0      1     2       3       4       5         6
-                " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
+                        " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
 
         return 1;
     }
 
     //filename that contains all the images to use
-    std::string filename_i_1, filename_i0, filename_i1, filename_i2;
+    string filename_i_1, filename_i0, filename_i1, filename_i2;
 
     //Read txt file of images
-    const std::string& filename_images = args[1];
+    const string& filename_images = args[1];
     ifstream infile(filename_images);
     int num_files = 0;
     string line;
@@ -963,11 +1059,11 @@ int main(int argc, char* argv[]){
     }
 
     //Save other arguments
-    const std::string& filename_go  = args[2];
-    const std::string& filename_ba  = args[3];
-    const std::string& filename_out = args[4];
-    const std::string& filenme_sim  = args[5];
-    const std::string& filename_occ = args[6];
+    const string& filename_go  = args[2];
+    const string& filename_ba  = args[3];
+    const string& filename_out = args[4];
+    const string& filenme_sim  = args[5];
+    const string& filename_occ = args[6];
     const char *filename_sal0 = nullptr;
     const char *filename_sal1 = nullptr;
 
@@ -1046,8 +1142,8 @@ int main(int argc, char* argv[]){
         sal1[i] = 1.0;
     }
     for (int i = 0; i < w[0]*h[0]; i++){
-        assert(std::isfinite(sal0[i]));
-        assert(std::isfinite(sal1[i]));
+        assert(isfinite(sal0[i]));
+        assert(isfinite(sal1[i]));
         if (sal0[i] < 0.0)
             fprintf(stderr, "cosa: %d\n", i);
         if (sal1[i] < 0.0)
@@ -1176,7 +1272,7 @@ int main(int argc, char* argv[]){
     today = system_clock::now();
 
     tt = system_clock::to_time_t ( today );
-    std::cerr << "Finishing date: " << ctime(&tt);
+    cerr << "Finishing date: " << ctime(&tt);
     return 0;
 }
 #endif

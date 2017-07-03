@@ -23,7 +23,7 @@
 #include <cmath>
 #include <cassert>
 #include <cstdio>
-
+#include "energy_structures.h"
 
 extern "C" {
 #include "bicubic_interpolation.h"
@@ -32,7 +32,25 @@ extern "C" {
 
 
 #define PAR_DEFAULT_GAMMA 0.05
+PatchIndexes get_index_patch(
+        const int wr,
+        const int w,
+        const int h,
+        const int i,
+        const int j,
+        const int factor
+        ) {
+    PatchIndexes index;
+    //Points to begin and end. End is the previous value
+    index.i = i;
+    index.j = j;
+    index.ii = ((i - factor * wr) < 0)? 0 : (i - factor * wr);
+    index.ij = ((j - factor * wr) < 0)? 0 : (j - factor * wr);
+    index.ei = ((i + 1 + factor * wr) > w)? w : (i + 1 + factor * wr);
+    index.ej = ((j + 1 + factor * wr) > h)? h : (j + 1 + factor * wr);
+    return index;
 
+}
 
 
 ///////////////////////////////////////////

@@ -154,6 +154,7 @@ void  free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff){
     delete [] ofStuff->tvl2_occ.I1w;
     delete [] ofStuff->tvl2_occ.I1wx;
     delete [] ofStuff->tvl2_occ.I1wy;
+
     if (ofStuff->tvl2_occ.I0x){
         delete [] ofStuff->tvl2_occ.I0x;
         delete [] ofStuff->tvl2_occ.I0y;
@@ -289,10 +290,7 @@ float eval_tvl2coupled_occ(
             if (!std::isfinite(smooth_term)){
                 std::printf("Regularizacion corrupta\n");
             }
-            //            assert(std::isfinite(data_term)); // std::printf("Datos corruptos\n");
-            //            assert(std::isfinite(smooth_term)); // std::printf("Regularizacion corrupta\n");
-            //            assert(std::isfinite(div_u_term));
-            //            assert(std::isfinite(norm_v_term));
+
             ener += data_term + smooth_term + div_u_term + norm_v_term + diff_uv_term;
             m++;
         }

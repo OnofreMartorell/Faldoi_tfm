@@ -10,6 +10,9 @@
 
 ////INITIALIZATION OF AUXILIAR STUFF
 ///
+///
+
+Weights_Bilateral* init_weights_bilateral(float* i0, int w, int h);
 OpticalFlowData init_Optical_Flow_Data(const Parameters& params);
 OpticalFlowData init_Optical_Flow_Data(float *saliency, const Parameters& params);
 

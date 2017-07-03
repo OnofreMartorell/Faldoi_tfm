@@ -2,6 +2,35 @@
 #include "parameters.h"
 #include "energy_structures.h"
 #include <fstream>
+#include <algorithm>
+
+
+bool pick_option(std::vector<std::string>& args, const std::string& option){
+
+    auto it = find(args.begin(), args.end(), "-" + option);
+
+    bool found = it != args.end();
+    if (found)
+        args.erase(it);
+
+    return found;
+}
+
+std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value){
+    auto arg = "-" + option;
+
+    for (auto it = args.begin(); it != args.end(); it++) {
+        if (*it == arg) {
+            auto next = it + 1;
+            if (next == args.end())
+                continue;
+            auto result = *next;
+            args.erase(it, it + 2);
+            return result;
+        }
+    }
+    return default_value;
+}
 
 Parameters init_params(const std::string& file_params, int step_alg){
     Parameters params;

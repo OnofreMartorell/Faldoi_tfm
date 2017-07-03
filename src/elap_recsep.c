@@ -190,8 +190,7 @@ static void zoom_out_by_factor_two(float *out, int ow, int oh,
 // zoom-in by replicating pixels into 2x2 blocks
 // no NAN's are expected in the input image
 static void zoom_in_by_factor_two(float *out, int ow, int oh,
-		float *in, int iw, int ih)
-{
+        float *in, int iw, int ih) {
 	getpixel_operator p = getpixel_1;
 	assert(abs(2*iw-ow) < 2);
 	assert(abs(2*ih-oh) < 2);
@@ -202,11 +201,11 @@ static void zoom_in_by_factor_two(float *out, int ow, int oh,
 
 // extension of an image by laplace equation
 void elap_recursive(float *out, float *in, int w, int h,
-		float timestep, int niter, int scale)
-{
+		float timestep, int niter, int scale){
+
 	float init[w*h];
-	if (scale > 1)
-	{
+	if (scale > 1){
+
 		int ws = ceil(w/2.0);
 		int hs = ceil(h/2.0);
 		float ins[ws * hs];
@@ -215,22 +214,17 @@ void elap_recursive(float *out, float *in, int w, int h,
 		elap_recursive(outs, ins, ws, hs, timestep, niter, scale - 1);
 		zoom_in_by_factor_two(init, w, h, outs, ws, hs);
 
-		//free(ins);
-		//free(outs);
-	} else {
+    }else{
 		for (int i = 0 ; i < w*h; i++)
 			init[i] = 0;
 	}
 	harmonic_extension_with_init(out, in, w, h, timestep, niter, init);
-	//free(init);
 }
 
 // extension by laplace equation of each channel of a color image
 void elap_recursive_separable(float *out, float *in, int w, int h, int pd,
-		float timestep, int niter, int scale)
-{
-	for (int l = 0; l < pd; l++)
-	{
+		float timestep, int niter, int scale){
+    for (int l = 0; l < pd; l++){
 		float *outl = out + w*h*l;
 		float *inl = in + w*h*l;
 		elap_recursive(outl, inl, w, h, timestep, niter, scale);

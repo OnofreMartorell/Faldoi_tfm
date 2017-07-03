@@ -27,12 +27,12 @@
 #define PAR_DEFAULT_TAU_CHI 0.1
 #define PAR_DEFAULT_TOL_D   0.01
 #define PAR_DEFAULT_VERBOSE 1  //0
-#define PAR_DEFAULT_MU 0.4 //1
+#define PAR_DEFAULT_MU 1.4 //1
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
-#define MAX_ITERATIONS_LOCAL 6 //4
-#define MAX_ITERATIONS_GLOBAL 2000 //400
+#define MAX_ITERATIONS_LOCAL 4 //4
+#define MAX_ITERATIONS_GLOBAL 400 //400
 
 #define GRAD_IS_ZERO 1E-8
 #define GRAD_IS_ZERO_GLOBAL 1E-10
@@ -41,7 +41,7 @@
 #define PAR_DEFAULT_NPROC   0    //0
 
 #define PAR_DEFAULT_NWARPS_LOCAL  1  //1
-#define PAR_DEFAULT_NWARPS_GLOBAL  7  //5
+#define PAR_DEFAULT_NWARPS_GLOBAL  5  //5
 
 #define ITER_XI 5
 #define ITER_CHI 5
@@ -54,6 +54,13 @@
 #define LOCAL_ITER 3 //3
 #define TU_TOL 0.01
 #define FB_TOL 2
+
+//Parameters for bilateral filter
+#define PATCH_BILATERAL_FILTER 2
+#define SIGMA_BILATERAL_DIST 5.0
+#define SIGMA_BILATERAL_COLOR 2.0 //0.19
+#define ITER_BILATERAL_FILTER 5
+
 //Specific stuff for NLTV
 
 #define NL_SPATIAL 2

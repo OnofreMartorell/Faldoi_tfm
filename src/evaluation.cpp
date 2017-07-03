@@ -1,13 +1,23 @@
+// This program is free software: you can use, modify and/or redistribute it
+// under the terms of the simplified BSD License. You should have received a
+// copy of this license athis program. If not, see
+// <http://www.opensource.org/licenses/bsd-license.html>.
+//
+// Copyright (C) 2017, Onofre Martorell <onofremartorelln@gmail.com>
+// All rights reserved.
+
 
 #include <cmath>
 #include <vector>
 #include <cstring>
 #include <iostream>
 #include <string>
+
 extern "C" {
 #include "iio.h"
 }
-void  of_errors(float *flow1, float *flow2, int w, int h, int pd){
+
+void  of_errors(float *flow1, float *flow2, int w, int h){
 
     //[ni, nj, nChannels] = size(flow1);
     auto image_ae = new float[w*h];
@@ -15,6 +25,7 @@ void  of_errors(float *flow1, float *flow2, int w, int h, int pd){
     float ae = 0;
     float ee = 0;
     int nPix = 0;
+
     for (int j = 0; j < h; j++){
         for (int i = 0; i < w; i++){
 
@@ -80,7 +91,7 @@ int main(int argc, char* argv[]){
     //Sparse Optical flow forward and backward
     float *optical_flow = iio_read_image_float_split(filename_of.c_str(), w, h, pd);
     float *ground_truth = iio_read_image_float_split(filename_gt.c_str(), w + 1, h + 1, pd + 1);
-    of_errors(optical_flow, ground_truth, w[0], h[0], pd[0]);
+    of_errors(optical_flow, ground_truth, w[0], h[0]);
     return 0;
 
 }

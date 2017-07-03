@@ -12,6 +12,17 @@
 #include <chrono>
 #include <iostream>
 #include <utility>
+#include "energy_structures.h"
+
+
+PatchIndexes get_index_patch(
+        const int wr,
+        const int w,
+        const int h,
+        const int i,
+        const int j,
+        const int factor
+        );
 
 
 ///////////////////////////////////////////

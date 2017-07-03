@@ -87,14 +87,69 @@ void rgb_to_lab(const float *in, int size, float *out){
 
 
 
-////AUXILIAR FUNCTIONS (NEUMANN BOUNDARY CONDITIONS)///////////////
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////AUXILIAR FUNCTIONS CSAD///////////////////
 
-///////////////////////////////////////////////////////////
+//////////////////////////////////////
+/////Initialize bilteral filter///////
+/////////////////////////////////////
 
 
-//Initialize optical flow data
+static float weight_dist(int x1, int x2, //center of patch
+                         int chi1, int chi2 //pixel in patch
+                         ){
+    float sigma = SIGMA_BILATERAL_DIST;
+    float result = exp(-0.5*pow(2.0, sqrt(pow(2.0, x1 - chi1) + pow(2.0, x2 - chi2))/sigma));
+    return result;
+}
+
+static float weight_color(float color_x,
+                          float color_chi){
+    float sigma = SIGMA_BILATERAL_COLOR;
+    float result = exp(-0.5*pow(2.0, std::abs(color_x - color_chi)/sigma));
+    return result;
+}
+
+Weights_Bilateral* init_weights_bilateral(
+        float* i0,
+        int w,
+        int h){
+
+    auto weights = new Weights_Bilateral[w*h];
+    int wr = PATCH_BILATERAL_FILTER;
+    for (int j = 0; j < h; j++){
+        for (int i = 0; i < w; i++){
+
+            //For each pixel in the image, compute neighbor of weights
+            int ij = j*w + i;
+            auto neighbor = get_index_patch(wr, w, h, i, j, 1 );
+            const int w_patch = neighbor.ei - neighbor.ii;
+            const int h_patch = neighbor.ej - neighbor.ij;
+            weights[ij].weight = new float[w_patch*h_patch];
+
+
+            for (int idx_j = 0; idx_j < h_patch; idx_j++){
+                for (int idx_i = 0; idx_i < w_patch; idx_i++){
+
+                    int x = idx_i + neighbor.ii;
+                    int y = idx_j + neighbor.ij;
+                    int xy = y*w + x;
+
+
+                    int idx_ij = idx_j*w_patch + idx_i;
+
+                    float dist  = weight_dist(i, j, x, y);
+                    float color = weight_color(i0[ij], i0[xy]);
+
+                    //Save the weight for each point in the neighborhood
+                    weights[ij].weight[idx_ij] = color*dist;
+                }
+            }
+        }
+    }
+    return weights;
+}
+
+
+//Initialization of Optical Flow data for global method
 OpticalFlowData init_Optical_Flow_Data(
         const Parameters& params
         ) {
@@ -110,7 +165,7 @@ OpticalFlowData init_Optical_Flow_Data(
     return of;
 }
 
-
+//Initialization of Optical Flow data for local method
 OpticalFlowData init_Optical_Flow_Data(
         float *saliency,
         const Parameters& params
@@ -122,14 +177,12 @@ OpticalFlowData init_Optical_Flow_Data(
     of.u2  = of.u1 + w*h;
     of.u1_ba  = new float[w*h*2];
     of.u2_ba  = of.u1_ba + w*h;
+    of.u1_filter  = new float[w*h*2];
+    of.u2_filter  = of.u1_filter + w*h;
     of.chi = new float[w*h];
     of.fixed_points = new int[w*h];
     of.trust_points = new int[w*h];
     of.saliency = saliency;
-    //TODO: Only to keep if it presents better performance.
-    of.weight = new BilateralWeight[w*h]; // weight of non local
-    of.u1_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
-    of.u2_ini = new float[(2*params.w_radio + 1)*(2*params.w_radio + 1)];
     of.params = params;
     return of;
 }
@@ -137,8 +190,8 @@ OpticalFlowData init_Optical_Flow_Data(
 void initialize_auxiliar_stuff(
         SpecificOFStuff& ofStuff,
         OpticalFlowData& ofCore){
-    switch(ofCore.params.val_method)
-    {
+    switch(ofCore.params.val_method){
+
     case M_NLTVL1: //NLTV-L1
         intialize_stuff_nltvl1(&ofStuff, &ofCore);
         break;
@@ -169,12 +222,12 @@ void initialize_auxiliar_stuff(
 
 }
 
-void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore)
-{
+void free_auxiliar_stuff(SpecificOFStuff *ofStuff, OpticalFlowData *ofCore){
+
     const int method = ofCore->params.val_method;
 
-    switch(method)
-    {
+    switch(method){
+
     case M_NLTVL1: //NLTVL1
         free_stuff_nltvl1(ofStuff);
         break;

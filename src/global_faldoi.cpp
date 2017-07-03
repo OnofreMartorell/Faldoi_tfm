@@ -1735,37 +1735,7 @@ void rgb2gray(float *in, int w, int h, float *out) {
 }
 
 
-
-
-static bool pick_option(std::vector<std::string>& args, const std::string& option){
-
-    auto it = std::find(args.begin(), args.end(), "-" + option);
-
-    bool found = it != args.end();
-    if (found)
-        args.erase(it);
-
-    return found;
-}
-
-static std::string pick_option(std::vector<std::string>& args, const std::string& option, const std::string& default_value) {
-    auto arg = "-" + option;
-
-    for (auto it = args.begin(); it != args.end(); it++) {
-        if (*it == arg) {
-            auto next = it + 1;
-            if (next == args.end())
-                continue;
-            auto result = *next;
-            args.erase(it, it + 2);
-            return result;
-        }
-    }
-    return default_value;
-}
-
-
-/**
+/*
  *
  *  Main program:
  *   This program reads the following parameters from the console and
@@ -1780,6 +1750,7 @@ static std::string pick_option(std::vector<std::string>& args, const std::string
  *   -verbose     switch on/off messages
  *
  */
+
 int main(int argc, char *argv[]) {
 
     using namespace std::chrono;
@@ -1791,22 +1762,18 @@ int main(int argc, char *argv[]) {
 
     // process input
     std::vector<std::string> args(argv, argv + argc);
-    auto warps_val      = pick_option(args, "w", "4"); // Warpings
+    auto warps_val      = pick_option(args, "w", to_string(PAR_DEFAULT_NWARPS_GLOBAL)); //"4"); // Warpings
     auto var_reg        = pick_option(args, "m",  "8"); // Methods
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
     if (args.size() != 6 && args.size() != 4) {
-        fprintf(stderr, "Usage: %lu  ims.txt in_flow.flo  out.flo"
-                        "  [-m] val [-w] val"
-                //                       0   1  2   3     4    5   6
-                "\n", args.size());
+        fprintf(stderr, "Usage: %lu  ims.txt in_flow.flo  out.flo [-m] val [-w] val \n", args.size());
         fprintf(stderr, "Usage: %lu  ims.txt in_flow.flo  out.flo occl_input.png occl_out.png"
-                        "  [-m] val [-w] val"
-                //                       0   1  2   3     4    5   6
-                "\n", args.size());
+                        " [-m] val [-w] val \n", args.size());
 
         return EXIT_FAILURE;
     }
+
     // O TV-l2 coupled 1 - ||Du + Du'||_{F}
     int val_method = stoi(var_reg);
     int nwarps = stoi(warps_val);

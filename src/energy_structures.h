@@ -38,12 +38,16 @@ struct BilateralWeight{
 };
 
 struct PatchIndexes{
-    int i;
-    int j;
+    int i; //center column
+    int j; //center row
     int ii; // initial column
     int ij; // initial row
     int ei; // end column
     int ej; // end row
+};
+
+struct Weights_Bilateral{
+    float* weight;
 };
 
 struct Parameters{
@@ -70,7 +74,7 @@ struct Parameters{
 
 inline std::ostream& operator<<(std::ostream& os, const Parameters& p){
     return os << "Parameters: \n lambda: " << p.lambda << ", theta: " << p.theta << ", beta: " << p.beta
-              << ", alpha: " << p.alpha << ", \n tau_u: " << p.tau_u << ", tau_eta: " << p.tau_eta << ", tau_chi: " << p.tau_chi << ", mu:" <<
+              << ", alpha: " << p.alpha << ", \n tau_u: " << p.tau_u << ", tau_eta: " << p.tau_eta << ", tau_chi: " << p.tau_chi << ", mu: " <<
                  p.mu <<  "\n";
 
 }
@@ -82,13 +86,13 @@ struct OpticalFlowData{
     float * __restrict u2;
     float * __restrict u1_ba;
     float * __restrict u2_ba;
+    float * __restrict u1_filter;
+    float * __restrict u2_filter;
     float * __restrict chi;
     int   * __restrict fixed_points;
     int   * __restrict trust_points;
     float * __restrict saliency; //It stores the saliency value for each pixel.
-    BilateralWeight *weight;
-    float * __restrict u1_ini; //Optical flow values to initialize the local patch
-    float * __restrict u2_ini; //Optical flow values to initialize the local patch
+    Weights_Bilateral *weights_filtering;
     Parameters params;
 };
 
@@ -169,8 +173,8 @@ struct NonLocalTVL1Stuff{
 };
 
 
-struct  TvCsadStuff
-{
+struct  TvCsadStuff{
+
     PosNei *pnei;
     float *xi11;
     float *xi12;
@@ -197,8 +201,8 @@ struct  TvCsadStuff
     float *div_xi2;
 };
 
-struct NonLocalTvCsadStuff
-{
+struct NonLocalTvCsadStuff{
+
     DualVariables *p;
     DualVariables *q;
     PosNei *pnei;
@@ -221,8 +225,8 @@ struct NonLocalTvCsadStuff
 };
 
 ///////////////////PESOS///////////////////////////////////////////////////////
-struct  Tvl2CoupledOFStuff_W
-{
+struct  Tvl2CoupledOFStuff_W{
+
     int iiw;
     int ijw;
     float *weight;
@@ -252,8 +256,8 @@ struct  Tvl2CoupledOFStuff_W
     float *u_N;
 };
 
-struct NonLocalTvCsadStuff_W
-{
+struct NonLocalTvCsadStuff_W{
+
     int iiw;
     int ijw;
     float *weight;
@@ -279,8 +283,8 @@ struct NonLocalTvCsadStuff_W
 };
 
 
-struct NonLocalTVL1Stuff_W
-{
+struct NonLocalTVL1Stuff_W{
+
     int iiw;
     int ijw;
     float *weight;
@@ -304,8 +308,8 @@ struct NonLocalTVL1Stuff_W
     float *u_N;
 };
 
-struct  TvCsadStuff_W
-{
+struct  TvCsadStuff_W{
+
     int iiw;
     int ijw;
     float *weight;
@@ -334,6 +338,7 @@ struct  TvCsadStuff_W
     float *div_xi1;
     float *div_xi2;
 };
+
 ////////////////////////
 /////////OCCLUSIONS/////
 ///////////////////////
@@ -417,8 +422,8 @@ struct  Tvl2CoupledOFStuff_occ {
 
 //General Struct for the auxiliar stuff.
 //Each pointer contains the auxiliar necessary information to estimate the of. 
-struct  SpecificOFStuff
-{ //TODO: Should think a best option. To link the things
+struct  SpecificOFStuff{
+    //TODO: Should think a best option. To link the things
     //Creo que el problema viene por como declaramos los punteros y todo eso.
 
     Tvl2CoupledOFStuff  tvl2;
