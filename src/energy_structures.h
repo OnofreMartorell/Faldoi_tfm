@@ -92,8 +92,13 @@ struct OpticalFlowData{
     int   * __restrict fixed_points;
     int   * __restrict trust_points;
     float * __restrict saliency; //It stores the saliency value for each pixel.
-    Weights_Bilateral *weights_filtering;
+
     Parameters params;
+};
+
+struct BilateralFilterData{
+    Weights_Bilateral *weights_filtering;
+    std::vector<PatchIndexes> indexes_filtering;
 };
 
 struct DualVariables{

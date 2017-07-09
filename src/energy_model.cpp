@@ -97,35 +97,59 @@ static float weight_dist(int x1, int x2, //center of patch
                          int chi1, int chi2 //pixel in patch
                          ){
     float sigma = SIGMA_BILATERAL_DIST;
-    float result = exp(-0.5*pow(2.0, sqrt(pow(2.0, x1 - chi1) + pow(2.0, x2 - chi2))/sigma));
+
+    float result = exp(-0.5*(pow(x1 - chi1, 2.0) + pow(x2 - chi2, 2.0))/pow(sigma, 2.0));
     return result;
 }
 
 static float weight_color(float color_x,
                           float color_chi){
     float sigma = SIGMA_BILATERAL_COLOR;
-    float result = exp(-0.5*pow(2.0, std::abs(color_x - color_chi)/sigma));
+
+    float result = exp(-0.5*pow(std::abs(color_x - color_chi)/sigma, 2.0));
     return result;
 }
 
-Weights_Bilateral* init_weights_bilateral(
+BilateralFilterData* init_weights_bilateral(
         float* i0,
         int w,
         int h){
 
-    auto weights = new Weights_Bilateral[w*h];
-    int wr = PATCH_BILATERAL_FILTER;
+    BilateralFilterData* Filter_data = new BilateralFilterData[1];
+    Filter_data->weights_filtering = new Weights_Bilateral[w*h];
+
+    Filter_data->indexes_filtering.resize(w*h);
+    int wr_filter = PATCH_BILATERAL_FILTER;
+
+
     for (int j = 0; j < h; j++){
         for (int i = 0; i < w; i++){
 
             //For each pixel in the image, compute neighbor of weights
-            int ij = j*w + i;
-            auto neighbor = get_index_patch(wr, w, h, i, j, 1 );
+            const int ij = j*w + i;
+            auto neighbor = get_index_patch(wr_filter, w, h, i, j, 1 );
+            Filter_data->indexes_filtering[ij] = neighbor;
             const int w_patch = neighbor.ei - neighbor.ii;
             const int h_patch = neighbor.ej - neighbor.ij;
-            weights[ij].weight = new float[w_patch*h_patch];
+            Filter_data->weights_filtering[ij].weight = new float[w_patch*h_patch];
 
+            if (i == 137  && j == 31){
+                std::cout << "(" << i << ","  << j << ") \n" ;
 
+                for (int idx_j = 0; idx_j < h_patch; idx_j++){
+                    for (int idx_i = 0; idx_i < w_patch; idx_i++){
+
+                        int x = idx_i + neighbor.ii;
+                        int y = idx_j + neighbor.ij;
+                        int xy = y*w + x;
+
+                        std::cout << i0[xy] << " " ;
+
+                    }
+                    std::cout << "\n";
+                }
+                std::cout << "\n";
+            }
             for (int idx_j = 0; idx_j < h_patch; idx_j++){
                 for (int idx_i = 0; idx_i < w_patch; idx_i++){
 
@@ -138,14 +162,24 @@ Weights_Bilateral* init_weights_bilateral(
 
                     float dist  = weight_dist(i, j, x, y);
                     float color = weight_color(i0[ij], i0[xy]);
-
+                    if (i == 137  && j == 31){
+                        std::cout << color << " ";
+                    }
+                    //std::cout << "(" << x << "," << y << ") " ;
                     //Save the weight for each point in the neighborhood
-                    weights[ij].weight[idx_ij] = color*dist;
+                    Filter_data->weights_filtering[ij].weight[idx_ij] = color*dist;
                 }
+                if (i == 137  && j == 31){
+                    std::cout << "\n";
+                }
+            }
+            if (i == 137  && j == 31){
+                std::cout << "\n";
+                std::cout << "\n";
             }
         }
     }
-    return weights;
+    return Filter_data;
 }
 
 

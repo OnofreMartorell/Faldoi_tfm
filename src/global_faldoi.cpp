@@ -1762,7 +1762,7 @@ int main(int argc, char *argv[]) {
 
     // process input
     std::vector<std::string> args(argv, argv + argc);
-    auto warps_val      = pick_option(args, "w", to_string(PAR_DEFAULT_NWARPS_GLOBAL)); //"4"); // Warpings
+    auto warps_val      = pick_option(args, "w", to_string(PAR_DEFAULT_NWARPS_GLOBAL));// Warpings
     auto var_reg        = pick_option(args, "m",  "8"); // Methods
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
@@ -1996,8 +1996,7 @@ int main(int argc, char *argv[]) {
     free_auxiliar_stuff(&stuffOF, &ofD);
     delete [] u;
     delete [] chi;
-    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W
-            || val_method == M_TVL1_OCC){
+    if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W){
         delete [] xi11;
         delete [] xi12;
         delete [] xi21;

@@ -24,10 +24,11 @@
 #define PAR_DEFAULT_ALPHA   0.01
 #define PAR_DEFAULT_TAU_U   0.125
 #define PAR_DEFAULT_TAU_ETA 0.125
-#define PAR_DEFAULT_TAU_CHI 0.1
+#define PAR_DEFAULT_TAU_CHI 0.125
 #define PAR_DEFAULT_TOL_D   0.01
+#define PAR_DEFAULT_MU      0.3 //1
 #define PAR_DEFAULT_VERBOSE 1  //0
-#define PAR_DEFAULT_MU 1.4 //1
+#define SAVE_RESULTS        1
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
@@ -57,21 +58,21 @@
 
 //Parameters for bilateral filter
 #define PATCH_BILATERAL_FILTER 2
-#define SIGMA_BILATERAL_DIST 5.0
-#define SIGMA_BILATERAL_COLOR 2.0 //0.19
-#define ITER_BILATERAL_FILTER 5
+#define SIGMA_BILATERAL_DIST   4.0
+#define SIGMA_BILATERAL_COLOR  0.08
+#define ITER_BILATERAL_FILTER  10
 
 //Specific stuff for NLTV
 
 #define NL_SPATIAL 2
 #define NL_INTENSITY 2
-#define NL_BETA  2//Neighboor
+#define NL_BETA  2 //Neighboor
 #define NL_DUAL_VAR (2*NL_BETA + 1)*(2*NL_BETA + 1) - 1 // 5x5
 
 //Specific Stuff for the CSAD
-#define DT_R  3//Neighboor 7x7
+#define DT_R  3 //Neighboor 7x7
 #define DT_NEI (2*DT_R + 1)*(2*DT_R + 1) - 1 // 7x7
 
 
-
+#define MAX_PATCH 50
 #endif // PARAMETERS_H

@@ -132,6 +132,7 @@ void  free_stuff_tvl2coupled_occ(SpecificOFStuff *ofStuff){
     delete [] ofStuff->tvl2_occ.vi_div2;
     delete [] ofStuff->tvl2_occ.grad_x2;
     delete [] ofStuff->tvl2_occ.grad_y2;
+
     delete [] ofStuff->tvl2_occ.g_xi11;
     delete [] ofStuff->tvl2_occ.g_xi12;
     delete [] ofStuff->tvl2_occ.g_xi21;

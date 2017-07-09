@@ -40,7 +40,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -ggdb -DNDEBUG -Wall -Wextra")
 
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=thread")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
 
 SET(SHARED_C_SRC iio.c mask.c xmalloc.c bicubic_interpolation.c elap_recsep.c)
 SET(SHARED_CPP_SRC tvl2_model.cpp nltv_model.cpp tvcsad_model.cpp nltvcsad_model.cpp tvl2w_model.cpp nltvcsadw_model.cpp nltvw_model.cpp tvcsadw_model.cpp aux_energy_model.cpp energy_model.cpp tvl2_model_occ.cpp utils.cpp utils_preprocess.cpp)

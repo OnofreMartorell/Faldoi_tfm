@@ -21,12 +21,14 @@ for i in range(len(folders_sequences)):
 			file.write(str(images_dir[j - 2]) + "\n")
 			file.write(str(images_dir[j]) + "\n")	
 			file.write(str(images_dir[j + 1]) + "\n")
+	#Firts two images	
 	nums = "0102"
 	#print directory_sequence + "/frames_" + nums + ".txt"
 	with open(directory_sequence + "/frames_" + nums + ".txt", 'w') as file:
 			file.write(str(images_dir[0]) + "\n")
 			file.write(str(images_dir[1]) + "\n")	
 	nums = str(len(images_dir) - 1).zfill(2) + str(len(images_dir)).zfill(2)
+	#Last two images
 	#print directory_sequence + "/frames_" + nums + ".txt"
 	with open(directory_sequence + "/frames_" + nums + ".txt", 'w') as file:
 			file.write(str(images_dir[0]) + "\n")

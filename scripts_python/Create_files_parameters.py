@@ -23,7 +23,7 @@ alphas = [0.001, 0.005]
 taus_u = [0.1]
 taus_eta = [0.1, 0.075]
 taus_chi = [0.125, 0.075]
-mu = [1]
+mus = [0.5, 1.5]
 directory = "../Parameters_files/"
 name_file = directory + "params_"
 if not os.path.exists(directory):

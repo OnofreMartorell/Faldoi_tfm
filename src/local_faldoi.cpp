@@ -33,6 +33,7 @@ extern "C" {
 #include "bicubic_interpolation.h"
 #include "elap_recsep.h"
 }
+
 #include <omp.h>
 
 #include <iostream>
@@ -45,11 +46,6 @@ using namespace std;
 
 //GLOBAL VARIABLES
 // char GLOBAL_TMP_FILE[] = "/tmp/faldoy_XXXXXX"; // template for our file.
-
-
-
-#define MAX_PATCH 50
-
 
 
 // typedef  __gnu_pbds::priority_queue<SparseOF, CompareSparseOF,__gnu_pbds::pairing_heap_tag> pq_cand;
@@ -308,6 +304,7 @@ void interpolate_poisson(
 
 void bilateral_filter(
         OpticalFlowData *ofD,
+        BilateralFilterData *BiFilt,
         const PatchIndexes& patch){
 
     int *trust_points = ofD->trust_points;
@@ -330,18 +327,10 @@ void bilateral_filter(
 
     PatchIndexes area_interp = get_index_patch(wr, w, h, patch.i, patch.j, 1);
 
-    //Save indexes of all neighbor in patch
-    //PatchIndexes *indexes_interp = new PatchIndexes[w_patch*h_patch];
-
-    vector<PatchIndexes> indexes_interp(w_patch*h_patch);
-
-
     //Copy all flow values to minimize and surroundings
     for (int j = 0; j < area_interp.ej - area_interp.ij; j++){
         for (int i = 0; i < area_interp.ei - area_interp.ii; i++){
 
-
-            //const int ij = j*w_patch + i;
 
             //Coordinates of pixel over whole image
             const int x = i + area_interp.ii;
@@ -362,19 +351,6 @@ void bilateral_filter(
     }
 
 
-    for (int j = 0; j < h_patch; j++){
-        for (int i = 0; i < w_patch; i++){
-            //Coordinates of pixel over whole image
-            const int x = i + patch.ii;
-            const int y = j + patch.ij;
-
-
-            const int ij = j*w_patch + i;
-            cout << ij << "\n";
-            indexes_interp.at(ij) = get_index_patch(wr_filter, w, h, x, y, 1);
-        }
-    }
-
     /*
      * For each pixel in the patch non trustable, do
      * bilateral filtering
@@ -388,17 +364,17 @@ void bilateral_filter(
                 //Coordinates of pixel over whole image
                 int x = i + patch.ii;
                 int y = j + patch.ij;
+
                 int xy = y*w + x;
 
-                const int ij = j*w_patch + i;
-
                 if (trust_points[xy] == 0){
+
                     //Index of points around ij
-                    const PatchIndexes index_interp = indexes_interp.at(ij);
-                    cout << ij << "\n";
+                    const PatchIndexes index_interp = BiFilt->indexes_filtering[xy];
+
 
                     //Variable that contains the precalculated weights
-                    const float *weights = ofD->weights_filtering->weight;
+                    const float *weights = BiFilt->weights_filtering[xy].weight;
 
 
                     const int w_neighbor = index_interp.ei - index_interp.ii;
@@ -408,20 +384,23 @@ void bilateral_filter(
                     float numerator_u2 = 0.0;
                     float denominator = 0.0;
 
+
                     for (int idx_j = 0; idx_j < h_neighbor; idx_j++){
                         for (int idx_i = 0; idx_i < w_neighbor; idx_i++){
+
 
                             const int idx_x = idx_i + index_interp.ii;
                             const int idx_y = idx_j + index_interp.ij;
                             const int idx_xy = idx_y*w + idx_x;
                             const int idx_ij = idx_j*w_neighbor + idx_i;
 
-
                             numerator_u1 += u1_filter[idx_xy]*weights[idx_ij];
                             numerator_u2 += u2_filter[idx_xy]*weights[idx_ij];
                             denominator  += weights[idx_ij];
+
                         }
                     }
+
                     const float new_flow_u1 = numerator_u1/denominator;
                     const float new_flow_u2 = numerator_u2/denominator;
                     u1_filter[i] = new_flow_u1;
@@ -605,7 +584,8 @@ static void add_neighbors(
         const int j,
         const int iteration,
         float *out,
-        float *out_occ
+        float *out_occ,
+        BilateralFilterData *BiFilt
         ) {
 
     const int w  = ofD->params.w;
@@ -634,8 +614,8 @@ static void add_neighbors(
         if (check_trustable_patch(ofD, index) == 0) {
 
             copy_fixed_coordinates(ofD, out, index);
-            bilateral_filter(ofD, index);
-            //interpolate_poisson(ofD, index);
+            bilateral_filter(ofD, BiFilt, index);
+
         }
     }
 
@@ -666,7 +646,8 @@ void insert_initial_seeds(
         SpecificOFStuff *ofS,
         float *ene_val,
         float *out_flow,
-        float *out_occ
+        float *out_occ,
+        BilateralFilterData *BiFilt
         ) {
     const int w = ofD->params.w;
     const int h = ofD->params.h;
@@ -696,7 +677,7 @@ void insert_initial_seeds(
 
                 // add_neigbors 0 means that during the propagation interpolates the patch
                 // based on the energy.
-                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out_flow, out_occ);
+                add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, 0, out_flow, out_occ, BiFilt);
 
                 //These values may have been modified in the previous function
                 out_flow[j*w + i] = in_flow[j*w + i];
@@ -782,10 +763,11 @@ void local_growing(
         pq_cand *queue,
         SpecificOFStuff *ofS,
         OpticalFlowData *ofD,
-        int tm,
+        int iteration,
         float *ene_val,
         float *out_flow,
         float *out_occ,
+        BilateralFilterData *BiFilt,
         bool fwd_or_bwd
         ) {
     int fixed = 0;
@@ -827,22 +809,48 @@ void local_growing(
             // ofD->u1[j*w + i] = u;
             // ofD->u2[j*w + i] = v;
 
-            //tm stores if we made interpolation or not.
-            add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, tm, out_flow, out_occ);
+            add_neighbors(i0, i1, i_1, ene_val, ofD, ofS, queue, i, j, iteration, out_flow, out_occ, BiFilt);
 
             float percent = 100*fixed*1.0/size*1.0;
 
-            for(int k = 0; k < 4; k++){
-                if (percent > percent_print[k] && percent < percent_print[k + 1]){
-                    string filename = " ";
-                    if (fwd_or_bwd){
-                        filename = "../Results/partial_results_fwd_" + to_string(percent_print[k]) + "_iter_" + to_string(tm) + ".flo";
-                        iio_save_image_float_split(filename.c_str(), out_flow, w, h, 2);
-                        percent_print[k] = 200;
+            if (SAVE_RESULTS == 1){
+                for(int k = 0; k < 4; k++){
+                    if (percent > percent_print[k] && percent < percent_print[k + 1]){
+                        string filename_flow = " ";
+                        string filename_occ = " ";
+                        if (fwd_or_bwd){
+                            filename_flow = "../Results/Partial_results/partial_results_fwd_" + to_string(percent_print[k]) + "_iter_" + to_string(iteration) + ".flo";
+                            iio_save_image_float_split(filename_flow.c_str(), out_flow, w, h, 2);
+                            filename_occ = "../Results/Partial_results/partial_results_fwd_" + to_string(percent_print[k]) + "_iter_" + to_string(iteration) + "_occ.png";
+                            int *out_occ_int = new int [w*h];
+
+                            for (int i = 0; i < w*h; i++){
+
+                                out_occ_int[i] = out_occ[i];
+                            }
+
+                            iio_save_image_int(filename_occ.c_str(), out_occ_int, w, h);
+
+                            percent_print[k] = 200;
+                        }
                     }
                 }
             }
         }
+    }
+    if (fwd_or_bwd){
+        string filename_flow = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + ".flo";
+        iio_save_image_float_split(filename_flow.c_str(), out_flow, w, h, 2);
+        string filename_occ = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + "_occ.png";
+        int *out_occ_int = new int [w*h];
+
+        for (int i = 0; i < w*h; i++){
+
+            out_occ_int[i] = out_occ[i];
+        }
+
+        iio_save_image_int(filename_occ.c_str(), out_occ_int, w, h);
+
     }
 }
 
@@ -903,8 +911,8 @@ void match_growing_variational(
     prepare_stuff(&stuffGo, &ofGo, &stuffBa, &ofBa, i0, i1, i_1, i2, params.pd, &i0n, &i1n, &i_1n, &i2n);
 
     //Initialize weights for bilateral filtering
-    ofGo.weights_filtering = init_weights_bilateral(i0, w, h);
-    ofBa.weights_filtering = init_weights_bilateral(i1, w, h);
+    auto BiFilt_Go = init_weights_bilateral(i0n, w, h);
+    auto BiFilt_Ba = init_weights_bilateral(i1n, w, h);
 
     printf("Finished initializing stuff\n");
     ////FIXED POINTS////
@@ -912,9 +920,9 @@ void match_growing_variational(
     printf("Inserting initial seeds\n");
 
     auto future_nfixed_go = async(launch::async,
-                                  [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, ene_Go, oft0, occ_Go); });
+                                  [&] { return insert_initial_seeds(i0n, i1n, i_1n, go, &queueGo, &ofGo, &stuffGo, ene_Go, oft0, occ_Go, BiFilt_Go); });
 
-    insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, ene_Ba, oft1, occ_Ba);
+    insert_initial_seeds(i1n, i0n, i2n, ba, &queueBa, &ofBa, &stuffBa, ene_Ba, oft1, occ_Ba, BiFilt_Ba);
     future_nfixed_go.get();
 
 
@@ -931,10 +939,10 @@ void match_growing_variational(
 
         //Estimate local minimization I0-I1
         auto growing_fwd = async(launch::async,
-                                 [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, ene_Go, oft0, occ_Go, true); });
+                                 [&] { local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, i, ene_Go, oft0, occ_Go, BiFilt_Go, true); });
 
         //Estimate local minimzation I1-I0
-        local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, ene_Ba, oft1, occ_Ba, false);
+        local_growing(i1n, i0n, i2n, &queueBa, &stuffBa, &ofBa, i, ene_Ba, oft1, occ_Ba, BiFilt_Ba, false);
         growing_fwd.get();
 
         //Pruning method
@@ -953,7 +961,7 @@ void match_growing_variational(
 
     }
     printf("Last growing\n");
-    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, iter, ene_Go, oft0, occ_Go, true);
+    local_growing(i0n, i1n, i_1n, &queueGo, &stuffGo, &ofGo, iter, ene_Go, oft0, occ_Go, BiFilt_Go, true);
 
 
     //Copy the result t, t+1 as output.
@@ -1173,7 +1181,6 @@ int main(int argc, char* argv[]){
             fprintf(stderr, "Method unknown\n");
             break;
         }
-
     }else{
         //If four images given for without occ, two not needed
         if(num_files == 4 && val_method >= 0 && val_method <= 7) {
@@ -1228,7 +1235,6 @@ int main(int argc, char* argv[]){
     //Match growing algorithm
     match_growing_variational(go, ba, i0, i1, i_1, i2, sal0, sal1, params, ene_val, out_flow, out_occ);
 
-
     // Save results
 
     iio_save_image_float_split(filename_out.c_str(), out_flow, w[0], h[0], 2);
@@ -1275,4 +1281,5 @@ int main(int argc, char* argv[]){
     cerr << "Finishing date: " << ctime(&tt);
     return 0;
 }
+
 #endif

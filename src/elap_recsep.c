@@ -14,10 +14,11 @@
 //#endif//DISABLE_OMP
 #include "mask.h"
 #include "zoom.h"
-
+#include "smapa.h"
+SMART_PARAMETER(PREFILTER, 0)
 
 // the type of a "getpixel" function
-typedef float (*getpixel_operator)(float*,int,int,int,int);
+typedef float (*getpixel_operator)(float*, int, int, int, int);
 
 // extrapolate by nearest value (useful for Neumann boundary conditions)
 static float getpixel_1(float *x, int w, int h, int i, int j)
@@ -121,9 +122,6 @@ static void harmonic_extension_with_init(
 	//free(mask);
 }
 
-
-#include "smapa.h"
-SMART_PARAMETER(PREFILTER, 0)
 
 // zoom-out by 2x2 block averages
 // NANs are discarded when possible

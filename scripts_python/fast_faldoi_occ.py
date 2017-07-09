@@ -20,9 +20,9 @@ parser.add_argument("file_images", help = "File with images")
 
 method = 8
 matchings = False
-sparse_flow = False
+sparse_flow = True
 local_of = True
-global_of = False
+global_of = True
 
 
 #Energy model
