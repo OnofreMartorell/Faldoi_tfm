@@ -10,7 +10,7 @@
 extern "C" {
 #include "bicubic_interpolation.h"
 }
-
+#include <omp.h>
 ////INITIALIZATION OF EACH METHOD
 void  intialize_stuff_tvl2coupled(
         SpecificOFStuff *ofStuff,
@@ -96,7 +96,7 @@ static void tvl2coupled_getD(
         const int nx
         ){
     //Compute the value of xi
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+////#pragma omp parallel for schedule(dynamic,1) collapse(2)
     for (int l = ij; l < ej; l++){
         for (int k = ii; k < ei; k++){
             const int i = l*nx + k;
@@ -138,7 +138,7 @@ static void tvl2coupled_getP(
         ){
     float err_D = 0.0;
 
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+//#pragma omp parallel for schedule(dynamic,1) collapse(2)
     for (int l = ij; l < ej; l++)
         for (int k = ii; k < ei; k++){
             const int i = l*nx + k;
@@ -315,7 +315,8 @@ void guided_tvl2coupled(
             xi11[i] = xi12[i] = xi21[i] = xi22[i] = 0.0;
         }
     }
-
+omp_set_dynamic(0);
+//omp_set_num_threads(2);
     for (int warpings = 0; warpings < warps; warpings++) {
         // compute the warping of the Right image and its derivatives Ir(x + u1o), Irx (x + u1o) and Iry (x + u2o)
         bicubic_interpolation_warp_patch(I1,  u1, u2, I1w,
@@ -326,7 +327,7 @@ void guided_tvl2coupled(
                                          ii, ij, ei, ej, nx, ny, false);
 
         //Compute values that will not change during the whole wraping
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+//#pragma omp parallel for schedule(dynamic,1) collapse(2)
         for (int l = ij; l < ej; l++)
             for (int k = ii; k < ei; k++){
 
@@ -342,7 +343,7 @@ void guided_tvl2coupled(
                             - I1wy[i] * u2[i] - I0[i]);
             }
 
-#pragma omp parallel for schedule(dynamic,1) collapse(2)
+//#pragma omp parallel for schedule(dynamic,1) collapse(2)
         for (int l = ij; l < ej; l++){
             for (int k = ii; k < ei; k++){
                 const int i = l*nx + k;
@@ -358,7 +359,7 @@ void guided_tvl2coupled(
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding opterator TH)
-#pragma omp parallel for schedule(dynamic, 1) collapse(2)
+//#pragma omp parallel for schedule(dynamic, 1) collapse(2)
             for (int l = ij; l < ej; l++){
                 for (int k = ii; k < ei; k++){
                     const int i = l*nx + k;
@@ -403,7 +404,7 @@ void guided_tvl2coupled(
             divergence_patch(xi21, xi22, div_xi2, ii, ij, ei, ej, nx);
 
             //Save previous iteration
-#pragma omp parallel for schedule(dynamic, 1) collapse(2)
+//#pragma omp parallel for schedule(dynamic, 1) collapse(2)
             for (int l = ij; l < ej; l++){
                 for (int k = ii; k < ei; k++){
                     const int i = l*nx + k;
@@ -416,7 +417,7 @@ void guided_tvl2coupled(
                              theta, tau, ii, ij, ei, ej, nx, &err_D);
 
             //(aceleration = 1);
-#pragma omp parallel for schedule(dynamic, 1) collapse(2)
+//#pragma omp parallel for schedule(dynamic, 1) collapse(2)
             for (int l = ij; l < ej; l++){
                 for (int k = ii; k < ei; k++){
                     const int i = l*nx + k;
@@ -427,7 +428,7 @@ void guided_tvl2coupled(
 
 
         }
-        if (verbose)
+        if (ofD->params.step_algorithm == GLOBAL_STEP && ofD->params.verbose)
             std::printf("Warping: %d,Iter: %d "
                         "Error: %f\n", warpings,n, err_D);
     }

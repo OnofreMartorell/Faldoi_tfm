@@ -44,7 +44,7 @@ void divergence(
         const int ny     // image height
         ) {
     // compute the divergence on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny-1; i++) {
         for(int j = 1; j < nx-1; j++){
             const int p  = i * nx + j;
@@ -97,7 +97,7 @@ void forward_gradient(
         const int ny    //image height
         ){
     // compute the gradient on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < ny-1; i++){
         for(int j = 0; j < nx-1; j++){
             const int p  = i * nx + j;
@@ -143,7 +143,7 @@ void backward_gradient(
         const int ny    //image height
         ){
     // compute the gradient on the central body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny; i++){
         for(int j = 1; j < nx; j++){
             const int p  = i * nx + j;
@@ -190,7 +190,7 @@ void centered_gradient(
         ) {
 
     // compute the gradient on the center body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 1; i < ny-1; i++){
         for(int j = 1; j < nx-1; j++){
 
@@ -391,7 +391,7 @@ void five_point_gradient(
 
 
     // compute the gradient on the center body of the image
-#pragma omp parallel for schedule(dynamic)
+//#pragma omp parallel for schedule(dynamic)
     for (int i = 2; i < ny-2; i++){
         for(int j = 2; j < nx-2; j++)
         {

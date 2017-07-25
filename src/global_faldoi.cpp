@@ -327,7 +327,7 @@ void ofTVl2_getP(
     float err_D = 0.0;
     float min,max;
 
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int i = 0; i < size; i++){
 
         const float u1k = u1[i];
@@ -364,7 +364,7 @@ void ofTVl2_getD(
         int size
         ){
 
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int i = 0; i < size; i++)
     {
 
@@ -633,7 +633,7 @@ void tvl2OF(
         bicubic_interpolation_warp(I1x, u1, u2, I1wx, nx, ny, true);
         bicubic_interpolation_warp(I1y, u1, u2, I1wy, nx, ny, true);
 
-#pragma omp parallel for
+//#pragma omp parallel for
         for (int i = 0; i < size; i++)
         {
             const float Ix2 = I1wx[i] * I1wx[i];
@@ -662,7 +662,7 @@ void tvl2OF(
             n++;
             // estimate the values of the variable (v1, v2)
             // (thresholding opterator TH)
-#pragma omp parallel for
+//#pragma omp parallel for
             for (int i = 0; i < size; i++)
             {
                 const float rho = rho_c[i]
@@ -1844,7 +1844,60 @@ int main(int argc, char *argv[]) {
     if (w[0] != w[2] || h[0] != h[2] || pd[2] != 2)
         return fprintf(stderr, "ERROR: input flow field size mismatch\n");
 
-
+    // Print method used
+    if (num_files == 2 && val_method == M_TVL1_OCC){
+        //If only two images given for occ, something not working
+        //TODO: When new methods with occlusions implemented, add here
+        switch (val_method) {
+        case M_TVL1_OCC:
+            fprintf(stderr, "Since only two images given, method is changed to TV-l2 coupled\n");
+            val_method  = M_TVL1;
+            break;
+        default:
+            fprintf(stderr, "Method unknown\n");
+            break;
+        }
+    }else{
+        //If four images given for without occ, two not needed
+        if(num_files == 4 && val_method >= 0 && val_method <= 7) {
+            fprintf(stderr, "Only two of the four images given will be used, according to method selected\n");
+            fprintf(stderr, "Method: ");
+            switch(val_method){
+            case M_NLTVL1: //NLTVL1
+                fprintf(stderr, "NLTV-L1\n");
+                break;
+            case M_TVCSAD: //TV-CSAD
+                fprintf(stderr, "TV-CSAD\n");
+                break;
+            case M_NLTVCSAD: //NLTV-CSAD
+                fprintf(stderr, "NLTV-CSAD\n");
+                break;
+            case M_TVL1_W: //TV-l2 con pesos
+                fprintf(stderr, "TV-l2 coupled Weights\n");
+                break;
+            case M_NLTVCSAD_W: //NLTV-CSAD con pesos
+                fprintf(stderr, "NLTV-CSAD Weights\n");
+                break;
+            case M_NLTVL1_W: //NLTV-L1 con pesos
+                fprintf(stderr," NLTV-L1 Weights\n");
+                break;
+            case M_TVCSAD_W: //TV-CSAD con pesos
+                fprintf(stderr, "TV-CSAD Weights\n");
+                break;
+            default: //TV-l2 coupled
+                fprintf(stderr, "TV-l2 coupled\n");
+            }
+        }else{
+            fprintf(stderr, "Method: ");
+            switch (val_method) {
+            case M_TVL1_OCC: //TV-l2 with occlusion
+                fprintf(stderr, "TV-l2 occlusions\n");
+                break;
+            default:
+                break;
+            }
+        }
+    }
 
     //Initialize parameters
     int step_alg = GLOBAL_STEP;
@@ -1867,7 +1920,7 @@ int main(int argc, char *argv[]) {
     int size = w[0]*h[0];
     // 0 - TVl2 coupled, otherwise Du
     if (val_method == M_NLTVL1 || val_method == M_NLTVL1_W || val_method == M_NLTVCSAD || val_method == M_NLTVCSAD_W ){
-        printf("NL-TVL1 or NLTV-CSAD\n");
+        //printf("NL-TVL1 or NLTV-CSAD\n");
         std::printf("W:%d H:%d Pd:%d\n", w[0], h[0], pd[0]);
         a = new float[size*pd[0]];
         image_to_lab(i0, size, a);
@@ -1947,33 +2000,33 @@ int main(int argc, char *argv[]) {
 
     // 0 - TVl2 coupled, otherwise Du
     if (val_method == M_TVL1 || val_method == M_TVL1_W){
-        printf("TV-l2 coupled\n");
+        //printf("TV-l2 coupled\n");
         tvl2OF(i0n, i1n, u, v, xi11, xi12, xi21, xi22,
                params.lambda, params.theta, params.tau, params.tol_OF, w[0], h[0], params.warps, params.verbose);
     }else if (val_method == M_NLTVCSAD || val_method == M_NLTVCSAD_W){
         params.lambda = 0.85;
         params.theta  = 0.3;
         params.tau    = 0.1;
-        printf("NLTV-CSAD\n");
+        //printf("NLTV-CSAD\n");
         nltvcsad_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau,
                 w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_NLTVL1 || val_method == M_NLTVL1_W){
         params.lambda = 2.0;
         params.theta  = 0.3;
         params.tau    = 0.1;
-        printf("NLTV-L1\n");
+        //printf("NLTV-L1\n");
         nltvl1_PD(i0n, i1n, a, pd[0], params.lambda, params.theta, params.tau,
                 w[0], h[0], params.warps, params.verbose, u, v);
     }else if (val_method == M_TVCSAD || val_method == M_TVCSAD_W){
         params.lambda = 0.85;
         params.theta  = 0.3;
         params.tau    = 0.125;
-        printf("TV-CSAD\n");
+        //printf("TV-CSAD\n");
         tvcsad_PD(i0n, i1n, xi11, xi12, xi21, xi22,
                   params.lambda, params.theta, params.tau, params.tol_OF, w[0], h[0], params.warps, params.verbose, u,v);
 
     }else if (val_method == M_TVL1_OCC){
-        fprintf(stderr, "TV-l2 occlusions\n");
+        //fprintf(stderr, "TV-l2 occlusions\n");
         float ener_N;
 
         guided_tvl2coupled_occ(i0n, i1n, i_1n, &ofD, &(stuffOF.tvl2_occ), &ener_N, index);
@@ -1990,10 +2043,11 @@ int main(int argc, char *argv[]) {
         }
         iio_save_image_int(occ_output.c_str(), out_occ_int, w[0], h[0]);
         delete [] out_occ_int;
+        free_auxiliar_stuff(&stuffOF, &ofD);
     }
 
     //delete allocated memory
-    free_auxiliar_stuff(&stuffOF, &ofD);
+
     delete [] u;
     delete [] chi;
     if (val_method == M_TVL1 || val_method == M_TVL1_W || val_method == M_TVCSAD || val_method == M_TVCSAD_W){

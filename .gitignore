@@ -16,3 +16,9 @@ Parameters_files/
 Resultats\.txt
 
 Resultats_04_07\.txt
+
+Parameters_optimization_files/
+
+Sequences_sintel\.jpg
+
+scripts_python/launch_hyperparameter_optimization\.py

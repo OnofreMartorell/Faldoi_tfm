@@ -3,6 +3,7 @@
 # Litle script for faldoy to execute the data from sift matches.
 
 #"""
+
 import argparse
 import os
 import subprocess
@@ -120,9 +121,11 @@ os.chdir(binary_path)
 
 match_name_1 = '%s%s_exp_mt_1.txt'%(f_path, core_name1)
 sparse_name_1 = '%s%s_exp_mt_1.flo'%(f_path, core_name1)
+sparse_in1 = '%s%s_exp_mt_1_saliency_out_cut.txt'%(f_path, core_name1)
 
 match_name_2 = '%s%s_exp_mt_2.txt'%(f_path, core_name2)
 sparse_name_2 = '%s%s_exp_mt_2.flo'%(f_path, core_name2)
+sparse_in2 = '%s%s_exp_mt_2_saliency_out_cut.txt'%(f_path, core_name2)
 
 region_growing = '%s%s_rg_%s%s.flo'%(f_path, core_name1, method_extension, iteration_params)
 sim_value = '%s%s_exp_sim_%s%s.tiff'%(f_path, core_name1, method_extension, iteration_params)
@@ -150,16 +153,17 @@ command_line = '%s %s\n'%(match_comparison, param)
 if matchings:
 	os.system(command_line)
 
+cut(delete(confi(im_name0, im_name1, match_name_1, f_path), threshold))
+cut(delete(confi(im_name1, im_name0, match_name_2, f_path), threshold))
 
 #Create a sparse flow from the deepmatching matches.
 print('Creating sparse from matches')
-
-param = '%s %s %s %s\n'%(cut(delete(confi(im_name0, im_name1, match_name_1, f_path), threshold)), width_im, height_im, sparse_name_1)
+param = '%s %s %s %s\n'%(sparse_in1, width_im, height_im, sparse_name_1)
 command_line = '%s %s\n'%(sparse_flow, param)
 if sparse_flow:
 	os.system(command_line)
 
-param = '%s %s %s %s\n'%(cut(delete(confi(im_name1, im_name0, match_name_2, f_path), threshold)), width_im, height_im, sparse_name_2)
+param = '%s %s %s %s\n'%(sparse_in2, width_im, height_im, sparse_name_2)
 command_line = '%s %s\n'%(sparse_flow, param)
 
 if sparse_flow:
@@ -200,6 +204,12 @@ if global_of:
 
 #Evaluate results of method
 if  not filename_gt == '':
-	command_line = evaluation + ' ' + var_flow + ' ' + filename_gt
-	#print(command_line)
+	gt = '../scripts_python/file_ev_gt.txt'
+	flow = '../scripts_python/file_ev_flow.txt'
+	with open(flow, 'w') as file:
+		file.write(var_flow)
+	with open(gt, 'w') as file:
+		file.write(filename_gt)
+	command_line = evaluation + ' ' + flow + ' ' + gt
+	print(command_line)
 	os.system(command_line)

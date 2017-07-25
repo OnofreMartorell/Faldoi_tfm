@@ -308,6 +308,7 @@ void bilateral_filter(
         const PatchIndexes& patch){
 
     int *trust_points = ofD->trust_points;
+    int *fixed_points = ofD->fixed_points;
 
     const int w = ofD->params.w;
     const int h = ofD->params.h;
@@ -339,7 +340,8 @@ void bilateral_filter(
 
 
             //Initialize flow in patch for filtering
-            if (trust_points[xy] == 1){
+            // We use values of trust points and fixed points
+            if (trust_points[xy] == 1 || fixed_points[xy] == 1){
                 u1_filter[xy] = u1[xy];
                 u2_filter[xy] = u2[xy];
             }else{
@@ -366,8 +368,9 @@ void bilateral_filter(
                 int y = j + patch.ij;
 
                 int xy = y*w + x;
-
-                if (trust_points[xy] == 0){
+                // If pixel has not survived the previous prunning or
+                // if it has not been fixed, we make interpolation
+                if (trust_points[xy] == 0 && fixed_points[xy] == 0){
 
                     //Index of points around ij
                     const PatchIndexes index_interp = BiFilt->indexes_filtering[xy];
@@ -382,15 +385,15 @@ void bilateral_filter(
 
                     float numerator_u1 = 0.0;
                     float numerator_u2 = 0.0;
-                    float denominator = 0.0;
+                    float denominator  = 0.0;
 
 
                     for (int idx_j = 0; idx_j < h_neighbor; idx_j++){
                         for (int idx_i = 0; idx_i < w_neighbor; idx_i++){
 
 
-                            const int idx_x = idx_i + index_interp.ii;
-                            const int idx_y = idx_j + index_interp.ij;
+                            const int idx_x  = idx_i + index_interp.ii;
+                            const int idx_y  = idx_j + index_interp.ij;
                             const int idx_xy = idx_y*w + idx_x;
                             const int idx_ij = idx_j*w_neighbor + idx_i;
 
@@ -417,7 +420,7 @@ void bilateral_filter(
             int y = j + patch.ij;
             int xy = y * w + x;
 
-            if (trust_points[xy] == 0){
+            if (trust_points[xy] == 0 && fixed_points[xy] == 0){
                 u1[xy] = u1_filter[xy];
                 u2[xy] = u2_filter[xy];
             }
@@ -751,7 +754,7 @@ void prepare_data_for_growing(
         ene_val[i] = INFINITY;
         out[i] = NAN;
         out[w*h + i] = NAN;
-        out_occ[i] = 0;
+        //out_occ[i] = 0;
     }
 }
 
@@ -803,7 +806,12 @@ void local_growing(
             out_flow[j*w + i] = u;
             out_flow[w*h + j*w + i] = v;
             ene_val[j*w + i] = energy;
-            out_occ[j*w + i] = occlusion;
+            //If the point is non trustable, we consider it to be occluded
+            if (ofD->trust_points[j*w + i] == 1){
+                out_occ[j*w + i] = occlusion;
+            }else{
+                out_occ[j*w + i] = 1;
+            }
             // //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
             // //MIRAR
             // ofD->u1[j*w + i] = u;
@@ -838,19 +846,21 @@ void local_growing(
             }
         }
     }
-    if (fwd_or_bwd){
-        string filename_flow = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + ".flo";
-        iio_save_image_float_split(filename_flow.c_str(), out_flow, w, h, 2);
-        string filename_occ = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + "_occ.png";
-        int *out_occ_int = new int [w*h];
+    if (SAVE_RESULTS == 1){
+        if (fwd_or_bwd){
+            string filename_flow = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + ".flo";
+            iio_save_image_float_split(filename_flow.c_str(), out_flow, w, h, 2);
+            string filename_occ = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + "_occ.png";
+            int *out_occ_int = new int [w*h];
 
-        for (int i = 0; i < w*h; i++){
+            for (int i = 0; i < w*h; i++){
 
-            out_occ_int[i] = out_occ[i];
+                out_occ_int[i] = out_occ[i];
+            }
+
+            iio_save_image_int(filename_occ.c_str(), out_occ_int, w, h);
+
         }
-
-        iio_save_image_int(filename_occ.c_str(), out_occ_int, w, h);
-
     }
 }
 
@@ -1017,8 +1027,8 @@ int main(int argc, char* argv[]){
 
     // process input
     vector<string> args(argv, argv + argc);
-    auto windows_ratio = pick_option(args, "wr", "5"); // Windows ratio
-    auto var_reg       = pick_option(args, "m",  "8"); // Methods
+    auto windows_ratio  = pick_option(args, "wr", "5"); // Windows ratio
+    auto var_reg        = pick_option(args, "m",  "8"); // Methods
     auto file_params    = pick_option(args, "p",  ""); // File of parameters
 
     if (args.size() != 7 && args.size() != 9) {
@@ -1100,8 +1110,8 @@ int main(int argc, char* argv[]){
     }
 
     //Frames t and t+1
-    float *i0 = iio_read_image_float_split(filename_i1.c_str(), w + 0, h + 0, pd + 0);
-    float *i1 = iio_read_image_float_split(filename_i2.c_str(), w + 1, h + 1, pd + 1);
+    float *i0 = iio_read_image_float_split(filename_i0.c_str(), w + 0, h + 0, pd + 0);
+    float *i1 = iio_read_image_float_split(filename_i1.c_str(), w + 1, h + 1, pd + 1);
 
     //Sparse Optical flow forward and backward
     float *go = iio_read_image_float_split(filename_go.c_str(), w + 2, h + 2, pd + 2);
@@ -1247,11 +1257,11 @@ int main(int argc, char* argv[]){
     for (int i = 0; i < w[0]*h[0]; i++){
 
         out_occ_int[i] = out_occ[i];
-        //cout << out_occ[i] << ", int:" << out_occ_int[i] << "\n";
+
     }
-    if (val_method == M_TVL1_OCC){
-        iio_save_image_int(filename_occ.c_str(), out_occ_int, w[0], h[0]);
-    }
+
+    iio_save_image_int(filename_occ.c_str(), out_occ_int, w[0], h[0]);
+
     // cleanup and exit
     free(i_1);
     free(i0);

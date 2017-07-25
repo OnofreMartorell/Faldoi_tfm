@@ -250,7 +250,7 @@ void bicubic_interpolation_warp(
 	const int    ny,        // image height
 	bool         border_out // if true, put zeros outside the region
 ){
-	#pragma omp parallel for
+    //#pragma omp parallel for
 	for(int i = 0; i < ny; i++)
 		for(int j = 0; j < nx; j++)
 		{

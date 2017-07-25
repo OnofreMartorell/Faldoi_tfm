@@ -26,9 +26,9 @@
 #define PAR_DEFAULT_TAU_ETA 0.125
 #define PAR_DEFAULT_TAU_CHI 0.125
 #define PAR_DEFAULT_TOL_D   0.01
-#define PAR_DEFAULT_MU      0.3 //1
+#define PAR_DEFAULT_MU      0.5 //1
 #define PAR_DEFAULT_VERBOSE 1  //0
-#define SAVE_RESULTS        1
+#define SAVE_RESULTS        0
 
 #define PAR_DEFAULT_GAMMA 0.05  //0
 
