@@ -16,18 +16,18 @@ PAR_DEFAULT_MU = 1
 import os
 from numpy import random
 
-random_trials = 50
+random_trials = 100
 init_num = 0
 
 
 lambda_range = [10, 100]
 theta_range = [0.05, 1]
 tau = [0.125]
-beta_range = [0.125, 0.25, 1]
-alpha_range = [0.001, 0.005]
-tau_u_range = [0.001, 0.125]
-tau_eta_range = [0.001, 0.125]
-tau_chi_range = [0.001, 0.125]
+beta_range = [0.125, 1.2]
+alpha_range = [0.001, 0.08]
+tau_u_range = [0.001, 0.25]
+tau_eta_range = [0.001, 0.25]
+tau_chi_range = [0.001, 0.25]
 mu_range = [0.05, 2]
 
 directory = "../Parameters_optimization_files/"

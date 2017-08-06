@@ -22,3 +22,5 @@ Parameters_optimization_files/
 Sequences_sintel\.jpg
 
 scripts_python/launch_hyperparameter_optimization\.py
+
+Bilateral_filter\.txt

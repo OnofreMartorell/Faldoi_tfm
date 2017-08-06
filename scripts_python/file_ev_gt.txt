@@ -1,1 +1,1 @@
-../Ground_truth/alley_2/frame_0002.flo
+../Ground_truth/Urban2/flow10.flo

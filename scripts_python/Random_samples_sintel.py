@@ -14,7 +14,9 @@ print len(images_dir)
 for i in range(len(folders_sequences)):
 	directory_sequence = join(directory_images_clean, folders_sequences[i])
 	images = sorted([f for f in listdir(directory_sequence) if isfile(join(directory_sequence, f)) and f.endswith(".txt")])
-	images_dir = images_dir + [join(directory_sequence, f) for f in images]
+	#print images[1:-1]
+	#print [join(directory_sequence, f) for f in images[1:-1]]
+	images_dir = images_dir + [join(directory_sequence, f) for f in images[1:-1]]
 	print len(images_dir)
 #print images_dir
 directory_images_clean = '../data/Sintel_clean'
@@ -22,7 +24,7 @@ folders_sequences = listdir(directory_images_clean)
 for i in range(len(folders_sequences)):
 	directory_sequence = join(directory_images_clean, folders_sequences[i])
 	images = sorted([f for f in listdir(directory_sequence) if isfile(join(directory_sequence, f)) and f.endswith(".txt")])
-	images_dir = images_dir + [join(directory_sequence, f) for f in images]
+	images_dir = images_dir + [join(directory_sequence, f) for f in images[1:-1]]
 	print len(images_dir)
 
 

@@ -146,13 +146,10 @@ BilateralFilterData* init_weights_bilateral(
                     float dist  = weight_dist(i, j, x, y);
                     float color = weight_color(i0[ij], i0[xy]);
 
-                    //std::cout << "(" << x << "," << y << ") " ;
                     //Save the weight for each point in the neighborhood
                     Filter_data->weights_filtering[ij].weight[idx_ij] = color*dist;
                 }
-
             }
-
         }
     }
     return Filter_data;

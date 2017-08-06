@@ -577,7 +577,6 @@ void guided_tvl2coupled_occ(
     const float l_t = lambda * theta;
 
     //Initialization of dual variables and updating backward flow
-    //#pragma omp simd collapse(2)
     for (int l = index.ij; l < index.ej; l++){
         for (int k = index.ii; k < index.ei; k++){
             const int  i = l*nx + k;
@@ -585,7 +584,7 @@ void guided_tvl2coupled_occ(
 
             u1_ba[i] = -u1[i];
             u2_ba[i] = -u2[i];
-            //fprintf(stderr, "%f\n", u1_ba[i]);
+
         }
     }
 

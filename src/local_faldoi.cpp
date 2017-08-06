@@ -338,7 +338,6 @@ void bilateral_filter(
             const int y = j + area_interp.ij;
             const int xy = y*w + x;
 
-
             //Initialize flow in patch for filtering
             // We use values of trust points and fixed points
             if (trust_points[xy] == 1 || fixed_points[xy] == 1){
@@ -472,7 +471,6 @@ void insert_candidates(
 }
 
 
-
 //TODO: Esto esta fatal. Si finalmenente funciona lo de los pesos arreglarlo para
 //que faldoi sea independiente y este dentro de energy_model.cpp
 inline void get_relative_index_weight(
@@ -603,8 +601,6 @@ static void add_neighbors(
     //TODO: Arreglar los de los pesos
     get_index_weight(method, ofS, wr, i, j);
 
-
-
     //In first iteration, Poisson interpolation
     if (iteration == 0) {
         //Interpolate by poisson on initialization
@@ -628,7 +624,7 @@ static void add_neighbors(
     //Insert new candidates to the queue
     insert_candidates(*queue, ene_val, ofD, i, j, (float) ener_N);
 
-    //TODO:It is a strange step, if the energy over the patch is lower thant the
+    //TODO: It is a strange step, if the energy over the patch is lower thant the
     //stored energy, we put the new one, if it's not, we leave the old one.
     if (ene_val[j*w + i] > ener_N) {
         out[      j*w + i] = ofD->u1[j*w + i];
@@ -664,6 +660,7 @@ void insert_initial_seeds(
         out_flow[i] = NAN;
         out_flow[w*h + i] = NAN;
         out_occ[i] = 0;
+        ofD->trust_points[i] = 1;
     }
 
     ofD->params.w_radio = 1;
@@ -690,8 +687,6 @@ void insert_initial_seeds(
             }
         }
     ofD->params.w_radio = wr;
-
-
 }
 
 
@@ -708,7 +703,7 @@ void insert_potential_candidates(
     const int w = ofD->params.w;
     const int h = ofD->params.h;
     //Fixed the initial seeds.
-    for (int j = 0; j < h; j++)
+    for (int j = 0; j < h; j++){
         for (int i = 0; i < w; i++) {
             //Indicates the initial seed in the similarity map
             if (isfinite(in[j*w + i]) && isfinite(in[w*h + j*w + i])) {
@@ -725,15 +720,7 @@ void insert_potential_candidates(
                 queue.push(element);
             }
         }
-
-    //    //Set to the initial conditions all the stuff
-    //    for (int i = 0; i < w*h; i++) {
-    //        ofD->fixed_points[i] = 0;
-    //        ene_val[i] = INFINITY;
-    //        out[i] = NAN;
-    //        out[w*h + i] = NAN;
-    //        out_occ[i] = 0;
-    //    }
+    }
 }
 
 
@@ -754,11 +741,10 @@ void prepare_data_for_growing(
         ene_val[i] = INFINITY;
         out[i] = NAN;
         out[w*h + i] = NAN;
-        //out_occ[i] = 0;
     }
 }
 
-//static const auto MAIN_THREAD_ID = std::this_thread::get_id();
+
 void local_growing(        
         const float *i0,
         const float *i1,
@@ -806,14 +792,11 @@ void local_growing(
             out_flow[j*w + i] = u;
             out_flow[w*h + j*w + i] = v;
             ene_val[j*w + i] = energy;
-            //If the point is non trustable, we consider it to be occluded
-            if (ofD->trust_points[j*w + i] == 1){
-                out_occ[j*w + i] = occlusion;
-            }else{
-                out_occ[j*w + i] = 1;
-            }
-            // //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
-            // //MIRAR
+
+            out_occ[j*w + i] = occlusion;
+
+            //TODO: Lo copiamos para que esos valores influyan en la minimizacion.
+            //MIRAR
             // ofD->u1[j*w + i] = u;
             // ofD->u2[j*w + i] = v;
 
@@ -848,9 +831,9 @@ void local_growing(
     }
     if (SAVE_RESULTS == 1){
         if (fwd_or_bwd){
-            string filename_flow = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + ".flo";
+            string filename_flow = "../Results/Partial_results/partial_results_fwd_100_iter_" + to_string(iteration) + ".flo";
             iio_save_image_float_split(filename_flow.c_str(), out_flow, w, h, 2);
-            string filename_occ = "../Results/partial_results_fwd_100_iter_" + to_string(iteration) + "_occ.png";
+            string filename_occ = "../Results/Partial_results/partial_results_fwd_100_iter_" + to_string(iteration) + "_occ.png";
             int *out_occ_int = new int [w*h];
 
             for (int i = 0; i < w*h; i++){
@@ -925,7 +908,7 @@ void match_growing_variational(
     auto BiFilt_Ba = init_weights_bilateral(i1n, w, h);
 
     printf("Finished initializing stuff\n");
-    ////FIXED POINTS////
+
     //Insert initial seeds to queues
     printf("Inserting initial seeds\n");
 
@@ -1225,7 +1208,7 @@ int main(int argc, char* argv[]){
             fprintf(stderr, "Method: ");
             switch (val_method) {
             case M_TVL1_OCC: //TV-l2 with occlusion
-                fprintf(stderr, "TV-l2 occlusions\n");
+                fprintf(stderr, "TV-l1 occlusions\n");
                 break;
             default:
                 break;

@@ -19,17 +19,16 @@ if __name__ == '__main__':
 	for i in range(len(list_images)):
 		list_images[i] = list_images[i][:-1]
 	#For all random trials, evaluate all images
+	not_done = 0
 	for count in range(init_num, init_num + random_trials):
 
-		folder_out = '../Output_error_optimization_results/'
+		folder_out = '../Output_error_optimization/params_optimization_trial_' + str(count)
 		if not os.path.exists(folder_out):
 			os.makedirs(folder_out)
 		folder_lists = '../scripts_optimization/lists_images/'
 		if not os.path.exists(folder_lists):
 			os.makedirs(folder_lists)
-		filename_gt = folder_lists + 'List_flow_gt_' + str(count) + '.txt'
-		filename_of = folder_lists + 'List_flow_of_' + str(count) + '.txt'
-		with open(filename_gt, 'w') as file_gt, open(filename_of, 'w') as file_of:
+		if True:
 			for i in range(len(list_images)):
 				image_txt = list_images[i]
 				with open(image_txt, 'r') as file:
@@ -47,38 +46,42 @@ if __name__ == '__main__':
 					subset = 'Sintel_clean/'
 
 				f_path = '../Results/Experiment_' + str(count) + '/' + subset + sequence + '/'
-				var_flow = f_path + core_name1 + '_exp_var.flo'
+				var_flow = '%s%s_exp_var.flo'%(f_path, core_name1)
 				
-				gt_flow = '../Ground_truth/flow/' + sequence + '/' + core_name1 + '.flo'	
+				if not os.path.isfile(var_flow):
+					
+					#print var_flow 
+					image = list_images[i]
+					#Create sh
+					file_sh = "../scripts_optimization/Params_opti_" + str(count) + "_im_" + str(i) + ".sh"
+					with open(file_sh, 'w') as file:
+						file.write("#!/bin/bash\n")
+						
+						cmd = 'Faldoi_optimization.py ' + image + ' ' + str(count)
+		
+						f = 'time python ' + cmd + '  \n'
+						#print f
+						file.write(f)
+
+					#Create sub
+					file_sub = "../scripts_optimization/Params_opti_" + str(count) + "_im_" + str(i) + ".sub"
+					with open(file_sub, 'w') as file:
+						file.write("#!/bin/bash\n")
+						file.write('#$ -N Params_optimization_' + str(count) + "_im_" + str(i) + '\n')
+						file.write('#$ -cwd\n')
+						file.write('#$ -o ' + folder_out + '\n')
+						file.write('#$ -e ' + folder_out + '\n')
+						file.write('#$ -pe smp 2\n')
+						file.write('sh '+ file_sh + '\n')
 				
-				file_gt.write(gt_flow + '\n')
-				file_of.write(var_flow + '\n')
 
-
-		#Create sh
-		file_sh = "../scripts_optimization/Evaluation_" + str(count) + ".sh"
-		with open(file_sh, 'w') as file:
-			file.write("#!/bin/bash\n")
-				
-			cmd = '../build/evaluation ' + filename_of + ' ' + filename_gt				
-			file.write(cmd)
-			#os.system(cmd)
-
-		#Create sub
-		file_sub = "../scripts_optimization/Evaluation_" + str(count) + ".sub"
-		with open(file_sub, 'w') as file:
-			file.write("#!/bin/bash\n")
-			file.write('#$ -N Params_optimization_results_' + str(count) + '\n')
-			file.write('#$ -cwd\n')
-			file.write('#$ -o ' + folder_out + '\n')
-			file.write('#$ -e ' + folder_out + '\n')
-			file.write('sh '+ file_sh + '\n')
-				
-
-		#Send job
-		command = "qsub " + file_sub
-		print command
-		os.system(command)
+					#Send job
+					command = "qsub " + file_sub
+					print command
+					
+					not_done = not_done + 1
+					#os.system(command)
+	print not_done
 
 
 
