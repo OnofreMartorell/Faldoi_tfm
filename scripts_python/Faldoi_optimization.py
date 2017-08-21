@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description = 'Faldoy Minimization')
 parser.add_argument("file_images", help = "File with images")
 
 parser.add_argument("num_param_file",
-                    help = "Number of warps finest scale")
+                    help = "Number of file of parameters")
 
 parser.add_argument("-vm", default = str(method),
                     help = "Variational Method "

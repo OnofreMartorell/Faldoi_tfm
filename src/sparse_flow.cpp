@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <iostream>
+#include <cstdio>
 extern "C" {
 #include "iio.h"
 }
@@ -40,13 +41,12 @@ static int sparse_optical_flow(char *input, int nx, int ny, float *out) {
         return 1;
     }else{
         std::cout << "File does not exist\n";
+        std::cout << input << "\n";
         return 0;
     }
 }
 
 
-//#ifdef MAIN_SPARSE_FLOW
-#include <cstdio>
 int main(int argc, char *argv[]) {
     // process input arguments
     if (argc != 5) {
@@ -70,4 +70,4 @@ int main(int argc, char *argv[]) {
     delete [] out;
     return 0;
 }
-//#endif//MAIN_SPARSE_FLOW
+

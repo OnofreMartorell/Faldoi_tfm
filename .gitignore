@@ -24,3 +24,9 @@ Sequences_sintel\.jpg
 scripts_python/launch_hyperparameter_optimization\.py
 
 Bilateral_filter\.txt
+
+scripts_evaluation_datasets/
+
+scripts_optimization/
+
+visualize-flow-code/

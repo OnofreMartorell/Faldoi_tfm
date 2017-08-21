@@ -75,10 +75,8 @@ if __name__ == '__main__':
 				file.write('#$ -cwd\n')
 				file.write('#$ -o ' + folder_out + '\n')
 				file.write('#$ -e ' + folder_out + '\n')
-				if i == len(list_images) - 1:
-					
-					file.write('#$ -M onofremartorelln@gmail.com\n')
-					file.write('#$ -m e\n')
+				file.write('#$ -pe smp 3' + '\n')
+				file.write('#$ -q default.q \n')
 				file.write('sh '+ file_sh + '\n')
 				
 

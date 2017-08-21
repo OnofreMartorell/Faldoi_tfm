@@ -9,15 +9,13 @@ import os
 import subprocess
 import shlex
 import math
-from rescore_prunning import  confidence_values as confi
-from auxiliar_faldoi_functions import cut_deep_list as cut
-from auxiliar_faldoi_functions import execute_shell_program as exe_prog
-from auxiliar_faldoi_functions import delete_outliers as delete
+
 
 
 #Set the arguments to compute the images
 parser = argparse.ArgumentParser(description = 'Faldoy Minimization')
 parser.add_argument("file_images", help = "File with images")
+parser.add_argument("dataset", help = "Dataset of the incoming image")
 
 method = 8
 matchings = False
@@ -40,12 +38,7 @@ parser.add_argument("-vm", default = str(method),
 #M_NLTVCSAD_W 7
 #M_TVL1_OCC   8       
 
-if method == 0:
-	method_extension = 'tvl1'
-elif method == 8:
-	method_extension = 'tvl1_occ'
-else:
-	method_extension = ''
+method_extension = ''
 
 
 
@@ -60,18 +53,15 @@ parser.add_argument("-warps", default = '7',
 parser.add_argument("-th", default = '0.45',
                     help = "Threshold to discard outliers from DeepFlow")
 
-#Ground truth for evaluation
-parser.add_argument("-ev", default = '',
-                    help = "File with ground truth optical")
+
 #Ground truth for evaluation
 parser.add_argument("-p", default = '',
                     help = "File with parameters")
 
-parser.add_argument("-set", default = '',
-                    help = "Dataset for full evaluation")
-
 args = parser.parse_args()
-with open(args.file_images, 'r') as file:
+file_images = args.file_images
+print file_images
+with open(file_images, 'r') as file:
 	# read a list of lines into data
 	data = file.readlines()
 for i in range(len(data)):
@@ -84,10 +74,9 @@ var_m = args.vm
 warps = args.warps
 windows_radio = args.wr
 threshold = args.th
-dataset = args.set + '/'
+dataset = args.dataset + '/'
 
 #C++ program names
-match_comparison = "../build/deepmatching"
 sparse_flow = "../build/sparse_flow"
 match_propagation = "../build/local_faldoi"
 of_var = "../build/global_faldoi"
@@ -99,15 +88,32 @@ root_path = os.getcwd()
 #binary_path = root_path + "bin/"
 binary_path = '../build/'
 #f_path = root_path + "Results/"
-f_path = '../Results/' + sequence + '/' + dataset
-if not os.path.exists(f_path):
-    os.makedirs(f_path)
-filename_gt = args.ev
-filename_params = args.p
-if not filename_params == '':
-	iteration_params = '_' + str(filename_params.split('/')[-1].split('.')[0].split('_')[1]).zfill(2)
+
+
+if 'sintel' in dataset:
+	if 'Sintel_final' in file_images:
+		f_path = '../Results/Sintel_evaluation/' + 'Method_' + str(var_m) + '/Sintel_final/' + sequence + '/'
+		in_path = '../Results/Sintel_final/' + sequence + '/'
+	else:
+		f_path = '../Results/Sintel_evaluation/' + 'Method_' + str(var_m) + '/Sintel_clean/' + sequence + '/'
+		in_path = '../Results/Sintel_clean/' + sequence + '/'
 else:
-	iteration_params = ''
+	f_path = '../Results/Middlebury_evaluation/' + 'Method_' + str(var_m) + '/' + sequence + '/'
+	in_path = '../Results/Middlebury/' + sequence + '/'
+
+print 'Dataset: ' + dataset
+try:
+	if not os.path.exists(f_path):
+		os.makedirs(f_path)
+except OSError, e:
+	if e.errno != 17:
+		raise   
+        pass
+
+
+filename_params = args.p
+
+iteration_params = ''
 
 
 #Set the images input.
@@ -124,40 +130,20 @@ os.chdir(binary_path)
 
 match_name_1 = '%s%s_exp_mt_1.txt'%(f_path, core_name1)
 sparse_name_1 = '%s%s_exp_mt_1.flo'%(f_path, core_name1)
-sparse_in1 = '%s%s_exp_mt_1_saliency_out_cut.txt'%(f_path, core_name1)
+sparse_in1 = '%s%s_exp_mt_1_saliency_out_cut.txt'%(in_path, core_name1)
 
 match_name_2 = '%s%s_exp_mt_2.txt'%(f_path, core_name2)
 sparse_name_2 = '%s%s_exp_mt_2.flo'%(f_path, core_name2)
-sparse_in2 = '%s%s_exp_mt_2_saliency_out_cut.txt'%(f_path, core_name2)
+sparse_in2 = '%s%s_exp_mt_2_saliency_out_cut.txt'%(in_path, core_name2)
 
-region_growing = '%s%s_rg_%s%s.flo'%(f_path, core_name1, method_extension, iteration_params)
-sim_value = '%s%s_exp_sim_%s%s.tiff'%(f_path, core_name1, method_extension, iteration_params)
-var_flow = '%s%s_exp_var_%s%s.flo'%(f_path, core_name1, method_extension, iteration_params)
+region_growing = '%s%s_rg.flo'%(f_path, core_name1)
+sim_value = '%s%s_exp_sim.tiff'%(f_path, core_name1)
+var_flow = '%s%s_exp_var.flo'%(f_path, core_name1)
 
-occlusions_rg = '%s%s_rg_occ_%s%s.png'%(f_path, core_name1, method_extension, iteration_params)
-occlusions_var = '%s%s_var_occ_%s%s.png'%(f_path, core_name1, method_extension, iteration_params)
+occlusions_rg = '%s%s_rg_occ.png'%(f_path, core_name1)
+occlusions_var = '%s%s_var_occ.png'%(f_path, core_name1)
 
-#Obtain the matches' list for both (I0-I1 and I1-I0)
-if matchings:
-	print('Obtaining list of matches from DeepMatching')
-max_scale = math.sqrt(2)
 
-#I0-I1
-param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name0, im_name1, max_scale, match_name_1)
-command_line = '%s %s\n'%(match_comparison, param)
-
-if matchings:
-	os.system(command_line)
-
-#I1-I0
-param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name1, im_name0, max_scale, match_name_2)
-command_line = '%s %s\n'%(match_comparison, param)
-
-if matchings:
-	os.system(command_line)
-
-cut(delete(confi(im_name0, im_name1, match_name_1, f_path), threshold))
-cut(delete(confi(im_name1, im_name0, match_name_2, f_path), threshold))
 
 #Create a sparse flow from the deepmatching matches.
 print('Creating sparse from matches')
@@ -205,14 +191,4 @@ if global_of:
 	os.system(command_line)
 
 
-#Evaluate results of method
-if  not filename_gt == '':
-	gt = '../scripts_python/file_ev_gt.txt'
-	flow = '../scripts_python/file_ev_flow.txt'
-	with open(flow, 'w') as file:
-		file.write(var_flow)
-	with open(gt, 'w') as file:
-		file.write(filename_gt)
-	command_line = evaluation + ' ' + flow + ' ' + gt
-	print(command_line)
-	os.system(command_line)
+

@@ -88,14 +88,14 @@ for idx_directory in range(len(directories_images)):
 
 			
 			print command_line
-			os.system(command_line)
+			#os.system(command_line)
 
 			#I1-I0
 			param = '%s %s -downscale 1 -max_scale %s -rot_range -45 +45 > %s'%(im_name1, im_name0, max_scale, match_name_2)
 			command_line = '%s %s\n'%(match_comparison, param)
 			
 			print command_line
-			os.system(command_line)
+			#os.system(command_line)
 
 			
 

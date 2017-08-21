@@ -1,0 +1,2601 @@
+Computing precision, recall and F-measure
+../Results/Experiment_0/Sintel_clean/market_2/frame_0032_var_occ.png
+Pixels gt: 11863
+Pixels results: 1469
+pixelTP: 822
+pixelFP: 647
+pixelFN: 11041
+pixelTN: 433954
+
+num pixels: 446464
+Precision: 0.559564
+Recall: 0.0692911
+F-Measure: 0.123312
+
+../Results/Experiment_0/Sintel_clean/bandage_1/frame_0037_var_occ.png
+Pixels gt: 10924
+Pixels results: 387
+pixelTP: 222
+pixelFP: 165
+pixelFN: 10702
+pixelTN: 435375
+
+num pixels: 446464
+Precision: 0.573643
+Recall: 0.0203222
+F-Measure: 0.0392538
+
+../Results/Experiment_0/Sintel_final/market_2/frame_0032_var_occ.png
+Pixels gt: 11863
+Pixels results: 1270
+pixelTP: 762
+pixelFP: 508
+pixelFN: 11101
+pixelTN: 434093
+
+num pixels: 446464
+Precision: 0.6
+Recall: 0.0642333
+F-Measure: 0.116044
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0037_var_occ.png
+Pixels gt: 5641
+Pixels results: 331
+pixelTP: 236
+pixelFP: 95
+pixelFN: 5405
+pixelTN: 440728
+
+num pixels: 446464
+Precision: 0.712991
+Recall: 0.0418366
+F-Measure: 0.0790355
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0019_var_occ.png
+Pixels gt: 3459
+Pixels results: 180
+pixelTP: 7
+pixelFP: 173
+pixelFN: 3452
+pixelTN: 442832
+
+num pixels: 446464
+Precision: 0.0388889
+Recall: 0.00202371
+F-Measure: 0.00384721
+
+../Results/Experiment_0/Sintel_clean/temple_3/frame_0039_var_occ.png
+Pixels gt: 118399
+Pixels results: 76503
+pixelTP: 40216
+pixelFP: 36287
+pixelFN: 78183
+pixelTN: 291778
+
+num pixels: 446464
+Precision: 0.525679
+Recall: 0.339665
+F-Measure: 0.412679
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0027_var_occ.png
+Pixels gt: 13103
+Pixels results: 3033
+pixelTP: 1489
+pixelFP: 1544
+pixelFN: 11614
+pixelTN: 431817
+
+num pixels: 446464
+Precision: 0.490933
+Recall: 0.113638
+F-Measure: 0.184556
+
+../Results/Experiment_0/Sintel_final/ambush_5/frame_0019_var_occ.png
+Pixels gt: 25378
+Pixels results: 14721
+pixelTP: 5374
+pixelFP: 9347
+pixelFN: 20004
+pixelTN: 411739
+
+num pixels: 446464
+Precision: 0.365057
+Recall: 0.211758
+F-Measure: 0.268037
+
+../Results/Experiment_0/Sintel_clean/temple_3/frame_0009_var_occ.png
+Pixels gt: 10351
+Pixels results: 2935
+pixelTP: 2463
+pixelFP: 472
+pixelFN: 7888
+pixelTN: 435641
+
+num pixels: 446464
+Precision: 0.839182
+Recall: 0.237948
+F-Measure: 0.370766
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0036_var_occ.png
+Pixels gt: 19307
+Pixels results: 2275
+pixelTP: 977
+pixelFP: 1298
+pixelFN: 18330
+pixelTN: 425859
+
+num pixels: 446464
+Precision: 0.429451
+Recall: 0.0506034
+F-Measure: 0.0905384
+
+../Results/Experiment_0/Sintel_final/market_2/frame_0021_var_occ.png
+Pixels gt: 20392
+Pixels results: 15538
+pixelTP: 3492
+pixelFP: 12046
+pixelFN: 16900
+pixelTN: 414026
+
+num pixels: 446464
+Precision: 0.224739
+Recall: 0.171244
+F-Measure: 0.194378
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0041_var_occ.png
+Pixels gt: 8869
+Pixels results: 2315
+pixelTP: 110
+pixelFP: 2205
+pixelFN: 8759
+pixelTN: 435390
+
+num pixels: 446464
+Precision: 0.0475162
+Recall: 0.0124028
+F-Measure: 0.019671
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0035_var_occ.png
+Pixels gt: 26665
+Pixels results: 2994
+pixelTP: 1789
+pixelFP: 1205
+pixelFN: 24876
+pixelTN: 418594
+
+num pixels: 446464
+Precision: 0.597528
+Recall: 0.0670917
+F-Measure: 0.120638
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0031_var_occ.png
+Pixels gt: 21438
+Pixels results: 2624
+pixelTP: 1911
+pixelFP: 713
+pixelFN: 19527
+pixelTN: 424313
+
+num pixels: 446464
+Precision: 0.728277
+Recall: 0.0891408
+F-Measure: 0.15884
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0010_var_occ.png
+Pixels gt: 40304
+Pixels results: 2590
+pixelTP: 1758
+pixelFP: 832
+pixelFN: 38546
+pixelTN: 405328
+
+num pixels: 446464
+Precision: 0.678764
+Recall: 0.0436185
+F-Measure: 0.0819695
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0043_var_occ.png
+Pixels gt: 97180
+Pixels results: 58566
+pixelTP: 31576
+pixelFP: 26990
+pixelFN: 65604
+pixelTN: 322294
+
+num pixels: 446464
+Precision: 0.539152
+Recall: 0.324923
+F-Measure: 0.405481
+
+../Results/Experiment_0/Sintel_final/ambush_5/frame_0010_var_occ.png
+Pixels gt: 22676
+Pixels results: 8792
+pixelTP: 5717
+pixelFP: 3075
+pixelFN: 16959
+pixelTN: 420713
+
+num pixels: 446464
+Precision: 0.65025
+Recall: 0.252117
+F-Measure: 0.363353
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0043_var_occ.png
+Pixels gt: 8188
+Pixels results: 832
+pixelTP: 19
+pixelFP: 813
+pixelFN: 8169
+pixelTN: 437463
+
+num pixels: 446464
+Precision: 0.0228365
+Recall: 0.00232047
+F-Measure: 0.00421286
+
+../Results/Experiment_0/Sintel_clean/cave_4/frame_0036_var_occ.png
+Pixels gt: 30133
+Pixels results: 5983
+pixelTP: 4640
+pixelFP: 1343
+pixelFN: 25493
+pixelTN: 414988
+
+num pixels: 446464
+Precision: 0.775531
+Recall: 0.153984
+F-Measure: 0.25695
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0009_var_occ.png
+Pixels gt: 26386
+Pixels results: 301
+pixelTP: 54
+pixelFP: 247
+pixelFN: 26332
+pixelTN: 419831
+
+num pixels: 446464
+Precision: 0.179402
+Recall: 0.00204654
+F-Measure: 0.00404691
+
+../Results/Experiment_0/Sintel_clean/market_6/frame_0024_var_occ.png
+Pixels gt: 40255
+Pixels results: 16242
+pixelTP: 5113
+pixelFP: 11129
+pixelFN: 35142
+pixelTN: 395080
+
+num pixels: 446464
+Precision: 0.314801
+Recall: 0.127015
+F-Measure: 0.181001
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0021_var_occ.png
+Pixels gt: 6505
+Pixels results: 387
+pixelTP: 21
+pixelFP: 366
+pixelFN: 6484
+pixelTN: 439593
+
+num pixels: 446464
+Precision: 0.0542636
+Recall: 0.00322829
+F-Measure: 0.00609402
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0037_var_occ.png
+Pixels gt: 33238
+Pixels results: 9344
+pixelTP: 4623
+pixelFP: 4721
+pixelFN: 28615
+pixelTN: 408505
+
+num pixels: 446464
+Precision: 0.494756
+Recall: 0.139088
+F-Measure: 0.217134
+
+../Results/Experiment_0/Sintel_clean/sleeping_1/frame_0026_var_occ.png
+Pixels gt: 1675
+Pixels results: 413
+pixelTP: 26
+pixelFP: 387
+pixelFN: 1649
+pixelTN: 444402
+
+num pixels: 446464
+Precision: 0.062954
+Recall: 0.0155224
+F-Measure: 0.0249042
+
+../Results/Experiment_0/Sintel_final/ambush_5/frame_0038_var_occ.png
+Pixels gt: 114391
+Pixels results: 112664
+pixelTP: 49750
+pixelFP: 62914
+pixelFN: 64641
+pixelTN: 269159
+
+num pixels: 446464
+Precision: 0.441579
+Recall: 0.434912
+F-Measure: 0.43822
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0030_var_occ.png
+Pixels gt: 30622
+Pixels results: 6430
+pixelTP: 3262
+pixelFP: 3168
+pixelFN: 27360
+pixelTN: 412674
+
+num pixels: 446464
+Precision: 0.507309
+Recall: 0.106525
+F-Measure: 0.176077
+
+../Results/Experiment_0/Sintel_final/bandage_2/frame_0020_var_occ.png
+Pixels gt: 15625
+Pixels results: 2044
+pixelTP: 779
+pixelFP: 1265
+pixelFN: 14846
+pixelTN: 429574
+
+num pixels: 446464
+Precision: 0.381115
+Recall: 0.049856
+F-Measure: 0.088177
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0014_var_occ.png
+Pixels gt: 111108
+Pixels results: 69448
+pixelTP: 35141
+pixelFP: 34307
+pixelFN: 75967
+pixelTN: 301049
+
+num pixels: 446464
+Precision: 0.506005
+Recall: 0.316278
+F-Measure: 0.389253
+
+../Results/Experiment_0/Sintel_final/ambush_7/frame_0037_var_occ.png
+Pixels gt: 12855
+Pixels results: 13587
+pixelTP: 3810
+pixelFP: 9777
+pixelFN: 9045
+pixelTN: 423832
+
+num pixels: 446464
+Precision: 0.280415
+Recall: 0.296383
+F-Measure: 0.288178
+
+../Results/Experiment_0/Sintel_final/alley_2/frame_0004_var_occ.png
+Pixels gt: 4137
+Pixels results: 1728
+pixelTP: 1031
+pixelFP: 697
+pixelFN: 3106
+pixelTN: 441630
+
+num pixels: 446464
+Precision: 0.596644
+Recall: 0.249214
+F-Measure: 0.351577
+
+../Results/Experiment_0/Sintel_clean/ambush_4/frame_0018_var_occ.png
+Pixels gt: 48545
+Pixels results: 41660
+pixelTP: 15779
+pixelFP: 25881
+pixelFN: 32766
+pixelTN: 372038
+
+num pixels: 446464
+Precision: 0.378757
+Recall: 0.325039
+F-Measure: 0.349848
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0020_var_occ.png
+Pixels gt: 1781
+Pixels results: 350
+pixelTP: 7
+pixelFP: 343
+pixelFN: 1774
+pixelTN: 444340
+
+num pixels: 446464
+Precision: 0.02
+Recall: 0.00393038
+F-Measure: 0.00656969
+
+../Results/Experiment_0/Sintel_clean/bandage_2/frame_0021_var_occ.png
+Pixels gt: 14289
+Pixels results: 844
+pixelTP: 464
+pixelFP: 380
+pixelFN: 13825
+pixelTN: 431795
+
+num pixels: 446464
+Precision: 0.549763
+Recall: 0.0324725
+F-Measure: 0.0613229
+
+../Results/Experiment_0/Sintel_final/ambush_2/frame_0003_var_occ.png
+Pixels gt: 119228
+Pixels results: 160532
+pixelTP: 50343
+pixelFP: 110189
+pixelFN: 68885
+pixelTN: 217047
+
+num pixels: 446464
+Precision: 0.313601
+Recall: 0.422241
+F-Measure: 0.359901
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0048_var_occ.png
+Pixels gt: 78202
+Pixels results: 41703
+pixelTP: 30326
+pixelFP: 11377
+pixelFN: 47876
+pixelTN: 356885
+
+num pixels: 446464
+Precision: 0.72719
+Recall: 0.387791
+F-Measure: 0.505834
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0017_var_occ.png
+Pixels gt: 63822
+Pixels results: 29210
+pixelTP: 9080
+pixelFP: 20130
+pixelFN: 54742
+pixelTN: 362512
+
+num pixels: 446464
+Precision: 0.310852
+Recall: 0.142271
+F-Measure: 0.195202
+
+../Results/Experiment_0/Sintel_final/temple_2/frame_0020_var_occ.png
+Pixels gt: 40807
+Pixels results: 12018
+pixelTP: 6886
+pixelFP: 5132
+pixelFN: 33921
+pixelTN: 400525
+
+num pixels: 446464
+Precision: 0.572974
+Recall: 0.168746
+F-Measure: 0.26071
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0028_var_occ.png
+Pixels gt: 1698
+Pixels results: 535
+pixelTP: 9
+pixelFP: 526
+pixelFN: 1689
+pixelTN: 444240
+
+num pixels: 446464
+Precision: 0.0168224
+Recall: 0.00530035
+F-Measure: 0.0080609
+
+../Results/Experiment_0/Sintel_clean/sleeping_1/frame_0031_var_occ.png
+Pixels gt: 1496
+Pixels results: 427
+pixelTP: 34
+pixelFP: 393
+pixelFN: 1462
+pixelTN: 444575
+
+num pixels: 446464
+Precision: 0.0796253
+Recall: 0.0227273
+F-Measure: 0.0353614
+
+../Results/Experiment_0/Sintel_clean/ambush_7/frame_0017_var_occ.png
+Pixels gt: 1993
+Pixels results: 28
+pixelTP: 0
+pixelFP: 28
+pixelFN: 1993
+pixelTN: 444443
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0047_var_occ.png
+Pixels gt: 4623
+Pixels results: 174
+pixelTP: 72
+pixelFP: 102
+pixelFN: 4551
+pixelTN: 441739
+
+num pixels: 446464
+Precision: 0.413793
+Recall: 0.0155743
+F-Measure: 0.0300188
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0025_var_occ.png
+Pixels gt: 29443
+Pixels results: 8320
+pixelTP: 3754
+pixelFP: 4566
+pixelFN: 25689
+pixelTN: 412455
+
+num pixels: 446464
+Precision: 0.451202
+Recall: 0.127501
+F-Measure: 0.198819
+
+../Results/Experiment_0/Sintel_clean/bandage_2/frame_0009_var_occ.png
+Pixels gt: 20806
+Pixels results: 2613
+pixelTP: 2433
+pixelFP: 180
+pixelFN: 18373
+pixelTN: 425478
+
+num pixels: 446464
+Precision: 0.931114
+Recall: 0.116937
+F-Measure: 0.20778
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0035_var_occ.png
+Pixels gt: 7023
+Pixels results: 349
+pixelTP: 47
+pixelFP: 302
+pixelFN: 6976
+pixelTN: 439139
+
+num pixels: 446464
+Precision: 0.13467
+Recall: 0.0066923
+F-Measure: 0.0127509
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0029_var_occ.png
+Pixels gt: 63574
+Pixels results: 30136
+pixelTP: 15352
+pixelFP: 14784
+pixelFN: 48222
+pixelTN: 368106
+
+num pixels: 446464
+Precision: 0.509424
+Recall: 0.241482
+F-Measure: 0.327649
+
+../Results/Experiment_0/Sintel_clean/temple_2/frame_0003_var_occ.png
+Pixels gt: 27050
+Pixels results: 3977
+pixelTP: 2877
+pixelFP: 1100
+pixelFN: 24173
+pixelTN: 418314
+
+num pixels: 446464
+Precision: 0.72341
+Recall: 0.106359
+F-Measure: 0.185451
+
+../Results/Experiment_0/Sintel_clean/alley_2/frame_0037_var_occ.png
+Pixels gt: 10734
+Pixels results: 2101
+pixelTP: 912
+pixelFP: 1189
+pixelFN: 9822
+pixelTN: 434541
+
+num pixels: 446464
+Precision: 0.434079
+Recall: 0.0849637
+F-Measure: 0.142111
+
+../Results/Experiment_0/Sintel_clean/bandage_1/frame_0005_var_occ.png
+Pixels gt: 17236
+Pixels results: 2322
+pixelTP: 1629
+pixelFP: 693
+pixelFN: 15607
+pixelTN: 428535
+
+num pixels: 446464
+Precision: 0.70155
+Recall: 0.0945115
+F-Measure: 0.166581
+
+../Results/Experiment_0/Sintel_clean/bandage_2/frame_0025_var_occ.png
+Pixels gt: 11476
+Pixels results: 648
+pixelTP: 331
+pixelFP: 317
+pixelFN: 11145
+pixelTN: 434671
+
+num pixels: 446464
+Precision: 0.510802
+Recall: 0.0288428
+F-Measure: 0.0546024
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0013_var_occ.png
+Pixels gt: 20001
+Pixels results: 7
+pixelTP: 3
+pixelFP: 4
+pixelFN: 19998
+pixelTN: 426459
+
+num pixels: 446464
+Precision: 0.428571
+Recall: 0.000149992
+F-Measure: 0.00029988
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0041_var_occ.png
+Pixels gt: 7439
+Pixels results: 46
+pixelTP: 0
+pixelFP: 46
+pixelFN: 7439
+pixelTN: 438979
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0007_var_occ.png
+Pixels gt: 1428
+Pixels results: 482
+pixelTP: 40
+pixelFP: 442
+pixelFN: 1388
+pixelTN: 444594
+
+num pixels: 446464
+Precision: 0.0829876
+Recall: 0.0280112
+F-Measure: 0.0418848
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0028_var_occ.png
+Pixels gt: 19630
+Pixels results: 2032
+pixelTP: 985
+pixelFP: 1047
+pixelFN: 18645
+pixelTN: 425787
+
+num pixels: 446464
+Precision: 0.484744
+Recall: 0.0501783
+F-Measure: 0.0909427
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0037_var_occ.png
+Pixels gt: 7206
+Pixels results: 9242
+pixelTP: 15
+pixelFP: 9227
+pixelFN: 7191
+pixelTN: 430031
+
+num pixels: 446464
+Precision: 0.00162303
+Recall: 0.0020816
+F-Measure: 0.00182393
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0037_var_occ.png
+Pixels gt: 20448
+Pixels results: 2320
+pixelTP: 965
+pixelFP: 1355
+pixelFN: 19483
+pixelTN: 424661
+
+num pixels: 446464
+Precision: 0.415948
+Recall: 0.0471929
+F-Measure: 0.0847681
+
+../Results/Experiment_0/Sintel_final/ambush_2/frame_0008_var_occ.png
+Pixels gt: 87537
+Pixels results: 104851
+pixelTP: 52304
+pixelFP: 52547
+pixelFN: 35233
+pixelTN: 306380
+
+num pixels: 446464
+Precision: 0.498841
+Recall: 0.597507
+F-Measure: 0.543735
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0024_var_occ.png
+Pixels gt: 28325
+Pixels results: 8572
+pixelTP: 6964
+pixelFP: 1608
+pixelFN: 21361
+pixelTN: 416531
+
+num pixels: 446464
+Precision: 0.812413
+Recall: 0.245861
+F-Measure: 0.377483
+
+../Results/Experiment_0/Sintel_clean/ambush_7/frame_0004_var_occ.png
+Pixels gt: 3486
+Pixels results: 4418
+pixelTP: 2556
+pixelFP: 1862
+pixelFN: 930
+pixelTN: 441116
+
+num pixels: 446464
+Precision: 0.578542
+Recall: 0.733219
+F-Measure: 0.646761
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0014_var_occ.png
+Pixels gt: 18393
+Pixels results: 1121
+pixelTP: 636
+pixelFP: 485
+pixelFN: 17757
+pixelTN: 427586
+
+num pixels: 446464
+Precision: 0.567351
+Recall: 0.0345784
+F-Measure: 0.065184
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0044_var_occ.png
+Pixels gt: 1076
+Pixels results: 261
+pixelTP: 44
+pixelFP: 217
+pixelFN: 1032
+pixelTN: 445171
+
+num pixels: 446464
+Precision: 0.168582
+Recall: 0.0408922
+F-Measure: 0.065819
+
+../Results/Experiment_0/Sintel_clean/alley_2/frame_0002_var_occ.png
+Pixels gt: 3652
+Pixels results: 939
+pixelTP: 681
+pixelFP: 258
+pixelFN: 2971
+pixelTN: 442554
+
+num pixels: 446464
+Precision: 0.72524
+Recall: 0.186473
+F-Measure: 0.296667
+
+../Results/Experiment_0/Sintel_clean/cave_4/frame_0022_var_occ.png
+Pixels gt: 30021
+Pixels results: 3088
+pixelTP: 1575
+pixelFP: 1513
+pixelFN: 28446
+pixelTN: 414930
+
+num pixels: 446464
+Precision: 0.510039
+Recall: 0.0524633
+F-Measure: 0.0951403
+
+../Results/Experiment_0/Sintel_clean/ambush_7/frame_0023_var_occ.png
+Pixels gt: 2648
+Pixels results: 161
+pixelTP: 115
+pixelFP: 46
+pixelFN: 2533
+pixelTN: 443770
+
+num pixels: 446464
+Precision: 0.714286
+Recall: 0.043429
+F-Measure: 0.0818797
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0007_var_occ.png
+Pixels gt: 23142
+Pixels results: 7584
+pixelTP: 5963
+pixelFP: 1621
+pixelFN: 17179
+pixelTN: 421701
+
+num pixels: 446464
+Precision: 0.786261
+Recall: 0.25767
+F-Measure: 0.38814
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0011_var_occ.png
+Pixels gt: 17678
+Pixels results: 898
+pixelTP: 421
+pixelFP: 477
+pixelFN: 17257
+pixelTN: 428309
+
+num pixels: 446464
+Precision: 0.46882
+Recall: 0.0238149
+F-Measure: 0.0453273
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0007_var_occ.png
+Pixels gt: 17027
+Pixels results: 2
+pixelTP: 2
+pixelFP: 0
+pixelFN: 17025
+pixelTN: 429437
+
+num pixels: 446464
+Precision: 1
+Recall: 0.000117461
+F-Measure: 0.000234893
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0045_var_occ.png
+Pixels gt: 25857
+Pixels results: 5881
+pixelTP: 2987
+pixelFP: 2894
+pixelFN: 22870
+pixelTN: 417713
+
+num pixels: 446464
+Precision: 0.507907
+Recall: 0.11552
+F-Measure: 0.188229
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0013_var_occ.png
+Pixels gt: 3158
+Pixels results: 130
+pixelTP: 5
+pixelFP: 125
+pixelFN: 3153
+pixelTN: 443181
+
+num pixels: 446464
+Precision: 0.0384615
+Recall: 0.00158328
+F-Measure: 0.00304136
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0018_var_occ.png
+Pixels gt: 1734
+Pixels results: 489
+pixelTP: 42
+pixelFP: 447
+pixelFN: 1692
+pixelTN: 444283
+
+num pixels: 446464
+Precision: 0.0858896
+Recall: 0.0242215
+F-Measure: 0.0377868
+
+../Results/Experiment_0/Sintel_final/bamboo_2/frame_0011_var_occ.png
+Pixels gt: 14856
+Pixels results: 3146
+pixelTP: 2017
+pixelFP: 1129
+pixelFN: 12839
+pixelTN: 430479
+
+num pixels: 446464
+Precision: 0.641132
+Recall: 0.13577
+F-Measure: 0.224086
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0015_var_occ.png
+Pixels gt: 8401
+Pixels results: 1615
+pixelTP: 150
+pixelFP: 1465
+pixelFN: 8251
+pixelTN: 436598
+
+num pixels: 446464
+Precision: 0.0928793
+Recall: 0.017855
+F-Measure: 0.0299521
+
+../Results/Experiment_0/Sintel_final/shaman_2/frame_0042_var_occ.png
+Pixels gt: 5794
+Pixels results: 73
+pixelTP: 9
+pixelFP: 64
+pixelFN: 5785
+pixelTN: 440606
+
+num pixels: 446464
+Precision: 0.123288
+Recall: 0.00155333
+F-Measure: 0.00306801
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0018_var_occ.png
+Pixels gt: 85106
+Pixels results: 22063
+pixelTP: 14599
+pixelFP: 7464
+pixelFN: 70507
+pixelTN: 353894
+
+num pixels: 446464
+Precision: 0.661696
+Recall: 0.171539
+F-Measure: 0.272448
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0010_var_occ.png
+Pixels gt: 18052
+Pixels results: 1738
+pixelTP: 873
+pixelFP: 865
+pixelFN: 17179
+pixelTN: 427547
+
+num pixels: 446464
+Precision: 0.502302
+Recall: 0.0483603
+F-Measure: 0.0882264
+
+../Results/Experiment_0/Sintel_clean/bandage_2/frame_0014_var_occ.png
+Pixels gt: 17960
+Pixels results: 689
+pixelTP: 470
+pixelFP: 219
+pixelFN: 17490
+pixelTN: 428285
+
+num pixels: 446464
+Precision: 0.682148
+Recall: 0.0261693
+F-Measure: 0.0504048
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0038_var_occ.png
+Pixels gt: 7261
+Pixels results: 15366
+pixelTP: 31
+pixelFP: 15335
+pixelFN: 7230
+pixelTN: 423868
+
+num pixels: 446464
+Precision: 0.00201744
+Recall: 0.00426938
+F-Measure: 0.00274009
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0030_var_occ.png
+Pixels gt: 1611
+Pixels results: 515
+pixelTP: 21
+pixelFP: 494
+pixelFN: 1590
+pixelTN: 444359
+
+num pixels: 446464
+Precision: 0.0407767
+Recall: 0.0130354
+F-Measure: 0.0197554
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0010_var_occ.png
+Pixels gt: 3002
+Pixels results: 97
+pixelTP: 0
+pixelFP: 97
+pixelFN: 3002
+pixelTN: 443365
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_final/mountain_1/frame_0040_var_occ.png
+Pixels gt: 3124
+Pixels results: 302
+pixelTP: 179
+pixelFP: 123
+pixelFN: 2945
+pixelTN: 443217
+
+num pixels: 446464
+Precision: 0.592715
+Recall: 0.0572983
+F-Measure: 0.104495
+
+../Results/Experiment_0/Sintel_final/cave_2/frame_0040_var_occ.png
+Pixels gt: 59179
+Pixels results: 32158
+pixelTP: 7626
+pixelFP: 24532
+pixelFN: 51553
+pixelTN: 362753
+
+num pixels: 446464
+Precision: 0.237142
+Recall: 0.128863
+F-Measure: 0.166986
+
+../Results/Experiment_0/Sintel_clean/ambush_5/frame_0007_var_occ.png
+Pixels gt: 19496
+Pixels results: 2803
+pixelTP: 1807
+pixelFP: 996
+pixelFN: 17689
+pixelTN: 425972
+
+num pixels: 446464
+Precision: 0.644666
+Recall: 0.0926857
+F-Measure: 0.16207
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0019_var_occ.png
+Pixels gt: 14061
+Pixels results: 1176
+pixelTP: 923
+pixelFP: 253
+pixelFN: 13138
+pixelTN: 432150
+
+num pixels: 446464
+Precision: 0.784864
+Recall: 0.0656426
+F-Measure: 0.121152
+
+../Results/Experiment_0/Sintel_clean/sleeping_1/frame_0011_var_occ.png
+Pixels gt: 1577
+Pixels results: 187
+pixelTP: 0
+pixelFP: 187
+pixelFN: 1577
+pixelTN: 444700
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_final/temple_3/frame_0009_var_occ.png
+Pixels gt: 10351
+Pixels results: 5512
+pixelTP: 2808
+pixelFP: 2704
+pixelFN: 7543
+pixelTN: 433409
+
+num pixels: 446464
+Precision: 0.509434
+Recall: 0.271278
+F-Measure: 0.354031
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0034_var_occ.png
+Pixels gt: 27026
+Pixels results: 3862
+pixelTP: 2826
+pixelFP: 1036
+pixelFN: 24200
+pixelTN: 418402
+
+num pixels: 446464
+Precision: 0.731745
+Recall: 0.104566
+F-Measure: 0.182984
+
+../Results/Experiment_0/Sintel_clean/alley_2/frame_0045_var_occ.png
+Pixels gt: 5265
+Pixels results: 2226
+pixelTP: 442
+pixelFP: 1784
+pixelFN: 4823
+pixelTN: 439415
+
+num pixels: 446464
+Precision: 0.198562
+Recall: 0.0839506
+F-Measure: 0.118008
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0041_var_occ.png
+Pixels gt: 41041
+Pixels results: 26852
+pixelTP: 17145
+pixelFP: 9707
+pixelFN: 23896
+pixelTN: 395716
+
+num pixels: 446464
+Precision: 0.6385
+Recall: 0.417753
+F-Measure: 0.505059
+
+../Results/Experiment_0/Sintel_clean/mountain_1/frame_0005_var_occ.png
+Pixels gt: 12228
+Pixels results: 1772
+pixelTP: 1234
+pixelFP: 538
+pixelFN: 10994
+pixelTN: 433698
+
+num pixels: 446464
+Precision: 0.696388
+Recall: 0.100916
+F-Measure: 0.176286
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0040_var_occ.png
+Pixels gt: 7493
+Pixels results: 14367
+pixelTP: 0
+pixelFP: 14367
+pixelFN: 7493
+pixelTN: 424604
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_final/bamboo_2/frame_0033_var_occ.png
+Pixels gt: 24582
+Pixels results: 2947
+pixelTP: 2301
+pixelFP: 646
+pixelFN: 22281
+pixelTN: 421236
+
+num pixels: 446464
+Precision: 0.780794
+Recall: 0.0936051
+F-Measure: 0.167169
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0019_var_occ.png
+Pixels gt: 20050
+Pixels results: 7376
+pixelTP: 3812
+pixelFP: 3564
+pixelFN: 16238
+pixelTN: 422850
+
+num pixels: 446464
+Precision: 0.516811
+Recall: 0.190125
+F-Measure: 0.277984
+
+../Results/Experiment_0/Sintel_clean/mountain_1/frame_0009_var_occ.png
+Pixels gt: 13672
+Pixels results: 1552
+pixelTP: 1089
+pixelFP: 463
+pixelFN: 12583
+pixelTN: 432329
+
+num pixels: 446464
+Precision: 0.701675
+Recall: 0.0796518
+F-Measure: 0.143064
+
+../Results/Experiment_0/Sintel_final/temple_3/frame_0042_var_occ.png
+Pixels gt: 96526
+Pixels results: 103312
+pixelTP: 24557
+pixelFP: 78755
+pixelFN: 71969
+pixelTN: 271183
+
+num pixels: 446464
+Precision: 0.237697
+Recall: 0.254408
+F-Measure: 0.245769
+
+../Results/Experiment_0/Sintel_clean/market_6/frame_0004_var_occ.png
+Pixels gt: 92711
+Pixels results: 20756
+pixelTP: 16935
+pixelFP: 3821
+pixelFN: 75776
+pixelTN: 349932
+
+num pixels: 446464
+Precision: 0.815909
+Recall: 0.182664
+F-Measure: 0.298501
+
+../Results/Experiment_0/Sintel_final/ambush_4/frame_0019_var_occ.png
+Pixels gt: 32232
+Pixels results: 47059
+pixelTP: 12112
+pixelFP: 34947
+pixelFN: 20120
+pixelTN: 379285
+
+num pixels: 446464
+Precision: 0.257379
+Recall: 0.375776
+F-Measure: 0.305508
+
+../Results/Experiment_0/Sintel_final/market_5/frame_0040_var_occ.png
+Pixels gt: 33097
+Pixels results: 29140
+pixelTP: 13362
+pixelFP: 15778
+pixelFN: 19735
+pixelTN: 397589
+
+num pixels: 446464
+Precision: 0.458545
+Recall: 0.403722
+F-Measure: 0.429391
+
+../Results/Experiment_0/Sintel_final/market_2/frame_0034_var_occ.png
+Pixels gt: 12998
+Pixels results: 3714
+pixelTP: 1630
+pixelFP: 2084
+pixelFN: 11368
+pixelTN: 431382
+
+num pixels: 446464
+Precision: 0.43888
+Recall: 0.125404
+F-Measure: 0.195069
+
+../Results/Experiment_0/Sintel_clean/sleeping_2/frame_0024_var_occ.png
+Pixels gt: 3761
+Pixels results: 366
+pixelTP: 9
+pixelFP: 357
+pixelFN: 3752
+pixelTN: 442346
+
+num pixels: 446464
+Precision: 0.0245902
+Recall: 0.00239298
+F-Measure: 0.00436152
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0045_var_occ.png
+Pixels gt: 25695
+Pixels results: 1788
+pixelTP: 1136
+pixelFP: 652
+pixelFN: 24559
+pixelTN: 420117
+
+num pixels: 446464
+Precision: 0.635347
+Recall: 0.0442109
+F-Measure: 0.0826693
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0011_var_occ.png
+Pixels gt: 53694
+Pixels results: 25960
+pixelTP: 12421
+pixelFP: 13539
+pixelFN: 41273
+pixelTN: 379231
+
+num pixels: 446464
+Precision: 0.478467
+Recall: 0.231329
+F-Measure: 0.311874
+
+../Results/Experiment_0/Sintel_clean/temple_3/frame_0035_var_occ.png
+Pixels gt: 111874
+Pixels results: 65728
+pixelTP: 44848
+pixelFP: 20880
+pixelFN: 67026
+pixelTN: 313710
+
+num pixels: 446464
+Precision: 0.682327
+Recall: 0.40088
+F-Measure: 0.505039
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0015_var_occ.png
+Pixels gt: 8401
+Pixels results: 923
+pixelTP: 524
+pixelFP: 399
+pixelFN: 7877
+pixelTN: 437664
+
+num pixels: 446464
+Precision: 0.567714
+Recall: 0.0623735
+F-Measure: 0.112398
+
+../Results/Experiment_0/Sintel_final/ambush_7/frame_0034_var_occ.png
+Pixels gt: 5002
+Pixels results: 1055
+pixelTP: 644
+pixelFP: 411
+pixelFN: 4358
+pixelTN: 441051
+
+num pixels: 446464
+Precision: 0.610427
+Recall: 0.128749
+F-Measure: 0.212647
+
+../Results/Experiment_0/Sintel_clean/alley_2/frame_0038_var_occ.png
+Pixels gt: 9285
+Pixels results: 2195
+pixelTP: 787
+pixelFP: 1408
+pixelFN: 8498
+pixelTN: 435771
+
+num pixels: 446464
+Precision: 0.358542
+Recall: 0.0847604
+F-Measure: 0.137108
+
+../Results/Experiment_0/Sintel_final/cave_2/frame_0029_var_occ.png
+Pixels gt: 113615
+Pixels results: 76434
+pixelTP: 29989
+pixelFP: 46445
+pixelFN: 83626
+pixelTN: 286404
+
+num pixels: 446464
+Precision: 0.392352
+Recall: 0.263953
+F-Measure: 0.315592
+
+../Results/Experiment_0/Sintel_final/temple_3/frame_0046_var_occ.png
+Pixels gt: 75192
+Pixels results: 38965
+pixelTP: 10053
+pixelFP: 28912
+pixelFN: 65139
+pixelTN: 342360
+
+num pixels: 446464
+Precision: 0.258001
+Recall: 0.133698
+F-Measure: 0.176126
+
+../Results/Experiment_0/Sintel_clean/temple_2/frame_0030_var_occ.png
+Pixels gt: 34644
+Pixels results: 6388
+pixelTP: 5778
+pixelFP: 610
+pixelFN: 28866
+pixelTN: 411210
+
+num pixels: 446464
+Precision: 0.904508
+Recall: 0.166782
+F-Measure: 0.281634
+
+../Results/Experiment_0/Sintel_final/mountain_1/frame_0031_var_occ.png
+Pixels gt: 2061
+Pixels results: 658
+pixelTP: 150
+pixelFP: 508
+pixelFN: 1911
+pixelTN: 443895
+
+num pixels: 446464
+Precision: 0.227964
+Recall: 0.0727802
+F-Measure: 0.110335
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0015_var_occ.png
+Pixels gt: 93834
+Pixels results: 65941
+pixelTP: 37134
+pixelFP: 28807
+pixelFN: 56700
+pixelTN: 323823
+
+num pixels: 446464
+Precision: 0.56314
+Recall: 0.395741
+F-Measure: 0.464829
+
+../Results/Experiment_0/Sintel_clean/bandage_1/frame_0015_var_occ.png
+Pixels gt: 19057
+Pixels results: 5029
+pixelTP: 2667
+pixelFP: 2362
+pixelFN: 16390
+pixelTN: 425045
+
+num pixels: 446464
+Precision: 0.530324
+Recall: 0.139949
+F-Measure: 0.221456
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0012_var_occ.png
+Pixels gt: 18062
+Pixels results: 1279
+pixelTP: 560
+pixelFP: 719
+pixelFN: 17502
+pixelTN: 427683
+
+num pixels: 446464
+Precision: 0.437842
+Recall: 0.0310043
+F-Measure: 0.0579081
+
+../Results/Experiment_0/Sintel_final/ambush_4/frame_0021_var_occ.png
+Pixels gt: 68742
+Pixels results: 87451
+pixelTP: 25386
+pixelFP: 62065
+pixelFN: 43356
+pixelTN: 315657
+
+num pixels: 446464
+Precision: 0.290288
+Recall: 0.369294
+F-Measure: 0.325059
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0021_var_occ.png
+Pixels gt: 20392
+Pixels results: 12784
+pixelTP: 4381
+pixelFP: 8403
+pixelFN: 16011
+pixelTN: 417669
+
+num pixels: 446464
+Precision: 0.342694
+Recall: 0.214839
+F-Measure: 0.264107
+
+../Results/Experiment_0/Sintel_clean/alley_2/frame_0009_var_occ.png
+Pixels gt: 6493
+Pixels results: 2358
+pixelTP: 1997
+pixelFP: 361
+pixelFN: 4496
+pixelTN: 439610
+
+num pixels: 446464
+Precision: 0.846904
+Recall: 0.307562
+F-Measure: 0.451248
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0022_var_occ.png
+Pixels gt: 107381
+Pixels results: 91494
+pixelTP: 51663
+pixelFP: 39831
+pixelFN: 55718
+pixelTN: 299252
+
+num pixels: 446464
+Precision: 0.56466
+Recall: 0.481119
+F-Measure: 0.519552
+
+../Results/Experiment_0/Sintel_clean/bandage_1/frame_0046_var_occ.png
+Pixels gt: 15783
+Pixels results: 3152
+pixelTP: 2618
+pixelFP: 534
+pixelFN: 13165
+pixelTN: 430147
+
+num pixels: 446464
+Precision: 0.830584
+Recall: 0.165875
+F-Measure: 0.276525
+
+../Results/Experiment_0/Sintel_final/ambush_7/frame_0022_var_occ.png
+Pixels gt: 2596
+Pixels results: 1026
+pixelTP: 135
+pixelFP: 891
+pixelFN: 2461
+pixelTN: 442977
+
+num pixels: 446464
+Precision: 0.131579
+Recall: 0.0520031
+F-Measure: 0.0745445
+
+../Results/Experiment_0/Sintel_clean/ambush_6/frame_0015_var_occ.png
+Pixels gt: 161533
+Pixels results: 99151
+pixelTP: 57540
+pixelFP: 41611
+pixelFN: 103993
+pixelTN: 243320
+
+num pixels: 446464
+Precision: 0.580327
+Recall: 0.356212
+F-Measure: 0.441454
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0036_var_occ.png
+Pixels gt: 7284
+Pixels results: 2695
+pixelTP: 2
+pixelFP: 2693
+pixelFN: 7282
+pixelTN: 436487
+
+num pixels: 446464
+Precision: 0.000742115
+Recall: 0.000274574
+F-Measure: 0.000400842
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0022_var_occ.png
+Pixels gt: 6138
+Pixels results: 323
+pixelTP: 25
+pixelFP: 298
+pixelFN: 6113
+pixelTN: 440028
+
+num pixels: 446464
+Precision: 0.0773994
+Recall: 0.00407299
+F-Measure: 0.00773874
+
+../Results/Experiment_0/Sintel_clean/temple_2/frame_0045_var_occ.png
+Pixels gt: 15116
+Pixels results: 848
+pixelTP: 677
+pixelFP: 171
+pixelFN: 14439
+pixelTN: 431177
+
+num pixels: 446464
+Precision: 0.798349
+Recall: 0.044787
+F-Measure: 0.0848158
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0011_var_occ.png
+Pixels gt: 98801
+Pixels results: 61846
+pixelTP: 37979
+pixelFP: 23867
+pixelFN: 60822
+pixelTN: 323796
+
+num pixels: 446464
+Precision: 0.61409
+Recall: 0.384399
+F-Measure: 0.472825
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0028_var_occ.png
+Pixels gt: 19630
+Pixels results: 1811
+pixelTP: 1111
+pixelFP: 700
+pixelFN: 18519
+pixelTN: 426134
+
+num pixels: 446464
+Precision: 0.613473
+Recall: 0.056597
+F-Measure: 0.103633
+
+../Results/Experiment_0/Sintel_clean/ambush_5/frame_0026_var_occ.png
+Pixels gt: 43341
+Pixels results: 10003
+pixelTP: 8073
+pixelFP: 1930
+pixelFN: 35268
+pixelTN: 401193
+
+num pixels: 446464
+Precision: 0.807058
+Recall: 0.186267
+F-Measure: 0.302677
+
+../Results/Experiment_0/Sintel_final/alley_2/frame_0034_var_occ.png
+Pixels gt: 12488
+Pixels results: 3387
+pixelTP: 1508
+pixelFP: 1879
+pixelFN: 10980
+pixelTN: 432097
+
+num pixels: 446464
+Precision: 0.445232
+Recall: 0.120756
+F-Measure: 0.189984
+
+../Results/Experiment_0/Sintel_clean/ambush_4/frame_0014_var_occ.png
+Pixels gt: 81661
+Pixels results: 51171
+pixelTP: 24175
+pixelFP: 26996
+pixelFN: 57486
+pixelTN: 337807
+
+num pixels: 446464
+Precision: 0.472436
+Recall: 0.296041
+F-Measure: 0.363994
+
+../Results/Experiment_0/Sintel_clean/mountain_1/frame_0046_var_occ.png
+Pixels gt: 4843
+Pixels results: 815
+pixelTP: 499
+pixelFP: 316
+pixelFN: 4344
+pixelTN: 441305
+
+num pixels: 446464
+Precision: 0.61227
+Recall: 0.103035
+F-Measure: 0.176387
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0004_var_occ.png
+Pixels gt: 92711
+Pixels results: 39321
+pixelTP: 26233
+pixelFP: 13088
+pixelFN: 66478
+pixelTN: 340665
+
+num pixels: 446464
+Precision: 0.66715
+Recall: 0.282955
+F-Measure: 0.397373
+
+../Results/Experiment_0/Sintel_clean/temple_2/frame_0041_var_occ.png
+Pixels gt: 14263
+Pixels results: 938
+pixelTP: 730
+pixelFP: 208
+pixelFN: 13533
+pixelTN: 431993
+
+num pixels: 446464
+Precision: 0.778252
+Recall: 0.0511814
+F-Measure: 0.0960463
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0011_var_occ.png
+Pixels gt: 17678
+Pixels results: 884
+pixelTP: 537
+pixelFP: 347
+pixelFN: 17141
+pixelTN: 428439
+
+num pixels: 446464
+Precision: 0.607466
+Recall: 0.0303767
+F-Measure: 0.0578601
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0015_var_occ.png
+Pixels gt: 19718
+Pixels results: 2034
+pixelTP: 1143
+pixelFP: 891
+pixelFN: 18575
+pixelTN: 425855
+
+num pixels: 446464
+Precision: 0.561947
+Recall: 0.0579673
+F-Measure: 0.105094
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0047_var_occ.png
+Pixels gt: 8559
+Pixels results: 655
+pixelTP: 74
+pixelFP: 581
+pixelFN: 8485
+pixelTN: 437324
+
+num pixels: 446464
+Precision: 0.112977
+Recall: 0.00864587
+F-Measure: 0.0160625
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0005_var_occ.png
+Pixels gt: 11891
+Pixels results: 529
+pixelTP: 166
+pixelFP: 363
+pixelFN: 11725
+pixelTN: 434210
+
+num pixels: 446464
+Precision: 0.3138
+Recall: 0.0139601
+F-Measure: 0.0267311
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0048_var_occ.png
+Pixels gt: 94143
+Pixels results: 51076
+pixelTP: 21217
+pixelFP: 29859
+pixelFN: 72926
+pixelTN: 322462
+
+num pixels: 446464
+Precision: 0.415401
+Recall: 0.22537
+F-Measure: 0.292207
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0023_var_occ.png
+Pixels gt: 105835
+Pixels results: 60122
+pixelTP: 29566
+pixelFP: 30556
+pixelFN: 76269
+pixelTN: 310073
+
+num pixels: 446464
+Precision: 0.491767
+Recall: 0.279359
+F-Measure: 0.356309
+
+../Results/Experiment_0/Sintel_final/market_5/frame_0039_var_occ.png
+Pixels gt: 30124
+Pixels results: 20614
+pixelTP: 8278
+pixelFP: 12336
+pixelFN: 21846
+pixelTN: 404004
+
+num pixels: 446464
+Precision: 0.401572
+Recall: 0.274797
+F-Measure: 0.326304
+
+../Results/Experiment_0/Sintel_clean/market_5/frame_0010_var_occ.png
+Pixels gt: 113866
+Pixels results: 57792
+pixelTP: 28256
+pixelFP: 29536
+pixelFN: 85610
+pixelTN: 303062
+
+num pixels: 446464
+Precision: 0.488926
+Recall: 0.248151
+F-Measure: 0.329213
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0031_var_occ.png
+Pixels gt: 6067
+Pixels results: 370
+pixelTP: 5
+pixelFP: 365
+pixelFN: 6062
+pixelTN: 440032
+
+num pixels: 446464
+Precision: 0.0135135
+Recall: 0.000824131
+F-Measure: 0.00155352
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0039_var_occ.png
+Pixels gt: 3886
+Pixels results: 144
+pixelTP: 28
+pixelFP: 116
+pixelFN: 3858
+pixelTN: 442462
+
+num pixels: 446464
+Precision: 0.194444
+Recall: 0.00720535
+F-Measure: 0.0138958
+
+../Results/Experiment_0/Sintel_clean/bamboo_1/frame_0009_var_occ.png
+Pixels gt: 17386
+Pixels results: 1296
+pixelTP: 859
+pixelFP: 437
+pixelFN: 16527
+pixelTN: 428641
+
+num pixels: 446464
+Precision: 0.662809
+Recall: 0.0494076
+F-Measure: 0.0919602
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0032_var_occ.png
+Pixels gt: 24565
+Pixels results: 292
+pixelTP: 20
+pixelFP: 272
+pixelFN: 24545
+pixelTN: 421627
+
+num pixels: 446464
+Precision: 0.0684932
+Recall: 0.000814167
+F-Measure: 0.0016092
+
+../Results/Experiment_0/Sintel_final/alley_1/frame_0018_var_occ.png
+Pixels gt: 11820
+Pixels results: 211
+pixelTP: 168
+pixelFP: 43
+pixelFN: 11652
+pixelTN: 434601
+
+num pixels: 446464
+Precision: 0.796209
+Recall: 0.0142132
+F-Measure: 0.0279279
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0008_var_occ.png
+Pixels gt: 14026
+Pixels results: 860
+pixelTP: 681
+pixelFP: 179
+pixelFN: 13345
+pixelTN: 432259
+
+num pixels: 446464
+Precision: 0.79186
+Recall: 0.0485527
+F-Measure: 0.0914954
+
+../Results/Experiment_0/Sintel_clean/market_6/frame_0010_var_occ.png
+Pixels gt: 99103
+Pixels results: 23946
+pixelTP: 14909
+pixelFP: 9037
+pixelFN: 84194
+pixelTN: 338324
+
+num pixels: 446464
+Precision: 0.622609
+Recall: 0.150439
+F-Measure: 0.242326
+
+../Results/Experiment_0/Sintel_final/bamboo_2/frame_0042_var_occ.png
+Pixels gt: 40242
+Pixels results: 11281
+pixelTP: 6048
+pixelFP: 5233
+pixelFN: 34194
+pixelTN: 400989
+
+num pixels: 446464
+Precision: 0.536123
+Recall: 0.150291
+F-Measure: 0.234769
+
+../Results/Experiment_0/Sintel_final/cave_2/frame_0030_var_occ.png
+Pixels gt: 135755
+Pixels results: 77653
+pixelTP: 51089
+pixelFP: 26564
+pixelFN: 84666
+pixelTN: 284145
+
+num pixels: 446464
+Precision: 0.657914
+Recall: 0.376332
+F-Measure: 0.478792
+
+../Results/Experiment_0/Sintel_clean/temple_3/frame_0020_var_occ.png
+Pixels gt: 83591
+Pixels results: 77446
+pixelTP: 60082
+pixelFP: 17364
+pixelFN: 23509
+pixelTN: 345509
+
+num pixels: 446464
+Precision: 0.775792
+Recall: 0.718762
+F-Measure: 0.746189
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0048_var_occ.png
+Pixels gt: 4615
+Pixels results: 215
+pixelTP: 94
+pixelFP: 121
+pixelFN: 4521
+pixelTN: 441728
+
+num pixels: 446464
+Precision: 0.437209
+Recall: 0.0203684
+F-Measure: 0.0389234
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0029_var_occ.png
+Pixels gt: 20835
+Pixels results: 2239
+pixelTP: 1600
+pixelFP: 639
+pixelFN: 19235
+pixelTN: 424990
+
+num pixels: 446464
+Precision: 0.714605
+Recall: 0.0767939
+F-Measure: 0.138684
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0043_var_occ.png
+Pixels gt: 41285
+Pixels results: 14237
+pixelTP: 7515
+pixelFP: 6722
+pixelFN: 33770
+pixelTN: 398457
+
+num pixels: 446464
+Precision: 0.52785
+Recall: 0.182027
+F-Measure: 0.270703
+
+../Results/Experiment_0/Sintel_final/mountain_1/frame_0030_var_occ.png
+Pixels gt: 4057
+Pixels results: 901
+pixelTP: 150
+pixelFP: 751
+pixelFN: 3907
+pixelTN: 441656
+
+num pixels: 446464
+Precision: 0.166482
+Recall: 0.0369731
+F-Measure: 0.0605083
+
+../Results/Experiment_0/Sintel_final/mountain_1/frame_0035_var_occ.png
+Pixels gt: 2421
+Pixels results: 1187
+pixelTP: 34
+pixelFP: 1153
+pixelFN: 2387
+pixelTN: 442890
+
+num pixels: 446464
+Precision: 0.0286436
+Recall: 0.0140438
+F-Measure: 0.018847
+
+../Results/Experiment_0/Sintel_final/shaman_3/frame_0021_var_occ.png
+Pixels gt: 6505
+Pixels results: 39
+pixelTP: 32
+pixelFP: 7
+pixelFN: 6473
+pixelTN: 439952
+
+num pixels: 446464
+Precision: 0.820513
+Recall: 0.00491929
+F-Measure: 0.00977995
+
+../Results/Experiment_0/Sintel_final/ambush_4/frame_0017_var_occ.png
+Pixels gt: 52599
+Pixels results: 67833
+pixelTP: 18170
+pixelFP: 49663
+pixelFN: 34429
+pixelTN: 344202
+
+num pixels: 446464
+Precision: 0.267864
+Recall: 0.345444
+F-Measure: 0.301747
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0002_var_occ.png
+Pixels gt: 4092
+Pixels results: 7027
+pixelTP: 1028
+pixelFP: 5999
+pixelFN: 3064
+pixelTN: 436373
+
+num pixels: 446464
+Precision: 0.146293
+Recall: 0.251222
+F-Measure: 0.184909
+
+../Results/Experiment_0/Sintel_final/mountain_1/frame_0028_var_occ.png
+Pixels gt: 8424
+Pixels results: 4828
+pixelTP: 2256
+pixelFP: 2572
+pixelFN: 6168
+pixelTN: 435468
+
+num pixels: 446464
+Precision: 0.467274
+Recall: 0.267806
+F-Measure: 0.340477
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0009_var_occ.png
+Pixels gt: 41269
+Pixels results: 3200
+pixelTP: 2106
+pixelFP: 1094
+pixelFN: 39163
+pixelTN: 404101
+
+num pixels: 446464
+Precision: 0.658125
+Recall: 0.051031
+F-Measure: 0.0947177
+
+../Results/Experiment_0/Sintel_final/alley_2/frame_0046_var_occ.png
+Pixels gt: 4787
+Pixels results: 2338
+pixelTP: 494
+pixelFP: 1844
+pixelFN: 4293
+pixelTN: 439833
+
+num pixels: 446464
+Precision: 0.211292
+Recall: 0.103196
+F-Measure: 0.138667
+
+../Results/Experiment_0/Sintel_clean/mountain_1/frame_0032_var_occ.png
+Pixels gt: 2061
+Pixels results: 466
+pixelTP: 139
+pixelFP: 327
+pixelFN: 1922
+pixelTN: 444076
+
+num pixels: 446464
+Precision: 0.298283
+Recall: 0.067443
+F-Measure: 0.110012
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0009_var_occ.png
+Pixels gt: 3017
+Pixels results: 252
+pixelTP: 0
+pixelFP: 252
+pixelFN: 3017
+pixelTN: 443195
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_clean/market_6/frame_0009_var_occ.png
+Pixels gt: 101321
+Pixels results: 22865
+pixelTP: 14777
+pixelFP: 8088
+pixelFN: 86544
+pixelTN: 337055
+
+num pixels: 446464
+Precision: 0.646272
+Recall: 0.145843
+F-Measure: 0.237982
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0013_var_occ.png
+Pixels gt: 9026
+Pixels results: 882
+pixelTP: 354
+pixelFP: 528
+pixelFN: 8672
+pixelTN: 436910
+
+num pixels: 446464
+Precision: 0.401361
+Recall: 0.03922
+F-Measure: 0.0714574
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0027_var_occ.png
+Pixels gt: 50200
+Pixels results: 22665
+pixelTP: 15330
+pixelFP: 7335
+pixelFN: 34870
+pixelTN: 388929
+
+num pixels: 446464
+Precision: 0.676373
+Recall: 0.305378
+F-Measure: 0.420778
+
+../Results/Experiment_0/Sintel_clean/bamboo_2/frame_0045_var_occ.png
+Pixels gt: 42773
+Pixels results: 11478
+pixelTP: 7271
+pixelFP: 4207
+pixelFN: 35502
+pixelTN: 399484
+
+num pixels: 446464
+Precision: 0.633473
+Recall: 0.16999
+F-Measure: 0.26805
+
+../Results/Experiment_0/Sintel_final/cave_2/frame_0022_var_occ.png
+Pixels gt: 105387
+Pixels results: 77317
+pixelTP: 33568
+pixelFP: 43749
+pixelFN: 71819
+pixelTN: 297328
+
+num pixels: 446464
+Precision: 0.434161
+Recall: 0.318521
+F-Measure: 0.367458
+
+../Results/Experiment_0/Sintel_clean/sleeping_1/frame_0012_var_occ.png
+Pixels gt: 1590
+Pixels results: 138
+pixelTP: 23
+pixelFP: 115
+pixelFN: 1567
+pixelTN: 444759
+
+num pixels: 446464
+Precision: 0.166667
+Recall: 0.0144654
+F-Measure: 0.0266204
+
+../Results/Experiment_0/Sintel_clean/market_2/frame_0047_var_occ.png
+Pixels gt: 5996
+Pixels results: 492
+pixelTP: 166
+pixelFP: 326
+pixelFN: 5830
+pixelTN: 440142
+
+num pixels: 446464
+Precision: 0.337398
+Recall: 0.0276851
+F-Measure: 0.0511714
+
+../Results/Experiment_0/Sintel_final/bamboo_2/frame_0047_var_occ.png
+Pixels gt: 43327
+Pixels results: 16107
+pixelTP: 9360
+pixelFP: 6747
+pixelFN: 33967
+pixelTN: 396390
+
+num pixels: 446464
+Precision: 0.581114
+Recall: 0.216032
+F-Measure: 0.314971
+
+../Results/Experiment_0/Sintel_final/alley_1/frame_0023_var_occ.png
+Pixels gt: 25842
+Pixels results: 12310
+pixelTP: 7984
+pixelFP: 4326
+pixelFN: 17858
+pixelTN: 416296
+
+num pixels: 446464
+Precision: 0.648578
+Recall: 0.308954
+F-Measure: 0.418536
+
+../Results/Experiment_0/Sintel_clean/bandage_2/frame_0036_var_occ.png
+Pixels gt: 8028
+Pixels results: 106
+pixelTP: 73
+pixelFP: 33
+pixelFN: 7955
+pixelTN: 438403
+
+num pixels: 446464
+Precision: 0.688679
+Recall: 0.00909317
+F-Measure: 0.0179493
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0044_var_occ.png
+Pixels gt: 2449
+Pixels results: 13
+pixelTP: 0
+pixelFP: 13
+pixelFN: 2449
+pixelTN: 444002
+
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_clean/mountain_1/frame_0036_var_occ.png
+Pixels gt: 2571
+Pixels results: 746
+pixelTP: 303
+pixelFP: 443
+pixelFN: 2268
+pixelTN: 443450
+
+num pixels: 446464
+Precision: 0.406166
+Recall: 0.117853
+F-Measure: 0.182695
+
+../Results/Experiment_0/Sintel_final/market_5/frame_0007_var_occ.png
+Pixels gt: 68787
+Pixels results: 37139
+pixelTP: 16583
+pixelFP: 20556
+pixelFN: 52204
+pixelTN: 357121
+
+num pixels: 446464
+Precision: 0.446512
+Recall: 0.241078
+F-Measure: 0.313105
+
+../Results/Experiment_0/Sintel_final/bamboo_1/frame_0027_var_occ.png
+Pixels gt: 19334
+Pixels results: 2008
+pixelTP: 1166
+pixelFP: 842
+pixelFN: 18168
+pixelTN: 426288
+
+num pixels: 446464
+Precision: 0.580677
+Recall: 0.0603083
+F-Measure: 0.109268
+
+../Results/Experiment_0/Sintel_final/shaman_2/frame_0030_var_occ.png
+Pixels gt: 31390
+Pixels results: 177
+pixelTP: 42
+pixelFP: 135
+pixelFN: 31348
+pixelTN: 414939
+
+num pixels: 446464
+Precision: 0.237288
+Recall: 0.00133801
+F-Measure: 0.00266101
+
+../Results/Experiment_0/Sintel_final/sleeping_2/frame_0005_var_occ.png
+Pixels gt: 2891
+Pixels results: 165
+pixelTP: 8
+pixelFP: 157
+pixelFN: 2883
+pixelTN: 443416
+
+num pixels: 446464
+Precision: 0.0484848
+Recall: 0.00276721
+F-Measure: 0.0052356
+
+../Results/Experiment_0/Sintel_final/alley_2/frame_0009_var_occ.png
+Pixels gt: 6493
+Pixels results: 2745
+pixelTP: 1643
+pixelFP: 1102
+pixelFN: 4850
+pixelTN: 438869
+
+num pixels: 446464
+Precision: 0.598543
+Recall: 0.253042
+F-Measure: 0.355705
+
+../Results/Experiment_0/Sintel_clean/ambush_7/frame_0038_var_occ.png
+Pixels gt: 22502
+Pixels results: 11761
+pixelTP: 7084
+pixelFP: 4677
+pixelFN: 15418
+pixelTN: 419285
+
+num pixels: 446464
+Precision: 0.60233
+Recall: 0.314816
+F-Measure: 0.413507
+
+../Results/Experiment_0/Sintel_final/temple_3/frame_0034_var_occ.png
+Pixels gt: 111100
+Pixels results: 53623
+pixelTP: 28085
+pixelFP: 25538
+pixelFN: 83015
+pixelTN: 309826
+
+num pixels: 446464
+Precision: 0.523749
+Recall: 0.25279
+F-Measure: 0.340997
+
+../Results/Experiment_0/Sintel_clean/shaman_3/frame_0044_var_occ.png
+Pixels gt: 8155
+Pixels results: 320
+pixelTP: 57
+pixelFP: 263
+pixelFN: 8098
+pixelTN: 438046
+
+num pixels: 446464
+Precision: 0.178125
+Recall: 0.00698958
+F-Measure: 0.0134513
+
+../Results/Experiment_0/Sintel_final/temple_2/frame_0024_var_occ.png
+Pixels gt: 61166
+Pixels results: 46865
+pixelTP: 22467
+pixelFP: 24398
+pixelFN: 38699
+pixelTN: 360900
+
+num pixels: 446464
+Precision: 0.479398
+Recall: 0.367312
+F-Measure: 0.415936
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0006_var_occ.png
+Pixels gt: 51313
+Pixels results: 10808
+pixelTP: 6937
+pixelFP: 3871
+pixelFN: 44376
+pixelTN: 391280
+
+num pixels: 446464
+Precision: 0.641839
+Recall: 0.13519
+F-Measure: 0.223338
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0026_var_occ.png
+Pixels gt: 32616
+Pixels results: 11367
+pixelTP: 5640
+pixelFP: 5727
+pixelFN: 26976
+pixelTN: 408121
+
+num pixels: 446464
+Precision: 0.496173
+Recall: 0.172921
+F-Measure: 0.256463
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0037_var_occ.png
+Pixels gt: 3390
+Pixels results: 135
+pixelTP: 6
+pixelFP: 129
+pixelFN: 3384
+pixelTN: 442945
+
+num pixels: 446464
+Precision: 0.0444444
+Recall: 0.00176991
+F-Measure: 0.00340426
+
+../Results/Experiment_0/Sintel_final/cave_2/frame_0038_var_occ.png
+Pixels gt: 88751
+Pixels results: 61592
+pixelTP: 27288
+pixelFP: 34304
+pixelFN: 61463
+pixelTN: 323409
+
+num pixels: 446464
+Precision: 0.443045
+Recall: 0.307467
+F-Measure: 0.36301
+
+../Results/Experiment_0/Sintel_clean/ambush_7/frame_0003_var_occ.png
+Pixels gt: 0
+Pixels results: 2382
+pixelTP: 0
+pixelFP: 2382
+pixelFN: 0
+pixelTN: 444082
+
+Precision changed to 0
+Recall changed to 0
+Changed to 0
+num pixels: 446464
+Precision: 0
+Recall: 0
+F-Measure: 0
+
+../Results/Experiment_0/Sintel_clean/sleeping_1/frame_0030_var_occ.png
+Pixels gt: 1611
+Pixels results: 321
+pixelTP: 36
+pixelFP: 285
+pixelFN: 1575
+pixelTN: 444568
+
+num pixels: 446464
+Precision: 0.11215
+Recall: 0.0223464
+F-Measure: 0.0372671
+
+../Results/Experiment_0/Sintel_clean/shaman_2/frame_0017_var_occ.png
+Pixels gt: 22503
+Pixels results: 570
+pixelTP: 1
+pixelFP: 569
+pixelFN: 22502
+pixelTN: 423392
+
+num pixels: 446464
+Precision: 0.00175439
+Recall: 4.44385e-05
+F-Measure: 8.66814e-05
+
+../Results/Experiment_0/Sintel_clean/temple_3/frame_0042_var_occ.png
+Pixels gt: 96526
+Pixels results: 51204
+pixelTP: 28347
+pixelFP: 22857
+pixelFN: 68179
+pixelTN: 327081
+
+num pixels: 446464
+Precision: 0.553609
+Recall: 0.293672
+F-Measure: 0.383768
+
+../Results/Experiment_0/Sintel_clean/cave_2/frame_0014_var_occ.png
+Pixels gt: 64920
+Pixels results: 22460
+pixelTP: 12840
+pixelFP: 9620
+pixelFN: 52080
+pixelTN: 371924
+
+num pixels: 446464
+Precision: 0.571683
+Recall: 0.197782
+F-Measure: 0.293889
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0002_var_occ.png
+Pixels gt: 9912
+Pixels results: 109
+pixelTP: 49
+pixelFP: 60
+pixelFN: 9863
+pixelTN: 436492
+
+num pixels: 446464
+Precision: 0.449541
+Recall: 0.0049435
+F-Measure: 0.00977946
+
+../Results/Experiment_0/Sintel_final/cave_4/frame_0025_var_occ.png
+Pixels gt: 31617
+Pixels results: 12088
+pixelTP: 3379
+pixelFP: 8709
+pixelFN: 28238
+pixelTN: 406138
+
+num pixels: 446464
+Precision: 0.279533
+Recall: 0.106873
+F-Measure: 0.154628
+
+../Results/Experiment_0/Sintel_clean/sleeping_2/frame_0019_var_occ.png
+Pixels gt: 3459
+Pixels results: 371
+pixelTP: 15
+pixelFP: 356
+pixelFN: 3444
+pixelTN: 442649
+
+num pixels: 446464
+Precision: 0.0404313
+Recall: 0.00433651
+F-Measure: 0.0078329
+
+../Results/Experiment_0/Sintel_final/alley_1/frame_0011_var_occ.png
+Pixels gt: 14155
+Pixels results: 1991
+pixelTP: 1711
+pixelFP: 280
+pixelFN: 12444
+pixelTN: 432029
+
+num pixels: 446464
+Precision: 0.859367
+Recall: 0.120876
+F-Measure: 0.211941
+
+../Results/Experiment_0/Sintel_final/bamboo_2/frame_0014_var_occ.png
+Pixels gt: 20977
+Pixels results: 5606
+pixelTP: 3534
+pixelFP: 2072
+pixelFN: 17443
+pixelTN: 423415
+
+num pixels: 446464
+Precision: 0.630396
+Recall: 0.16847
+F-Measure: 0.265884
+
+../Results/Experiment_0/Sintel_final/ambush_7/frame_0042_var_occ.png
+Pixels gt: 54211
+Pixels results: 35754
+pixelTP: 25547
+pixelFP: 10207
+pixelFN: 28664
+pixelTN: 382046
+
+num pixels: 446464
+Precision: 0.714521
+Recall: 0.471251
+F-Measure: 0.567932
+
+../Results/Experiment_0/Sintel_clean/alley_1/frame_0019_var_occ.png
+Pixels gt: 17578
+Pixels results: 276
+pixelTP: 204
+pixelFP: 72
+pixelFN: 17374
+pixelTN: 428814
+
+num pixels: 446464
+Precision: 0.73913
+Recall: 0.0116054
+F-Measure: 0.022852
+
+../Results/Experiment_0/Sintel_final/sleeping_1/frame_0048_var_occ.png
+Pixels gt: 801
+Pixels results: 431
+pixelTP: 32
+pixelFP: 399
+pixelFN: 769
+pixelTN: 445264
+
+num pixels: 446464
+Precision: 0.0742459
+Recall: 0.0399501
+F-Measure: 0.051948
+
+../Results/Experiment_0/Sintel_final/market_6/frame_0013_var_occ.png
+Pixels gt: 98119
+Pixels results: 39143
+pixelTP: 21742
+pixelFP: 17401
+pixelFN: 76377
+pixelTN: 330944
+
+num pixels: 446464
+Precision: 0.55545
+Recall: 0.221588
+F-Measure: 0.316796
+
+Mean precision: 0.441151
+Mean recall: 0.137893
+Mean Fmeasure: 0.183292
