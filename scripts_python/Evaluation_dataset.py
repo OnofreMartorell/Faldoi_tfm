@@ -9,8 +9,8 @@ from PIL import Image
 from utils import list_images_dataset
 
 
-method_ev = 'epe' #epe/epe_match/fmeasure
-dataset = 'sintel' #middlebury/sintel
+method_ev = 's0_10' #epe/epe_match/fmeasure/s0_10/s10_40/s40+
+dataset = 'middlebury' #middlebury/sintel
 method_var = 0 #0/8
 
 
@@ -20,7 +20,7 @@ if __name__ == '__main__':
 	#For all random trials, evaluate all images
 	
 
-	folder_out = '../Output_error_evaluation_results/'
+	folder_out = '../Output_error_evaluation_results/' + method_ev
 	if not os.path.exists(folder_out):
 		os.makedirs(folder_out)
 	folder_lists = '../scripts_evaluation_datasets/lists_images/'
@@ -42,8 +42,10 @@ if __name__ == '__main__':
 			#Out flow file
 			sequence = list_images_png[0].split('.')[2].split('/')[-2]
 			core_name1 = list_images_png[0].split('.')[2].split('/')[-1]
+			core_name_gt = core_name1
 			if dataset == 'middlebury':
 				subset = 'Middlebury_evaluation/Method_' + str(method_var) + '/'
+				core_name_gt = 'flow10'
 			else:
 				if 'Sintel_final' in list_images_png[0]:
 					subset = 'Sintel_evaluation/Method_' + str(method_var) + '/Sintel_final/'
@@ -51,12 +53,12 @@ if __name__ == '__main__':
 				else:
 					subset = 'Sintel_evaluation/Method_' + str(method_var) + '/Sintel_clean/'
 
-			if method_ev == 'epe' or method_ev == 'epe_match':
+			if method_ev == 'epe' or method_ev == 'epe_match' or method_ev == 's0_10' or method_ev == 's10_40' or method_ev == 's40+':
 
 				f_path = '../Results/' + subset + sequence + '/'
 				out = f_path + core_name1 + '_exp_var.flo'
 				
-				gt = '../Ground_truth/flow_' + dataset + '/' + sequence + '/' + core_name1 + '.flo'
+				gt = '../Ground_truth/flow_' + dataset + '/' + sequence + '/' + core_name_gt + '.flo'
 				mask = '../Ground_truth/occlusions_' + dataset +'/' + sequence + '/' + core_name1 + '.png'
 
 			elif method_ev == 'fmeasure':
@@ -65,10 +67,10 @@ if __name__ == '__main__':
 				
 				gt = '../Ground_truth/occlusions_' + dataset + '/' + sequence + '/' + core_name1 + '.png'
 				mask = ''
-
+			
 			file_gt.write(gt + '\n')
 			file_out.write(out + '\n')
-			file_out.write(mask + '\n')
+			file_mask.write(mask + '\n')
 
 
 	#Create sh
@@ -81,7 +83,13 @@ if __name__ == '__main__':
 		elif method_ev == 'epe_match':
 			cmd = '../build/evaluation epe_match ' + filename_out + ' ' + filename_gt	+ ' ' + filename_mask
 		elif method_ev == 'fmeasure':
-			cmd = '../build/evaluation fmeasure ' + filename_out + ' ' + filename_gt		
+			cmd = '../build/evaluation fmeasure ' + filename_out + ' ' + filename_gt
+		elif method_ev == 's0_10':	
+			cmd = '../build/evaluation s0_10 ' + filename_out + ' ' + filename_gt
+		elif method_ev == 's10_40':	
+			cmd = '../build/evaluation s10_40 ' + filename_out + ' ' + filename_gt
+		elif method_ev == 's40+':	
+			cmd = '../build/evaluation s40+ ' + filename_out + ' ' + filename_gt		
 		file.write(cmd)
 		
 
@@ -89,7 +97,7 @@ if __name__ == '__main__':
 	file_sub = '../scripts_evaluation_datasets/Evaluation_method_' + str(method_var) + '_' + dataset + '_' + method_ev  + '.sub'
 	with open(file_sub, 'w') as file:
 		file.write("#!/bin/bash\n")
-		file.write('#$ -N Evaluation_results\n')
+		file.write('#$ -N Evaluation_results' + str(method_var) + '_' + dataset + '_' + method_ev  + '\n')
 		file.write('#$ -cwd\n')
 		file.write('#$ -o ' + folder_out + '\n')
 		file.write('#$ -e ' + folder_out + '\n')
@@ -99,7 +107,7 @@ if __name__ == '__main__':
 	#Send job
 	command = "qsub " + file_sub
 	print command
-	#os.system(command)
+	os.system(command)
 
 
 

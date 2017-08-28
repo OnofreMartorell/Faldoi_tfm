@@ -13,7 +13,7 @@ from PIL import Image
 random_trials = 44
 init_num = 0
 				
-method_ev = 'fmeasure' #epe_match/fmeasure
+method_ev = 'fmeasure' #epe/epe_match/fmeasure
 
 
 if __name__ == '__main__':

@@ -13,9 +13,12 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+
 extern "C" {
 #include "iio.h"
 }
+
+
 #include "energy_structures.h"
 #include "utils_preprocess.h"
 using namespace std;
@@ -32,16 +35,14 @@ void  of_error(
     int w[2], h[2], pd[2];
 
 
-
     //Sparse Optical flow forward and backward
     float *flow1 = iio_read_image_float_split(filename_of.c_str(), w, h, pd);
     float *flow2 = iio_read_image_float_split(filename_gt.c_str(), w + 1, h + 1, pd + 1);
 
 
 
-    //[ni, nj, nChannels] = size(flow1);
-    auto image_ae = new float[w[0]*h[0]];
-    auto image_ee = new float[w[0]*h[0]];
+    float *image_ee = new float[w[0]*h[0]];
+    float *image_ae = new float[w[0]*h[0]];
     float ae = 0;
     float ee = 0;
     int nPix = 0;
@@ -94,9 +95,13 @@ void  of_error(
         results[0] = ae;
         results[1] = ee;
     }
+    delete [] image_ae;
+    delete [] image_ee;
+    delete [] flow1;
+    delete [] flow2;
 }
 
-void  of_error_match(
+void  of_error(
         const std::string& filename_of,
         const std::string& filename_gt,
         const std::string& filename_mask,
@@ -167,6 +172,71 @@ void  of_error_match(
         results[0] = ae;
         results[1] = ee;
     }
+    delete [] image_ae;
+    delete [] image_ee;
+    delete [] flow1;
+    delete [] flow2;
+}
+
+void  of_error(
+        const std::string& filename_of,
+        const std::string& filename_gt,
+        float *results,
+        float inf_limit,
+        float sup_limit,
+        const std::string& method_output
+        ){
+
+
+    // Open input images and .flo
+    // pd: number of channels
+    int w[2], h[2], pd[2];
+
+
+    //Sparse Optical flow forward and backward
+    float *flow1 = iio_read_image_float_split(filename_of.c_str(), w, h, pd);
+    float *flow2 = iio_read_image_float_split(filename_gt.c_str(), w + 1, h + 1, pd + 1);
+
+
+    float *image_ee = new float[w[0]*h[0]];
+    float ee = 0;
+    int nPix = 0;
+
+    for (int j = 0; j < h[0]; j++){
+        for (int i = 0; i < w[0]; i++){
+
+
+            int p = i*h[0] + j;
+            float u_c = flow1[p];
+            float v_c = flow1[p + w[0]*h[0]];
+
+            float u_e = flow2[p];
+            float v_e = flow2[p + w[0]*h[0]];
+
+            if ((abs(u_c) < 10000) && (abs(v_c) < 10000)){
+                float norm_gt = sqrt((u_e)*(u_e) + (v_e)*(v_e));
+
+                if (norm_gt >= inf_limit && norm_gt <= sup_limit){
+                    nPix++;
+
+                    float ee_single = sqrt((u_c - u_e)*(u_c - u_e) + (v_c - v_e)*(v_c - v_e));
+                    ee = ee + ee_single;
+                    image_ee[p] = ee_single;
+                }
+            }
+        }
+    }
+    cout << "num pixels: " << nPix << "\n";
+    ee = ee/nPix;
+    std::cout << method_output << ": "<< ee << "\n";
+    if (nPix == 0){
+        results[0] = 0;
+    }else{
+        results[0] = ee;
+    }
+    delete [] image_ee;
+    delete [] flow1;
+    delete [] flow2;
 }
 
 
@@ -180,10 +250,7 @@ void occ_error(const std::string& filename_of,
     cout << filename_of << "\n";
     //Sparse Optical flow forward and backward
     float *occ_results_float = iio_read_image_float_split(filename_of.c_str(), w, h, pd);
-    //auto *occ_gt_float = iio_read_image_float_split(filename_gt.c_str(), w + 1, h + 1, pd + 1);
     auto *occ_gt_uint8 = iio_read_image_uint8(filename_gt.c_str(), w + 1, h + 1);
-
-    //auto *gt = iio_read_image_uint8(filename.c_str(), w + 1, h + 1);
 
 
     auto occ_results = new int[w[0]*h[0]];
@@ -271,9 +338,7 @@ void occ_error(const std::string& filename_of,
     cout << "num pixels: " << nPix << "\n";
 
     std::cout << "Precision: "<< pixelPrecision << "\n";
-
     std::cout << "Recall: "<< pixelSensitivity << "\n";
-
     std::cout << "F-Measure: "<< pixelFMeasure << "\n\n";
 
     if (nPix == 0){
@@ -285,7 +350,14 @@ void occ_error(const std::string& filename_of,
         results[1] = pixelSensitivity;
         results[2] = pixelFMeasure;
     }
+    delete [] occ_gt;
+    delete [] occ_results;
+    delete [] occ_results_float;
+    delete [] occ_gt_uint8;
+    delete [] occ_results;
+    delete [] occ_gt;
 }
+
 int main(int argc, char* argv[]){
 
     std::vector<std::string> args(argv, argv + argc);
@@ -300,6 +372,10 @@ int main(int argc, char* argv[]){
 
     const string& method = args[1];
     string filename_mask_occ = "";
+    string method_output = "";
+    float inf_limit = 0.0;
+    float sup_limit = 0.0;
+
     if (method == "epe"){
         if (args.size() != 4) {
             fprintf(stderr, "Usage %lu :\n\t%s epe out_flow.txt gt_flow.txt", args.size(), args[0].c_str());
@@ -322,6 +398,36 @@ int main(int argc, char* argv[]){
             return 1;
         }
         cout << "Computing precision, recall and F-measure\n";
+    }else if (method == "s0_10") {
+        if (args.size() != 4) {
+            fprintf(stderr, "Usage %lu :\n\t%s s0_10 out_flow.txt gt_flow.txt", args.size(), args[0].c_str());
+
+            return 1;
+        }
+        cout << "Computing s0-10\n";
+        inf_limit = 0.0;
+        sup_limit = 10.0;
+        method_output = "s0-10";
+    }else if (method == "s10_40") {
+        if (args.size() != 4) {
+            fprintf(stderr, "Usage %lu :\n\t%s s10_40 out_flow.txt gt_flow.txt", args.size(), args[0].c_str());
+
+            return 1;
+        }
+        cout << "Computing s10-40\n";
+        inf_limit = 10.0;
+        sup_limit = 40.0;
+        method_output = "s10-40";
+    }else if (method == "s40+") {
+        if (args.size() != 4) {
+            fprintf(stderr, "Usage %lu :\n\t%s s40+ out_flow.txt gt_flow.txt", args.size(), args[0].c_str());
+
+            return 1;
+        }
+        cout << "Computing s40+\n";
+        inf_limit = 40.0;
+        sup_limit = INFINITY;
+        method_output = "s40+";
     }else{
         fprintf(stderr, "The first argument is not a known method, possible methods: \n"
                         "epe: computes EPE and AE for all flow fields (input is .flo)\n"
@@ -329,6 +435,8 @@ int main(int argc, char* argv[]){
                         "fmeasure: conputes precision, recall and Fmeasure for all occlusion masks (input is .png)\n");
         return 1;
     }
+
+
 
     const string& filename_images_results = args[2];
     ifstream infile_results(filename_images_results);
@@ -358,6 +466,7 @@ int main(int argc, char* argv[]){
 
         const string& filename_of = line_results;
         const string& filename_gt = line_gt;
+
         if (method == "epe"){
             float *results = new float[2];
             of_error(filename_of, filename_gt, results);
@@ -368,7 +477,7 @@ int main(int argc, char* argv[]){
             float *results = new float[2];
             getline(infile_mask, line_mask);
             const string& filename_mask = line_mask;
-            of_error_match(filename_of, filename_gt, filename_mask, results);
+            of_error(filename_of, filename_gt, filename_mask, results);
 
             global_ae += results[0];
             global_ee += results[1];
@@ -380,6 +489,11 @@ int main(int argc, char* argv[]){
             global_precision += results[0];
             global_recall += results[1];
             global_fmeasure += results[2];
+        }else if(method == "s0_10" || method == "s10_40" || method == "s40+" ){
+            float *results = new float[1];
+            of_error(filename_of, filename_gt, results, inf_limit, sup_limit, method_output);
+            global_ae += results[0];
+            global_ee += results[1];
         }
     }
 
@@ -408,6 +522,10 @@ int main(int argc, char* argv[]){
         std::cout << "Mean precision: " << global_precision << "\n";
         std::cout << "Mean recall: " << global_recall << "\n";
         std::cout << "Mean Fmeasure: " << global_fmeasure << "\n";
+    }else if(method == "s0_10" || method == "s10_40" || method == "s40+" ){
+        global_ae = global_ae/num_files;
+        global_ee = global_ee/num_files;
+        std::cout << "Mean " << method_output << ": "<< global_ee << "\n";
     }
 
     return 0;
