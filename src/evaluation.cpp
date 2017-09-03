@@ -58,7 +58,7 @@ void  of_error(
             float u_e = flow2[p];
             float v_e = flow2[p + w[0]*h[0]];
 
-            if ((abs(u_c) < 10000) && (abs(v_c) < 10000)){
+            if ((abs(u_c) < 10000) && (abs(v_c) < 10000) && (abs(u_e) < 10000) && (abs(v_e) < 10000)){
 
                 nPix++;
                 float esc_prod = u_c*u_e + v_c*v_e + 1.0;
@@ -78,6 +78,10 @@ void  of_error(
                 image_ae[p] = ae_single;
 
                 float ee_single = std::sqrt((u_c - u_e)*(u_c - u_e) + (v_c - v_e)*(v_c - v_e));
+
+
+
+
                 ee = ee + ee_single;
                 image_ee[p] = ee_single;
             }
@@ -178,6 +182,7 @@ void  of_error(
     delete [] flow2;
 }
 
+//compute s0-10, s10-40 and s40+
 void  of_error(
         const std::string& filename_of,
         const std::string& filename_gt,
@@ -215,6 +220,7 @@ void  of_error(
 
             if ((abs(u_c) < 10000) && (abs(v_c) < 10000)){
                 float norm_gt = sqrt((u_e)*(u_e) + (v_e)*(v_e));
+
 
                 if (norm_gt >= inf_limit && norm_gt <= sup_limit){
                     nPix++;
@@ -461,6 +467,7 @@ int main(int argc, char* argv[]){
     while(getline(infile_results, line_results)){
 
         num_files = num_files + 1.0;
+        cout << num_files << "\n";
         getline(infile_gt, line_gt);
 
 
@@ -469,7 +476,9 @@ int main(int argc, char* argv[]){
 
         if (method == "epe"){
             float *results = new float[2];
-            of_error(filename_of, filename_gt, results);
+            if (num_files == 1){
+                of_error(filename_of, filename_gt, results);
+            }
             global_ae += results[0];
             global_ee += results[1];
         }else if(method == "epe_match"){
@@ -490,10 +499,13 @@ int main(int argc, char* argv[]){
             global_recall += results[1];
             global_fmeasure += results[2];
         }else if(method == "s0_10" || method == "s10_40" || method == "s40+" ){
-            float *results = new float[1];
+            float *results = new float[2];
+
             of_error(filename_of, filename_gt, results, inf_limit, sup_limit, method_output);
-            global_ae += results[0];
-            global_ee += results[1];
+
+            global_ee += results[0];
+
+
         }
     }
 
@@ -523,6 +535,7 @@ int main(int argc, char* argv[]){
         std::cout << "Mean recall: " << global_recall << "\n";
         std::cout << "Mean Fmeasure: " << global_fmeasure << "\n";
     }else if(method == "s0_10" || method == "s10_40" || method == "s40+" ){
+        cout << global_ee << "\n";
         global_ae = global_ae/num_files;
         global_ee = global_ee/num_files;
         std::cout << "Mean " << method_output << ": "<< global_ee << "\n";

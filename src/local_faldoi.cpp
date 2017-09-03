@@ -45,11 +45,6 @@ extern "C" {
 
 using namespace std;
 
-//GLOBAL VARIABLES
-// char GLOBAL_TMP_FILE[] = "/tmp/faldoy_XXXXXX"; // template for our file.
-
-
-// typedef  __gnu_pbds::priority_queue<SparseOF, CompareSparseOF,__gnu_pbds::pairing_heap_tag> pq_cand;
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////OUTLIERS FUNCTIONS/////////////////////////////

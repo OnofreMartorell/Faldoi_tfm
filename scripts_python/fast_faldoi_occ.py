@@ -22,7 +22,7 @@ parser.add_argument("file_images", help = "File with images")
 method = 8
 matchings = False
 sparse_flow = True
-local_of = True
+local_of = False
 global_of = True
 
 
@@ -104,11 +104,11 @@ if not os.path.exists(f_path):
     os.makedirs(f_path)
 filename_gt = args.ev
 filename_params = args.p
-if not filename_params == '':
-	iteration_params = '_' + str(filename_params.split('/')[-1].split('.')[0].split('_')[1]).zfill(2)
-else:
-	iteration_params = ''
-
+#if not filename_params == '':
+#	iteration_params = '_' + str(filename_params.split('/')[-1].split('.')[0].split('_')[1]).zfill(2)
+#else:
+#	iteration_params = ''
+iteration_params = ''
 
 #Set the images input.
 im_name0 = os.path.abspath(data[0])

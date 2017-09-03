@@ -9,16 +9,13 @@ from PIL import Image
 from utils import list_images_dataset
 
 
-method_ev = 's0_10' #epe/epe_match/fmeasure/s0_10/s10_40/s40+
+method_ev = 'epe' #epe/epe_match/fmeasure/s0_10/s10_40/s40+
 dataset = 'middlebury' #middlebury/sintel
-method_var = 0 #0/8
-
+method_var = 8 #0/8
+random_subset = False
 
 if __name__ == '__main__':
-	list_images = list_images_dataset(dataset)
-
-	#For all random trials, evaluate all images
-	
+	list_images = list_images_dataset(dataset, random_subset)	
 
 	folder_out = '../Output_error_evaluation_results/' + method_ev
 	if not os.path.exists(folder_out):
@@ -77,8 +74,7 @@ if __name__ == '__main__':
 	file_sh = '../scripts_evaluation_datasets/Evaluation_method_' + str(method_var) + '_' + dataset + '_' + method_ev  + '.sh'
 	with open(file_sh, 'w') as file:
 		file.write("#!/bin/bash\n")
-		if method_ev == 'epe':
-	
+		if method_ev == 'epe':	
 			cmd = '../build/evaluation epe ' + filename_out + ' ' + filename_gt
 		elif method_ev == 'epe_match':
 			cmd = '../build/evaluation epe_match ' + filename_out + ' ' + filename_gt	+ ' ' + filename_mask
@@ -97,7 +93,7 @@ if __name__ == '__main__':
 	file_sub = '../scripts_evaluation_datasets/Evaluation_method_' + str(method_var) + '_' + dataset + '_' + method_ev  + '.sub'
 	with open(file_sub, 'w') as file:
 		file.write("#!/bin/bash\n")
-		file.write('#$ -N Evaluation_results' + str(method_var) + '_' + dataset + '_' + method_ev  + '\n')
+		file.write('#$ -N Evaluation_results_' + str(method_var) + '_' + dataset + '_' + method_ev  + '\n')
 		file.write('#$ -cwd\n')
 		file.write('#$ -o ' + folder_out + '\n')
 		file.write('#$ -e ' + folder_out + '\n')
@@ -107,7 +103,7 @@ if __name__ == '__main__':
 	#Send job
 	command = "qsub " + file_sub
 	print command
-	os.system(command)
+	#os.system(command)
 
 
 
