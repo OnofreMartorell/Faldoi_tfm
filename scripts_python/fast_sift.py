@@ -44,17 +44,19 @@ nsp = args.nsp;
 param_sif = '-ss_nspo %s'%(nsp)
 
 #C program names
-feature_descriptor = "./sift_cli "
-match_comparison = "./match_cli"
-sparse_flow = "./sparse_flow"
-match_propagation = "./local_faldoi"
-of_var = "./global_faldoi"
+feature_descriptor = "../build/sift_cli "
+match_comparison = "../build/match_cli"
+sparse_flow = "../build/sparse_flow"
+match_propagation = "../build/local_faldoi"
+of_var = "../build/global_faldoi"
 
 
 #Set the main directory that contains all the stuff
 root_path = '%s/'%(os.getcwd())
-binary_path = root_path + "bin/"
-f_path = root_path + "Results/"
+#binary_path = root_path + "bin/"
+binary_path = '../build/'
+#f_path = root_path + "Results/"
+f_path = '../Results/'
 #Set the folder where the binaries are.
 #Set the images input.
 im_name1 = os.path.abspath(args.i0)
