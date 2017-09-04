@@ -1012,9 +1012,9 @@ int main(int argc, char* argv[]){
 
     if (args.size() != 7 && args.size() != 9) {
         fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png"
-                        " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
+                        " [-m method_id] [-wr windows_radio] [-p file of parameters]\n", args.size(), args[0].c_str());
         fprintf(stderr, "usage %lu :\n\t%s ims.txt in0.flo in1.flo out.flo sim_map.tiff occlusions.png sal0.tiff sal1.tiff"
-                        " [-m method_id] [-wr windows_radio]\n", args.size(), args[0].c_str());
+                        " [-m method_id] [-wr windows_radio] [-p file of parameters]\n", args.size(), args[0].c_str());
 
         return 1;
     }
