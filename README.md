@@ -4,9 +4,7 @@ This respository contains the source code of Faldoi algorithm described in [Fald
 
 
 ## Compiling
-To compile
-
-Type
+To compile type
 ```
         mkdir build
         cd build
@@ -46,30 +44,25 @@ options:
 ## Script - Usage
 ### fast_faldoi
 To use the python script (fast_faldoi.py) that makes all the process, first you need to do the following:
-- Create the folders bin/ and Results/
-- Compile the executables through Makefile
-- Move the excutable files to bin/
+- Compile the executables through the commands above
 - Put the excutable deep matching from DeepMatching: Deep Convolutional Matching into 
-bin from [DeepMatchings](http://lear.inrialpes.fr/src/deepmatching/)
+build directory from [DeepMatchings](http://lear.inrialpes.fr/src/deepmatching/)
 
 Usage: ./fast_faldoi.py i0 i1
 
 ### fast_sift
 To use the python script (fast_sift.py) that makes all the process, first you need to do the following:
-- Create the folders bin/ and Results/
-- Compile the executables through Makefile
-- Move the excutable files to bin/
+- Compile the executables throughthe commands above
 - Put the excutables sift_cli and match_cli from Anatomy of SIFT from IPOL into 
-bin from [SIFT](http://www.ipol.im/pub/art/2014/82/)
+build directory from [SIFT](http://www.ipol.im/pub/art/2014/82/)
 
 Usage: ./fast_sift.py i0 i1
 
 ### fast_faldoi
 To use the python script (fast_faldoi.py) that makes all the process, first you need to do the following:
-- Create the folders bin/ and Results/
-- Compile the executables through Makefile
-- Move the excutable files to bin/
+- Compile the executables through the commands above
 - Put the excutable deep matching from DeepMatching: Deep Convolutional Matching into 
-bin from [DeepMatchings](http://lear.inrialpes.fr/src/deepmatching/)
+build directory from [DeepMatchings](http://lear.inrialpes.fr/src/deepmatching/)
 -Create a txt file with the path of the images in the following order: I_0, I_1, I_{-1}, I_2
+
 Usage: ./fast_faldoi_occ.py list_images.txt    
