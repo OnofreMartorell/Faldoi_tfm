@@ -60,9 +60,7 @@ of_var = "../build/global_faldoi"
 
 #Set the main directory that contains all the stuff
 root_path = '%s/'%(os.getcwd())
-#binary_path = root_path + "bin/"
 binary_path = '../build/'
-#f_path = root_path + "Results/"
 f_path = '../Results/'
 #Set the folder where the binaries are.
 #Set the images input.

@@ -49,9 +49,8 @@ SET(SHARED_CPP_SRC tvl2_model.cpp nltv_model.cpp tvcsad_model.cpp nltvcsad_model
 add_executable(sparse_flow ${SHARED_C_SRC} ${SHARED_CPP_SRC} sparse_flow.cpp)
 add_executable(local_faldoi ${SHARED_C_SRC} ${SHARED_CPP_SRC} local_faldoi.cpp)
 add_executable(global_faldoi ${SHARED_C_SRC} ${SHARED_CPP_SRC} global_faldoi.cpp)
-add_executable(evaluation ${SHARED_C_SRC} ${SHARED_CPP_SRC} evaluation.cpp)
 target_link_libraries(sparse_flow ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
 target_link_libraries(local_faldoi ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
 target_link_libraries(global_faldoi ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
-target_link_libraries(evaluation ${PNG} ${ZLIB}) # ${JPEG} ${TIFF} ${ZLIB})
+
 

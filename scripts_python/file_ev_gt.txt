@@ -1,1 +1,0 @@
-../Ground_truth/flow_sintel/temple_3/frame_0020.flo
