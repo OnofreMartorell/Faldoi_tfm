@@ -26,16 +26,16 @@ in the directory where this file is located. The compilation of the source
 ## Executable - Usage
 
 
-Usage: ./sparse_flow list_matches.txt colums rows out.flo
+Usage: ``./sparse_flow list_matches.txt colums rows out.flo``
 
-Usage: ./local_faldoi i0 i1 in.flo out.flo sim_map.tiff [options...]
+Usage: ``./local_faldoi i0 i1 in.flo out.flo sim_map.tiff [options...]``
 
 
 options:
 -            -m (0)  Changes the functional (check aux_energy_model.h)
 -            -wr (5) Radius value 5 - patch 11x11 
 
-Usage: ./global_faldoi I0 I1 input.flo out.flow
+Usage: ``./global_faldoi I0 I1 input.flo out.flow``
 
 
 options: 
@@ -58,11 +58,11 @@ build directory from [SIFT](http://www.ipol.im/pub/art/2014/82/)
 
 Usage: ./fast_sift.py i0 i1
 
-### fast_faldoi
+### fast_faldoi_occ
 To use the python script (fast_faldoi.py) that makes all the process, first you need to do the following:
 - Compile the executables through the commands above
 - Put the excutable deep matching from DeepMatching: Deep Convolutional Matching into 
 build directory from [DeepMatchings](http://lear.inrialpes.fr/src/deepmatching/)
--Create a txt file with the path of the images in the following order: I_0, I_1, I_{-1}, I_2
+- Create a txt file with the path of the images in the following order: I_0, I_1, I_{-1}, I_2
 
 Usage: ./fast_faldoi_occ.py list_images.txt    
